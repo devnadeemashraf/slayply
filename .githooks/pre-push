@@ -1,0 +1,14 @@
+#!/bin/sh
+# Slayply pre-push hook: refuse direct pushes to main
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "ERROR: Direct push to 'main' is forbidden by Slayply ground rules!"
+    echo "Please create a feature branch (<type>/<ID>-<slug>) and open a Pull Request."
+    exit 1
+  fi
+done
+
+exit 0

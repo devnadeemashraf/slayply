@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+build/
+.output/
+.wxt/
+coverage/
+*.tsbuildinfo
+
+# Turborepo
+.turbo/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# User-specific ignored folders
+temp/
+scratch/
+
+# OS and Editor
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

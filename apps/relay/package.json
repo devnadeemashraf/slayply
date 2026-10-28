@@ -1,0 +1,18 @@
+{
+  "name": "@slayply/relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'skip: relay dev server planned in CORE-02'",
+    "build": "echo 'skip: relay build planned in CORE-02'",
+    "start": "echo 'skip: relay start planned in CORE-02'",
+    "lint": "echo 'skip: relay code empty (skeleton only)'",
+    "fmt:check": "echo 'skip: relay formatting empty (skeleton only)'",
+    "test": "echo 'skip: relay tests planned in CORE-02'",
+    "check": "echo 'skip: relay check passed (skeleton only)'"
+  },
+  "dependencies": {
+    "@slayply/core": "workspace:*"
+  }
+}

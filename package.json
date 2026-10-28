@@ -1,0 +1,23 @@
+{
+  "name": "slayply",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "check": "node scripts/check.mjs",
+    "fmt": "node scripts/fmt.mjs",
+    "fmt:check": "node scripts/fmt-check.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node scripts/test.mjs",
+    "handoff:check": "node scripts/handoff-check.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.3",
+    "@types/node": "26.6.6",
+    "turbo": "2.11.10",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}

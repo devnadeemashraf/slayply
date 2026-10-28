@@ -1,0 +1,14 @@
+{
+  "name": "@slayply/site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'skip: site dev server planned in SITE-01'",
+    "build": "echo 'skip: site build planned in SITE-01'",
+    "lint": "echo 'skip: site code empty (skeleton only)'",
+    "fmt:check": "echo 'skip: site formatting empty (skeleton only)'",
+    "test": "echo 'skip: site tests planned in SITE-01'",
+    "check": "echo 'skip: site check passed (skeleton only)'"
+  }
+}

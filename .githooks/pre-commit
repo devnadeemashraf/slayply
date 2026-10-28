@@ -1,0 +1,7 @@
+#!/bin/sh
+# Slayply pre-commit hook: verify formatting and handoff pointer
+node scripts/fmt-check.mjs
+if [ $? -ne 0 ]; then
+  echo "Pre-commit hook failed: formatting check failed. Run 'pnpm run fmt' to fix."
+  exit 1
+fi

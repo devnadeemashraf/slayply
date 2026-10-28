@@ -1,0 +1,18 @@
+{
+  "name": "@slayply/providers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "echo 'skip: providers build planned in PROV-01'",
+    "lint": "echo 'skip: providers code empty (skeleton only)'",
+    "fmt:check": "echo 'skip: providers formatting empty (skeleton only)'",
+    "test": "echo 'skip: providers tests planned in PROV-01'",
+    "check": "echo 'skip: providers check passed (skeleton only)'"
+  },
+  "dependencies": {
+    "@slayply/core": "workspace:*"
+  }
+}

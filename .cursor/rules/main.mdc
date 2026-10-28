@@ -1,0 +1,14 @@
+---
+description: Slayply Master Agent Rule
+globs: *
+---
+# Slayply Cursor Rules
+
+All autonomous agent behavior and coding workflows must conform to `AGENTS.md`.
+
+## Golden Rules
+- Single Source of Truth: `docs/SPEC.md` > `docs/ROADMAP.md` > `docs/POINTER.md` > `docs/HANDBOOK.md`.
+- Read `docs/POINTER.md` at session start.
+- Run `pnpm run check` before submitting changes.
+- Never commit directly to `main`.
+- Never modify files in `temp/`.

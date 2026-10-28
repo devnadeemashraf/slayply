@@ -1,0 +1,16 @@
+#!/bin/sh
+# Slayply commit-msg hook: enforce Conventional Commits
+commit_msg=$(cat "$1")
+
+pattern="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([a-zA-Z0-9_\/-]+\))?: .+$"
+
+if ! echo "$commit_msg" | grep -Eq "$pattern"; then
+  echo "ERROR: Commit message does not follow Conventional Commits format!"
+  echo "Expected: <type>(<scope>): <subject>"
+  echo "Examples:"
+  echo "  feat(core): add Zod request schema"
+  echo "  fix(relay): handle SSE timeout gracefully"
+  echo "  docs(pointer): update handoff state for BOOT-01"
+  echo "Received: $commit_msg"
+  exit 1
+fi
