@@ -45,7 +45,7 @@
 #### `BOOT-01`: Monorepo Workspace & Build Pipeline
 - **Spec Section:** §3 Monorepo `[MUST]`
 - **Size:** S (1 session)
-- **Status:** In Progress
+- **Status:** Done
 - **Acceptance Criteria:**
   - `pnpm install` succeeds across all workspaces (`apps/*`, `packages/*`).
   - Turborepo orchestrates `check`, `lint`, `fmt:check`, and `test`.
@@ -256,4 +256,5 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `BOOT-01` completed. Package skeleton finalized, doctor pins verified (Node, pnpm, git, VERSIONS, turbo, Biome), Turborepo test and pipeline checks integrated into root CI script.
 - **2026-10-29:** Phase 0 initiated. Monorepo skeleton initialized, git repo initialized on `main`, scaffolding docs and CI pipelines created.

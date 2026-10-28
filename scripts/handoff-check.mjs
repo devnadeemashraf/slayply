@@ -6,6 +6,10 @@ import process from "node:process";
 
 export function validatePointerDoc(pointerContent) {
   const errors = [];
+  if (typeof pointerContent !== "string") {
+    return { valid: false, errors: ["POINTER.md content must be a string."], lineCount: 0 };
+  }
+
   const lines = pointerContent.split(/\r?\n/);
 
   if (lines.length > 80) {
@@ -31,8 +35,8 @@ export function validatePointerDoc(pointerContent) {
   return { valid: errors.length === 0, errors, lineCount: lines.length };
 }
 
-export function checkHandoffCompliance() {
-  const pointerPath = path.resolve(process.cwd(), "docs/POINTER.md");
+export function checkHandoffCompliance(options = {}) {
+  const pointerPath = options.pointerPath || path.resolve(process.cwd(), "docs/POINTER.md");
   if (!fs.existsSync(pointerPath)) {
     return { valid: false, errors: ["docs/POINTER.md does not exist."] };
   }
@@ -43,13 +47,41 @@ export function checkHandoffCompliance() {
     return validation;
   }
 
-  // Check git diff if git is present and repository has commits
-  try {
-    const _statusOutput = execSync("git status --porcelain", { encoding: "utf8" }).trim();
-    // In CI or git PR contexts, check if code changed without modifying POINTER
-    // For local initial commit, this check passes cleanly
-  } catch (_err) {
-    // If git is unavailable, we still validate the document structure
+  // Check git diff if git is present and in CI / PR context
+  const isCI = options.isCI ?? Boolean(process.env.CI);
+  if (isCI) {
+    const exec = options.execSync || execSync;
+    try {
+      const baseRef = process.env.GITHUB_BASE_REF
+        ? `origin/${process.env.GITHUB_BASE_REF}`
+        : "origin/main";
+      let changedFiles = "";
+      try {
+        changedFiles = exec(`git diff --name-only ${baseRef}...HEAD`, { encoding: "utf8" }).trim();
+      } catch (_e) {
+        changedFiles = exec("git diff --name-only HEAD~1", { encoding: "utf8" }).trim();
+      }
+
+      if (changedFiles) {
+        const fileList = changedFiles
+          .split(/\r?\n/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const codeFilesChanged = fileList.some(
+          (f) => f.startsWith("apps/") || f.startsWith("packages/") || f.startsWith("scripts/"),
+        );
+        const pointerChanged = fileList.includes("docs/POINTER.md");
+        if (codeFilesChanged && !pointerChanged) {
+          return {
+            valid: false,
+            errors: ["Code files were modified but docs/POINTER.md was not updated."],
+            lineCount: validation.lineCount,
+          };
+        }
+      }
+    } catch (_err) {
+      // If git diff fails (e.g. initial shallow clone), structure validation still holds
+    }
   }
 
   return { valid: true, errors: [], lineCount: validation.lineCount };
