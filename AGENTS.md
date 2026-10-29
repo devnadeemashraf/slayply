@@ -90,3 +90,22 @@ When requirements appear ambiguous or conflict, resolve using this strict preced
 - **NEVER** inspect, read, or print environment secrets or user API keys in terminal or logs.
 - **NEVER** weaken, comment out, or delete a failing test to achieve a green build.
 - **NEVER** leave a placeholder `TODO` without attaching a roadmap ID or issue tracker reference.
+
+---
+
+## 8. Checklists for Tools Without Hooks
+
+Claude Code enforces some rules mechanically (`.claude/settings.json` → `scripts/claude-guard.mjs`). Other tools must follow them by hand.
+
+**Before every edit**
+- [ ] Not touching `docs/SPEC.md` (needs an approved Spec change proposal), `pnpm-lock.yaml`, `dist/`, `.output/`, `.wxt/`, `temp/`, `.env*` or `*.pem`.
+
+**Before every commit**
+- [ ] Not on `main`. Branch is `<type>/<ID>-<slug>`.
+- [ ] `pnpm run check` is green.
+- [ ] `docs/POINTER.md` updated (and `docs/HANDBOOK.md` if a module was added).
+- [ ] Commit subject follows Conventional Commits, and carries no tool or AI attribution.
+
+**Before every push or PR**
+- [ ] No force-push, and no push to `main`.
+- [ ] Never merge. The maintainer merges.

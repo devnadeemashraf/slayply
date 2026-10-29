@@ -47,8 +47,10 @@ flowchart TD
   - `red-team`: Identifies input bypasses, rate limit issues, and unverified claims.
 
 ### Claude Code Integration (`CLAUDE.md`)
-- Defines shortcuts for `/next-pr`, `/handoff`, and `/review`.
-- Hooks intercept commits to verify `docs/POINTER.md` modifications.
+- Skills in `.claude/skills/` provide `/next-pr`, `/handoff`, `/review` and `/check`.
+- Hooks in `.claude/settings.json` run `scripts/claude-guard.mjs` to inject POINTER at session start, block protected edits and unsafe git/gh commands, require a POINTER update before `gh pr create`, and format after edits.
+- Subagents in `.claude/agents/`: `architect`, `reviewer`, `red-team`.
+- Rules the hooks cannot check are listed as checklists in `AGENTS.md` section 8.
 
 ### Cursor & Copilot Integration
 - Rule files in `.cursor/rules/main.mdc` and `.github/copilot-instructions.md` direct the LLM to adhere to the PR Loop and CODING_STANDARDS.
