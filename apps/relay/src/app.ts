@@ -1,12 +1,19 @@
 import type { HttpBindings } from "@hono/node-server";
 import { MAX_PAYLOAD_BYTES, validateGenerateRequest } from "@slayply/core";
+import { ProviderError, type ProviderErrorKind } from "@slayply/providers";
 import { type Context, Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { readBodyText } from "./body.js";
 import { resolveClientIp } from "./client-ip.js";
 import { isAllowedOrigin } from "./cors.js";
-import { KEY_HEADERS, PROVIDER_IDS, type ProviderId, type ProviderRegistry } from "./provider.js";
+import {
+  type GenerateChunk,
+  KEY_HEADERS,
+  PROVIDER_IDS,
+  type ProviderId,
+  type ProviderRegistry,
+} from "./provider.js";
 import { createRateLimiter } from "./rate-limit.js";
 
 export type AppOptions = {
@@ -17,15 +24,51 @@ export type AppOptions = {
   log: (line: string) => void;
   now: () => number;
   rateLimit?: { limit: number; windowMs: number };
+  /** Total time one generation may stream before it is cut off. */
+  streamDeadlineMs?: number;
+  /** Simultaneous open generations allowed per client IP. */
+  maxOpenStreamsPerIp?: number;
+  /** Time a request body may take to arrive in full. */
+  bodyTimeoutMs?: number;
 };
 
 type RelayEnv = {
   Bindings: Partial<HttpBindings>;
-  Variables: { provider?: ProviderId };
+  Variables: { provider?: ProviderId; clientIp: string };
 };
 
 const DEFAULT_RATE_LIMIT = { limit: 60, windowMs: 60_000 };
+const DEFAULT_STREAM_DEADLINE_MS = 120_000;
+const DEFAULT_MAX_OPEN_STREAMS = 2;
+const DEFAULT_BODY_TIMEOUT_MS = 15_000;
+const MODELS_TIMEOUT_MS = 10_000;
 const MAX_TRACKED_IPS = 10_000;
+// Printable ASCII only, so a key can never be an invalid header value for the upstream call.
+const API_KEY_PATTERN = /^[!-~]{1,512}$/;
+
+/** Static, user-safe text per failure kind; upstream messages are never forwarded. */
+const UPSTREAM_ERRORS: Record<ProviderErrorKind, { code: string; message: string }> = {
+  auth: { code: "UPSTREAM_AUTH", message: "The provider rejected the API key" },
+  rate_limit: { code: "UPSTREAM_RATE_LIMITED", message: "The provider is rate limiting this key" },
+  overloaded: { code: "UPSTREAM_OVERLOADED", message: "The provider is overloaded" },
+  invalid_request: { code: "UPSTREAM_REJECTED", message: "The provider rejected the request" },
+  upstream: { code: "UPSTREAM_ERROR", message: "The provider request failed" },
+  network: { code: "UPSTREAM_ERROR", message: "The provider request failed" },
+};
+
+const MODELS_STATUS: Record<ProviderErrorKind, ContentfulStatusCode> = {
+  auth: 401,
+  rate_limit: 429,
+  overloaded: 503,
+  invalid_request: 502,
+  upstream: 502,
+  network: 502,
+};
+
+function upstreamError(error: unknown): { code: string; message: string; kind: ProviderErrorKind } {
+  const kind = error instanceof ProviderError ? error.kind : "upstream";
+  return { ...UPSTREAM_ERRORS[kind], kind };
+}
 const ALLOWED_REQUEST_HEADERS = ["Content-Type", ...PROVIDER_IDS.map((id) => KEY_HEADERS[id])];
 
 function fail(
@@ -36,6 +79,10 @@ function fail(
   details: unknown[] = [],
 ): Response {
   return c.json({ error: { code, message, details } }, status);
+}
+
+function invalidKey(c: Context<RelayEnv>): Response {
+  return fail(c, 400, "INVALID_API_KEY", "The API key header has invalid characters or length");
 }
 
 function isJsonContentType(header: string | undefined): boolean {
@@ -49,6 +96,10 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
     maxEntries: MAX_TRACKED_IPS,
     now,
   });
+  const streamDeadlineMs = options.streamDeadlineMs ?? DEFAULT_STREAM_DEADLINE_MS;
+  const maxOpenStreams = options.maxOpenStreamsPerIp ?? DEFAULT_MAX_OPEN_STREAMS;
+  const bodyTimeoutMs = options.bodyTimeoutMs ?? DEFAULT_BODY_TIMEOUT_MS;
+  const openStreams = new Map<string, number>();
   const app = new Hono<RelayEnv>();
 
   // Outermost, so every response is logged. Metadata only: no headers, bodies or paths.
@@ -71,13 +122,13 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
     if (origin !== undefined) c.header("Vary", "Origin");
     if (originAllowed) c.header("Access-Control-Allow-Origin", origin);
 
-    const decision = limiter.check(
-      resolveClientIp({
-        forwardedFor: c.req.header("x-forwarded-for"),
-        socketAddress: c.env?.incoming?.socket?.remoteAddress,
-        trustedHops,
-      }),
-    );
+    const clientIp = resolveClientIp({
+      forwardedFor: c.req.header("x-forwarded-for"),
+      socketAddress: c.env?.incoming?.socket?.remoteAddress,
+      trustedHops,
+    });
+    c.set("clientIp", clientIp);
+    const decision = limiter.check(clientIp);
     if (!decision.allowed) {
       c.header("Retry-After", String(decision.retryAfterSeconds));
       return fail(c, 429, "RATE_LIMITED", "Too many requests");
@@ -119,11 +170,13 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
     }
     c.set("provider", providerId);
 
-    const body = await readBodyText(c.req.raw, MAX_PAYLOAD_BYTES);
+    const body = await readBodyText(c.req.raw, MAX_PAYLOAD_BYTES, bodyTimeoutMs);
     if (!body.ok) {
-      return body.reason === "too_large"
-        ? tooLarge()
-        : fail(c, 400, "BAD_REQUEST", "Body must be valid UTF-8 text");
+      if (body.reason === "too_large") return tooLarge();
+      if (body.reason === "timeout") {
+        return fail(c, 408, "REQUEST_TIMEOUT", "The request body took too long to arrive");
+      }
+      return fail(c, 400, "BAD_REQUEST", "Body must be valid UTF-8 text");
     }
 
     const parsed = validateGenerateRequest(body.text);
@@ -141,10 +194,44 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
       );
     }
 
+    // The limiter counts requests per minute; this caps generations running at the same time.
+    const clientIp = c.get("clientIp");
+    const open = openStreams.get(clientIp) ?? 0;
+    if (open >= maxOpenStreams) {
+      c.header("Retry-After", "5");
+      return fail(c, 429, "TOO_MANY_STREAMS", "Too many generations are already running");
+    }
+    openStreams.set(clientIp, open + 1);
+
     // Read the key straight into the call; it is never stored, logged or echoed.
     const apiKey = (c.req.header(KEY_HEADERS[providerId]) ?? "").trim();
+    if (!API_KEY_PATTERN.test(apiKey)) return invalidKey(c);
     const abort = new AbortController();
-    const chunks = adapter.stream(parsed.data, apiKey, abort.signal);
+    let timedOut = false;
+    let released = false;
+    const deadline = setTimeout(() => {
+      timedOut = true;
+      // Free the slot now: a client that stopped reading can block writeSSE past the abort.
+      release();
+    }, streamDeadlineMs);
+    const release = () => {
+      if (released) return;
+      released = true;
+      clearTimeout(deadline);
+      abort.abort();
+      const remaining = (openStreams.get(clientIp) ?? 1) - 1;
+      if (remaining > 0) openStreams.set(clientIp, remaining);
+      else openStreams.delete(clientIp);
+    };
+
+    // A synchronous throw is an adapter bug: free the slot and let onError answer 500.
+    let chunks: AsyncIterable<GenerateChunk>;
+    try {
+      chunks = adapter.stream(parsed.data, apiKey, abort.signal);
+    } catch (error) {
+      release();
+      throw error;
+    }
 
     return streamSSE(c, async (stream) => {
       stream.onAbort(() => abort.abort());
@@ -154,17 +241,60 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
           await stream.writeSSE({ event: "delta", data: JSON.stringify({ text: chunk.text }) });
         }
         await stream.writeSSE({ event: "done", data: "{}" });
-      } catch {
-        // Upstream messages can contain request details: log a marker only, send a generic event.
+      } catch (error) {
+        // Upstream messages can contain request details: log a marker only, send static text.
         log(`[${new Date(now()).toISOString()}] [stream_error] [-] [${providerId}] [-]`);
+        const failure = timedOut
+          ? { code: "STREAM_TIMEOUT", message: "The generation took too long" }
+          : upstreamError(error);
         await stream.writeSSE({
           event: "error",
-          data: JSON.stringify({ code: "UPSTREAM_ERROR", message: "The provider request failed" }),
+          data: JSON.stringify({ code: failure.code, message: failure.message }),
         });
       } finally {
-        abort.abort();
+        release();
       }
     });
+  });
+
+  app.get("/v1/models", async (c) => {
+    const requested = c.req.query("provider");
+    const providerId = PROVIDER_IDS.find((id) => id === requested);
+    if (providerId === undefined) {
+      return fail(c, 400, "BAD_REQUEST", `provider must be one of: ${PROVIDER_IDS.join(", ")}`);
+    }
+    c.set("provider", providerId);
+
+    const apiKey = (c.req.header(KEY_HEADERS[providerId]) ?? "").trim();
+    if (apiKey !== "" && !API_KEY_PATTERN.test(apiKey)) return invalidKey(c);
+    if (apiKey === "") {
+      return fail(
+        c,
+        400,
+        "MISSING_API_KEY",
+        `Provide your API key in the ${KEY_HEADERS[providerId]} header`,
+      );
+    }
+    const adapter = providers[providerId];
+    if (adapter === undefined) {
+      return fail(
+        c,
+        501,
+        "PROVIDER_NOT_IMPLEMENTED",
+        `Provider "${providerId}" is not available yet`,
+      );
+    }
+
+    try {
+      const models = await adapter.listModels(
+        apiKey,
+        AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(MODELS_TIMEOUT_MS)]),
+      );
+      return c.json({ provider: providerId, models });
+    } catch (error) {
+      const failure = upstreamError(error);
+      return fail(c, MODELS_STATUS[failure.kind], failure.code, failure.message);
+    }
   });
 
   app.notFound((c) => fail(c, 404, "NOT_FOUND", "Route not found"));

@@ -5,16 +5,17 @@
 - Git repository active with branch PR workflow.
 - Monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- Relay serves Claude for `/v1/generate` and `/v1/models` (`PROV-01`); OpenAI and Gemini still answer 501.
 
 ## FIX-FIRST QUEUE
 - None currently open.
 
 ## NEXT UP
-- **Item:** `PROV-01` — Provider interface and Claude adapter in `packages/providers`. Fix-first items above go before it.
-- **Why now:** `CORE-03` landed `buildPrompt`; `PROV-01` is the first consumer, sending `prompt.system` and `prompt.messages` to Claude.
-- **Where to start:** read SPEC §4 Feature 8 and the `PROV-01` roadmap entry. Verify the Anthropic Messages API and browser-access header against docs and record them in `docs/VERSIONS.md`. This is M-sized: use the `architect` subagent and write an ADR.
-- **Carry into `PROV-01`:** wire real adapters into `apps/relay/src/server.ts` (it passes `providers: {}`, so `/v1/generate` returns 501); add a stream deadline, a per-IP open-stream cap and a body-read timeout (ADR-0003); decide whether `ProviderAdapter` moves to a shared package; build `GET /v1/models`.
-- **Done-when:** see `PROV-01` in `docs/ROADMAP.md`.
+- **Item:** `GEN-01`: Basic Answer Generation Loop. Read its roadmap entry and SPEC §4 Feature 5 first. M-sized: use the `architect` subagent.
+- **Why now:** `PROV-01` landed the Claude adapter, `generateValidated` and the relay wiring; `GEN-01` is the first consumer.
+- **Carry into `GEN-01`:** `generateValidated` streams only the first attempt to `onDelta`; if it fails validation the UI must replace the shown text with the repaired reply (emit a "retrying" state). The relay streams raw text and never retries (ADR-0004), so a relay-mode client validates and retries itself. `GenerateRequest` has no model field, so the adapter uses the newest listed model; user model choice is a contract change.
+- **Open from `PROV-01`:** key IPv6 clients on their /64 in the limiter and stream cap; `DIRECT-01` must test whether `anthropic-dangerous-direct-browser-access` is needed from an extension origin; `PROV-02` / `PROV-03` add adapters to `server.ts`; effort mapping is not built.
+- **Done-when:** see `GEN-01` in `docs/ROADMAP.md`.
 
 ## Open questions for the human
 - None blocking. Confirmed defaults: BUILD mode active, Render free tier for relay, WXT for Chrome Side Panel.
@@ -40,6 +41,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #16 | `PROV-01` | `packages/providers`: shared adapter interface, Claude streaming adapter, cached model list, `generateValidated` (one repair retry, then raw text); relay serves Claude, `GET /v1/models`, stream deadline, per-IP open-stream cap, body timeout, API key charset check; ADR-0004 | Manual test: Yes
 - PR #15 | `CORE-03` | Prompt builder: `buildPrompt` returns provider-neutral `{ system, messages }` with the SPEC §7 rules, ID-tagged facts, per-question `maxChars`, and forged-tag neutralisation | Manual test: No
 - PR #14 | `CORE-02` | Stateless Hono relay: /health, /v1/generate SSE seam (501 until PROV-01), CORS allowlist, 500 KB cap, 60/min limiter, metadata-only logs, ADR-0003 | Manual test: Yes
 - PR #13 | `BP-006` | Handoff cleanup: no-stacking rule, session gotchas, merged branches deleted | Manual test: No
@@ -47,6 +49,3 @@
 - PR #11 | `BP-004` | Guard no longer blocks reads of SPEC/lockfile/node_modules; edits still blocked | Manual test: No
 - PR #10 | `BP-003` | Guard treats backslashes as path separators on every OS (CI caught it on Linux) | Manual test: No
 - PR #9 | `BP-002` | Re-landed CORE-01, README and agent harness that stacked PRs never delivered to main | Manual test: Yes
-- PR #8 | `BP-002` (rest) | CONTRIBUTING, SECURITY, Claude Code hooks/skills/subagents (merged into stacked branch) | Manual test: Yes
-- PR #3 / #9 | `CORE-01` | Bounded strict request schema, tolerant response schema, shared validators, ADR-0002 (reviewed in #3, delivered to main by #9) | Manual test: No
-- PR #2 | `BP-001` | Make check/lint/format truthful, wire hooks, harden doctor + handoff guard, CI frozen lockfile, LICENSE | Manual test: No

@@ -1,13 +1,14 @@
 import process from "node:process";
 import { serve } from "@hono/node-server";
+import { createClaudeAdapter } from "@slayply/providers";
 import { createApp } from "./app.js";
 import { parseConfig } from "./config.js";
 
 const config = parseConfig(process.env);
 
-// No provider adapters exist until PROV-01, so /v1/generate answers 501 for now.
+// OpenAI and Gemini adapters arrive in PROV-02 and PROV-03; their routes answer 501 until then.
 const app = createApp({
-  providers: {},
+  providers: { anthropic: createClaudeAdapter() },
   extensionIds: config.extensionIds,
   trustedHops: config.trustedHops,
   log: (line) => console.log(line),

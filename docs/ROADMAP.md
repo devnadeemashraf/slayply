@@ -117,7 +117,7 @@
 #### `PROV-01`: Provider Interface & Claude Adapter
 - **Spec Section:** §4 Feature 8 `[MUST]`, §3 Providers
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** Done
 - **Acceptance Criteria:**
   - One provider interface in `packages/providers`; the Claude adapter streams text and returns JSON validated with `validateGenerateResponse` (retry once with the retry prompt, then surface the raw text).
   - Model list is fetched from the provider's models endpoint and cached, never hard-coded.
@@ -329,6 +329,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-29:** `PROV-01` done: `packages/providers` has the shared adapter interface, the Claude streaming adapter, a cached model list and `generateValidated` (one repair retry, then raw text). The relay now serves Claude, `GET /v1/models`, a stream deadline, a per-IP open-stream cap and a body-read timeout (ADR-0004).
 
 - **2026-10-29:** `CORE-03` done: `buildPrompt` in `packages/core` turns a `GenerateRequest` into a provider-neutral `{ system, messages }`; user data sits in `<slayply-*>` blocks with forged tags neutralised.
 
