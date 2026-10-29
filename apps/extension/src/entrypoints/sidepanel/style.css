@@ -93,3 +93,31 @@ button {
 .status-unreachable .dot {
   background: #c0392b;
 }
+
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  font: inherit;
+  resize: vertical;
+}
+
+.result {
+  margin-top: 16px;
+}
+
+.answer {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.warnings {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

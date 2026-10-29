@@ -127,7 +127,7 @@
 #### `GEN-01`: Basic Answer Generation Loop
 - **Spec Section:** §4 Feature 5 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** Done
 - **Acceptance Criteria:**
   - Paste box for JD and Question in side panel.
   - User clicks "Slay"; request sent to relay; streaming tokens render in UI.
@@ -312,8 +312,9 @@
 | **ADR-0003** | Relay Runtime, Build and Request Guards | Accepted | Hono on Node, tsc build, guards in the app | n/a |
 | **ADR-0004** | Provider Interface & Claude Adapter | Accepted | `ProviderAdapter` in `packages/providers`, one repair retry | n/a |
 | **ADR-0005** | Extension Shell & Testable Logic | Accepted | WXT (Vite + MV3); logic in injected-dependency modules | Plasmo, hand-rolled Vite, logic inside React components |
-| ADR-0006 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (SPEC §10 DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
-| ADR-0007 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
+| **ADR-0006** | Relay-Mode Validation, Retry & Streaming Preview | Accepted | Draft preview from partial JSON; re-request once, then raw text; no-resume marker request | Raw JSON stream, relay `repair` field, resume textarea |
+| ADR-0007 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (SPEC §10 DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
+| ADR-0008 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
 
 ---
 
@@ -331,6 +332,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-29:** `GEN-01` done: the side panel takes a job description and a question, streams a draft from the relay, validates the reply (one re-request, then raw text) and copies the answer with visible feedback. Answers are generic until `RES-01` / `PROF-01` (ADR-0006).
 
 - **2026-10-29:** `EXT-01` done: `apps/extension` builds an MV3 side panel with WXT and React (227 kB). It stores the Anthropic key in `chrome.storage.local`, shows the SPEC §5 privacy statement until acknowledged, and pings the relay `/health` with a warm-up state and a 60 s Direct Mode offer (ADR-0005).
 

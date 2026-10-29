@@ -74,7 +74,7 @@ flowchart LR
 
 ## 5. Runtime Flows
 - **Health Warmup Flow (`EXT-01`, ADR-0005):** When the side panel opens, it pings `GET /health` on the relay. If asleep (Render cold start), the panel shows a warm-up animation ("cooking your answer… ☕"). If unreachable after 60s, UI invites user to switch to Direct Mode.
-- **Generation & Claim Verification Flow:** (planned, `GEN-01` & `VERIF-01`)
+- **Generation Flow (`GEN-01`, ADR-0006):** Slay builds an `answers` request, streams `delta` events from the relay and shows the first answer text as a draft. On `done` the full reply is validated; if invalid the panel says "Reformatting answer, attempt 2 of 2" and asks once more, then shows the raw text as unvalidated. Copy is enabled only for validated text (or the labelled raw fallback). Claim verification is planned (`VERIF-01`).
 - **Direct Mode Execution:** (planned, `DIRECT-01`)
 
 ---
@@ -108,6 +108,8 @@ flowchart LR
 - `src/lib/settings.ts`: `createSettingsStore(area)` with `load`, `saveKey`, `clearKey`, `acknowledgePrivacy`; keys are checked against the relay's printable-ASCII, 512-character rule; corrupt stored data falls back to defaults.
 - `src/lib/relay-status.ts`: `describeRelayStatus` (pure) and `monitorRelay` (probes `/health` every 3 s, 10 s per probe, gives up at 60 s and sets `offerDirectMode`).
 - `src/lib/config.ts`: build-time `RELAY_URL` and the SPEC §5 privacy text.
+- Generation (`GEN-01`, ADR-0006): `sse.ts` (`readSse`, chunk-safe, 1 MB event cap); `relay-client.ts` (`streamGenerate` posts to `/v1/generate` with the key in `X-User-Anthropic-Key` and yields deltas; failures are `RelayError` with the relay's static message); `partial-text.ts` (`extractAnswerPreview` for the live draft); `build-request.ts` (`buildAnswerRequest`: JD + one question, empty profile, no-resume marker); `generate-controller.ts` (`createGenerationRunner` keeps only the newest run reporting; `runGeneration` state machine, 200,000-character reply cap: streaming, done, raw, error, idle; one re-request on validation failure; `copyTextOf`); `copy.ts` (`copyText`, `createCopyFeedback`, 2 s reset).
+- `src/components/`: `generation-view.tsx` (renders a `GenerationState` as plain text, tested with `renderToString`) and `generate-panel.tsx` (the form and wiring; shown once the privacy statement is acknowledged and a key is saved).
 - Not covered by automated tests: the React layer (see the roadmap manual test).
 
 ## 6. Data & Content Pipeline
@@ -174,4 +176,5 @@ flowchart LR
 - `ADR-0001`: Monorepo Structure & Tooling (Turborepo + pnpm + Biome).
 - `ADR-0002`: Shared Request/Response Schema (Zod, strict requests, tolerant responses).
 - `ADR-0005`: Extension shell (WXT + React) and testable logic.
+- `ADR-0006`: Relay-mode validation, retry and streaming preview.
 - (`ADR-0003` and `ADR-0004` are the relay and provider decisions; further ADRs planned during Phase 1 & 2).

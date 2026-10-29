@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@slayply/core": "workspace:*",
+    "@slayply/providers": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "wxt": "0.21.5"

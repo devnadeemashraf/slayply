@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { GeneratePanel } from "../../components/generate-panel.js";
 import { PRIVACY_STATEMENT, RELAY_URL } from "../../lib/config.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createSettingsStore, type Settings } from "../../lib/settings.js";
@@ -170,6 +171,9 @@ export function App() {
             });
           }}
         />
+      )}
+      {settings?.privacyAcknowledged && settings.anthropicKey !== "" && (
+        <GeneratePanel apiKey={settings.anthropicKey} />
       )}
       {settings?.privacyAcknowledged && (
         <KeyForm
