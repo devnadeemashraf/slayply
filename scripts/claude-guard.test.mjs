@@ -38,6 +38,7 @@ test("allows ordinary source, docs and .env.example", () => {
 test("normalizes absolute, backslash and dot-segment paths", () => {
   assert.match(checkFilePath(path.join(ROOT, "docs", "SPEC.md"), ROOT) ?? "", /Blocked/);
   assert.match(checkFilePath("docs\\SPEC.md", ROOT) ?? "", /Blocked/);
+  assert.match(checkFilePath("packages\\core\\dist\\index.js", ROOT) ?? "", /Blocked/);
   assert.match(checkFilePath("packages/core/../../docs/SPEC.md", ROOT) ?? "", /Blocked/);
 });
 

@@ -29,6 +29,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #10 | `BP-003` | Guard treats backslashes as path separators on every OS (CI caught it on Linux) | Manual test: No
 - PR #8 | `BP-002` (rest) | CONTRIBUTING, SECURITY, Claude Code hooks/skills/subagents, hook-free checklists | Manual test: Yes
 - PR #7 | `BP-002` (part) | Product README | Manual test: No
 - PR #3 | `CORE-01` | Bounded strict request schema, tolerant response schema, shared validators, ADR-0002 | Manual test: No
