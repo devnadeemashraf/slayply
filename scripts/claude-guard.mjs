@@ -38,7 +38,9 @@ const FORMATTABLE = /\.(ts|tsx|js|mjs|cjs|json)$/;
 const MAIN_BRANCHES = new Set(["main", "master"]);
 
 export function normalizePath(filePath, cwd = process.cwd()) {
-  const absolute = path.resolve(cwd, String(filePath));
+  // Treat backslashes as separators on every OS: on POSIX they are legal filename characters,
+  // so without this `docs\SPEC.md` would not resolve to the protected file.
+  const absolute = path.resolve(cwd, String(filePath).replaceAll("\\", "/"));
   return path.relative(cwd, absolute).split(path.sep).join("/");
 }
 
