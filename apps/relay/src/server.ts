@@ -12,6 +12,11 @@ const app = createApp({
     openai: createOpenAiAdapter(),
     gemini: createGeminiAdapter(),
   },
+  adapterFor: (id, choice) => {
+    if (id === "anthropic") return createClaudeAdapter(choice.model ? { model: choice.model } : {});
+    if (id === "openai") return createOpenAiAdapter(choice);
+    return createGeminiAdapter(choice);
+  },
   extensionIds: config.extensionIds,
   trustedHops: config.trustedHops,
   log: (line) => console.log(line),

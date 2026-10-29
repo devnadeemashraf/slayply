@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { createSettingsStore, type StorageAreaLike } from "./settings.js";
+import { createSettingsStore, keyFor, type StorageAreaLike } from "./settings.js";
+
+const EMPTY_SETTINGS = {
+  anthropicKey: "",
+  openaiKey: "",
+  geminiKey: "",
+  provider: "anthropic",
+  model: "",
+  effort: "",
+  privacyAcknowledged: false,
+  directMode: false,
+} as const;
 
 function memoryArea(initial: Record<string, unknown> = {}): StorageAreaLike & {
   data: Record<string, unknown>;
@@ -23,9 +34,9 @@ describe("settings store", () => {
   it("starts empty: no key, privacy not acknowledged", async () => {
     const store = createSettingsStore(memoryArea());
     expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "",
       privacyAcknowledged: false,
-      directMode: false,
     });
   });
 
@@ -54,9 +65,9 @@ describe("settings store", () => {
     await store.wipe();
     expect(area.data).toEqual({});
     expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "",
       privacyAcknowledged: false,
-      directMode: false,
     });
   });
 
@@ -66,9 +77,9 @@ describe("settings store", () => {
     await store.saveKey("sk-ant-abc123");
     await store.clearKey();
     expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "",
       privacyAcknowledged: true,
-      directMode: false,
     });
   });
 
@@ -103,18 +114,18 @@ describe("settings store", () => {
       memoryArea({ "slayply:settings": { anthropicKey: 42, privacyAcknowledged: "yes" } }),
     );
     expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "",
       privacyAcknowledged: false,
-      directMode: false,
     });
   });
 
   it("falls back to defaults when stored data is not an object", async () => {
     const store = createSettingsStore(memoryArea({ "slayply:settings": "garbage" }));
     expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "",
       privacyAcknowledged: false,
-      directMode: false,
     });
   });
 
@@ -129,9 +140,9 @@ describe("settings store", () => {
     const store = createSettingsStore(area);
     await Promise.all([store.saveKey("sk-ant-abc123"), store.acknowledgePrivacy()]);
     expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "sk-ant-abc123",
       privacyAcknowledged: true,
-      directMode: false,
     });
   });
 
@@ -165,5 +176,68 @@ describe("settings store", () => {
     expect(error).toBeInstanceOf(Error);
     expect((error as Error).message).toMatch(/could not be saved/);
     expect((error as Error).message).not.toContain("sk-ant-secret");
+  });
+
+  it("reads a record saved before the picker existed with the new fields at their defaults", async () => {
+    const store = createSettingsStore(
+      memoryArea({
+        "slayply:settings": {
+          anthropicKey: "sk-ant-1",
+          privacyAcknowledged: true,
+          directMode: true,
+        },
+      }),
+    );
+    expect(await store.load()).toEqual({
+      ...EMPTY_SETTINGS,
+      anthropicKey: "sk-ant-1",
+      privacyAcknowledged: true,
+      directMode: true,
+    });
+  });
+
+  it("keeps a separate key per provider and reads each back", async () => {
+    const store = createSettingsStore(memoryArea());
+    await store.saveKey("sk-ant-1");
+    await store.saveKey("sk-oai-2", "openai");
+    await store.saveKey("AIza-3", "gemini");
+    const settings = await store.load();
+    expect(keyFor(settings, "anthropic")).toBe("sk-ant-1");
+    expect(keyFor(settings, "openai")).toBe("sk-oai-2");
+    expect(keyFor(settings, "gemini")).toBe("AIza-3");
+    await store.clearKey("openai");
+    expect(keyFor(await store.load(), "openai")).toBe("");
+    expect(keyFor(await store.load(), "anthropic")).toBe("sk-ant-1");
+  });
+
+  it("validates a key for every provider", async () => {
+    const store = createSettingsStore(memoryArea());
+    expect(await store.saveKey("bad key", "gemini")).toEqual({ ok: false, reason: "invalid" });
+    expect(await store.saveKey(" ", "openai")).toEqual({ ok: false, reason: "empty" });
+  });
+
+  it("stores the provider, model and effort choice", async () => {
+    const store = createSettingsStore(memoryArea());
+    await store.setChoice({ provider: "openai", model: "gpt-5.1", effort: "high" });
+    expect(await store.load()).toMatchObject({
+      provider: "openai",
+      model: "gpt-5.1",
+      effort: "high",
+    });
+  });
+
+  it("drops a model id that is not a plain id", async () => {
+    const store = createSettingsStore(memoryArea());
+    await store.setChoice({ provider: "gemini", model: "../x?y", effort: "" });
+    expect((await store.load()).model).toBe("");
+  });
+
+  it("falls back for a hand-edited provider, model and effort", async () => {
+    const store = createSettingsStore(
+      memoryArea({
+        "slayply:settings": { provider: "mistral", model: "a b", effort: "max", openaiKey: 7 },
+      }),
+    );
+    expect(await store.load()).toEqual(EMPTY_SETTINGS);
   });
 });

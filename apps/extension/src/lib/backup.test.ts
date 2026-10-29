@@ -141,7 +141,9 @@ describe("export and import", () => {
     const source = freshDb();
     await fill(source);
     const text = serializeBackup(await exportBackup(source, NOW));
-    expect(text).not.toMatch(/anthropicKey|privacyAcknowledged|directMode|sk-ant/);
+    expect(text).not.toMatch(
+      /anthropicKey|openaiKey|geminiKey|privacyAcknowledged|directMode|"provider"|"effort"|sk-ant/,
+    );
   });
 
   it("refuses to export a profile that no longer matches the schema", async () => {
@@ -263,6 +265,17 @@ describe("hostile and malformed imports", () => {
   });
 });
 
+const EMPTY_SETTINGS = {
+  anthropicKey: "",
+  openaiKey: "",
+  geminiKey: "",
+  provider: "anthropic",
+  model: "",
+  effort: "",
+  privacyAcknowledged: false,
+  directMode: false,
+} as const;
+
 describe("wipeLocalData", () => {
   it("leaves no records in any store and no stored settings", async () => {
     const db = freshDb();
@@ -277,9 +290,9 @@ describe("wipeLocalData", () => {
     for (const records of Object.values(await snapshot(db))) expect(records).toEqual([]);
     expect(area.data).toEqual({});
     expect(await settings.load()).toEqual({
+      ...EMPTY_SETTINGS,
       anthropicKey: "",
       privacyAcknowledged: false,
-      directMode: false,
     });
   });
 

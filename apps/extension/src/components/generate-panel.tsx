@@ -1,6 +1,11 @@
 import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
-import { buildAnswerRequest, buildFitRequest, describeProfileUse } from "../lib/build-request.js";
+import {
+  buildAnswerRequest,
+  buildFitRequest,
+  describeProfileUse,
+  type ProviderChoice,
+} from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import { createFitRunner } from "../lib/fit-flow.js";
@@ -16,6 +21,8 @@ import { GenerationView } from "./generation-view.js";
 
 const JD_MAX_CHARS = 60_000;
 const QUESTION_MAX_CHARS = 5_000;
+const DIRECT_BLOCKED =
+  "Direct Mode works with Claude only. Turn it off in Settings, or switch the provider to Claude.";
 
 // A per-viewer convenience only; storage can be blocked, so a failure just forgets the choice.
 function readRememberedResume(): string {
@@ -36,12 +43,14 @@ function rememberResume(id: string): void {
 
 export function GeneratePanel({
   apiKey,
+  choice,
   direct,
   profile,
   resumes,
   fitStore,
 }: {
   apiKey: string;
+  choice: ProviderChoice;
   direct: boolean;
   profile: StoredProfile | null;
   resumes: readonly StoredResume[];
@@ -76,14 +85,17 @@ export function GeneratePanel({
 
   // A removed resume falls back to "No resume" instead of silently sending nothing for a dead ID.
   const resume = resumes.find((entry) => entry.id === resumeId) ?? null;
+  const directBlocked = direct && choice.provider !== "anthropic";
+  // Direct Mode uses the newest Claude model, so a model or effort saved earlier is not sent.
+  const requestChoice: ProviderChoice = direct ? { ...choice, model: "", effort: "" } : choice;
   const running = state.phase === "streaming";
   const fitRunning = fitState.phase === "streaming";
   const suggested = fitResult ? suggestResume(fitResult.fit.resume, resumes) : null;
 
   async function slay() {
-    const built = buildAnswerRequest({ jd, question, profile, resume });
-    if (!built.ok) {
-      setFormError(built.message);
+    const built = buildAnswerRequest({ jd, question, profile, resume, choice: requestChoice });
+    if (!built.ok || directBlocked) {
+      setFormError(built.ok ? DIRECT_BLOCKED : built.message);
       return;
     }
     setFormError(null);
@@ -99,9 +111,9 @@ export function GeneratePanel({
   }
 
   async function checkFit(force: boolean) {
-    const built = buildFitRequest({ jd, profile, resume });
-    if (!built.ok) {
-      setFormError(built.message);
+    const built = buildFitRequest({ jd, profile, resume, choice: requestChoice });
+    if (!built.ok || directBlocked) {
+      setFormError(built.ok ? DIRECT_BLOCKED : built.message);
       return;
     }
     setFormError(null);

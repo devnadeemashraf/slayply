@@ -244,6 +244,17 @@
   - 🧪 **Manual Test:** Turn off relay, enable Direct Mode with personal key; verify generations still succeed.
 - **Required Tests:** Unit tests that Direct Mode bypasses the relay client and never sends the key to any non-provider origin.
 
+#### `PROV-04`: Provider, Model & Effort Picker
+- **Spec Section:** §4 Feature 8 `[MUST]`, §6 (Spec change, see §6 below)
+- **Size:** M (2 sessions)
+- **Status:** In review
+- **Acceptance Criteria:**
+  - Optional `provider`, `model` and `effort` on `GenerateRequest`; the relay rejects a provider that does not match the key header and a model the provider's list does not name.
+  - The side panel stores one key per provider and lets the user pick provider, model (from `GET /v1/models`) and effort (hidden when the model does not support it).
+  - Direct Mode stays Claude only and says so when another provider is chosen.
+  - 🧪 **Manual Test:** Save an OpenAI key, pick it and a model, generate an answer through the relay; repeat with Gemini. Try a reasoning model and confirm the effort control shows; try one without and confirm it is hidden.
+- **Required Tests:** Schema, relay (mismatch, unknown model, list failure, nothing logged), settings per-provider keys, header per provider, backup excludes keys, picker view.
+
 ---
 
 ### Phase 4: Capture & Application Workflow
@@ -346,7 +357,9 @@
 
 ## 6. Spec Change Proposals
 
-*(None approved yet. Any future changes to `docs/SPEC.md` must be proposed and logged here with what it replaces, cost, and risk.)*
+*(Any future changes to `docs/SPEC.md` must be proposed and logged here with what it replaces, cost, and risk.)*
+
+- **2026-10-30, approved by the maintainer (`PROV-04`):** §6 `GenerateRequest` gains optional `provider`, `model` and `effort`. *Replaces:* nothing (additive; requests without them are unchanged). *Cost:* one cached model-list call when a model is named. *Risk:* the model id is client text; mitigated by a shape check in the schema and a check against the provider's own model list in the relay (ADR-0014).
 
 ---
 
@@ -359,6 +372,7 @@
 
 ## 8. Status Log
 
+- **2026-10-30:** `PROV-04` in review: provider, model and effort picker. Spec change approved (§6 gains optional `provider`, `model`, `effort`); the relay checks provider against the key header and the model against the provider's list; one key per provider in the panel; Direct Mode stays Claude only (ADR-0014).
 - **2026-10-30:** `DIRECT-01` in review: a Direct Mode switch in settings that calls Anthropic straight from the side panel with the user's key, skipping the relay; the browser asks for permission to reach api.anthropic.com only when it is turned on (ADR-0013). Claude only for now.
 - **2026-10-30:** `PROV-03` in review: Gemini adapter (streamed, key in a header, incomplete replies are errors), text-model list, thinking effort mapped per model family and flagged for the UI; the relay serves all three providers and `GET /v1/models?provider=` already covered unknown-provider and missing-key cases (ADR-0012). Live-untested.
 - **2026-10-29:** `PROV-02` in review: OpenAI adapter behind the provider interface (Chat Completions, streamed), chat-model list from `GET /v1/models`, reasoning effort mapped to `reasoning_effort` and flagged per model so the UI can hide it; the relay now serves OpenAI too (ADR-0011). The side panel still sends only the Anthropic key.

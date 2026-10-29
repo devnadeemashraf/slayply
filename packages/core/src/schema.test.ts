@@ -73,6 +73,39 @@ describe("generateRequestSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts provider, model and effort and keeps them", () => {
+    const result = generateRequestSchema.safeParse(
+      buildRequest({ provider: "openai", model: "gpt-5.1", effort: "high" }),
+    );
+    expect(result.success && [result.data.provider, result.data.model, result.data.effort]).toEqual(
+      ["openai", "gpt-5.1", "high"],
+    );
+  });
+
+  it.each([
+    ["an unknown provider", { provider: "mistral" }],
+    ["an unknown effort", { effort: "max" }],
+    ["an empty model", { model: "" }],
+    ["a model with a path separator", { model: "../v1/admin" }],
+    ["a model with whitespace", { model: "gpt 5" }],
+    ["a model with a query character", { model: "gemini-2.5-pro?key=x" }],
+    ["a model over 64 characters", { model: "a".repeat(65) }],
+  ])("rejects %s", (_name, overrides) => {
+    expect(generateRequestSchema.safeParse(buildRequest(overrides)).success).toBe(false);
+  });
+
+  it("accepts model ids as the providers write them", () => {
+    for (const model of [
+      "claude-sonnet-5-5",
+      "gpt-5.1",
+      "o3-mini",
+      "gemini-2.5-pro",
+      "ft:gpt-4o",
+    ]) {
+      expect(generateRequestSchema.safeParse(buildRequest({ model })).success).toBe(true);
+    }
+  });
+
   it("trims surrounding whitespace on text fields", () => {
     const result = generateRequestSchema.safeParse(buildRequest({ job: { jd: "  padded JD \n" } }));
     expect(result.success && result.data.job.jd).toBe("padded JD");

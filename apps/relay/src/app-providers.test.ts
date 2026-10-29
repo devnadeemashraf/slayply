@@ -257,3 +257,79 @@ describe("GET /v1/models", () => {
     expect(logs.join("\n")).not.toContain(SECRET_KEY);
   });
 });
+
+describe("provider, model and effort on /v1/generate", () => {
+  const models: ModelInfo[] = [
+    { id: "claude-new", displayName: "New" },
+    { id: "claude-old", displayName: "Old" },
+  ];
+
+  function withBody(extra: Record<string, unknown>) {
+    return JSON.stringify({ ...validRequest, ...extra });
+  }
+
+  it("rejects a provider that does not match the key header", async () => {
+    const { app } = build(adapterWith());
+    const response = await generate(app, withBody({ provider: "openai" }));
+    expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe(
+      "PROVIDER_MISMATCH",
+    );
+  });
+
+  it("accepts a provider that matches the key header", async () => {
+    const { app } = build(adapterWith());
+    expect((await generate(app, withBody({ provider: "anthropic" }))).status).toBe(200);
+  });
+
+  it("rejects a model that is not in the provider's list", async () => {
+    const stream = vi.fn();
+    const { app } = build(adapterWith({ listModels: async () => models, stream }));
+    const response = await generate(app, withBody({ model: "claude-evil" }));
+    expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe(
+      "UNKNOWN_MODEL",
+    );
+    expect(stream).not.toHaveBeenCalled();
+  });
+
+  it("builds the adapter with the chosen model and effort when the model is listed", async () => {
+    const created = vi.fn(() => adapterWith());
+    const { app } = build(adapterWith({ listModels: async () => models }), {
+      adapterFor: created,
+    });
+    const response = await generate(app, withBody({ model: "claude-old", effort: "low" }));
+    expect(response.status).toBe(200);
+    expect(created).toHaveBeenCalledWith("anthropic", { model: "claude-old", effort: "low" });
+  });
+
+  it("answers 500 rather than using the default model when no adapter can be built", async () => {
+    const { app } = build(adapterWith({ listModels: async () => models }));
+    expect((await generate(app, withBody({ model: "claude-old" }))).status).toBe(500);
+    expect((await generate(app, withBody({ effort: "low" }))).status).toBe(500);
+  });
+
+  it("does not list models when the request names none", async () => {
+    const listModels = vi.fn(async () => models);
+    const { app } = build(adapterWith({ listModels }));
+    await generate(app, withBody({ effort: "high" }));
+    expect(listModels).not.toHaveBeenCalled();
+  });
+
+  it("maps a model-list failure to the static upstream error without the key", async () => {
+    const { app } = build(
+      adapterWith({ listModels: () => Promise.reject(new ProviderError("auth", 401)) }),
+    );
+    const response = await generate(app, withBody({ model: "claude-old" }));
+    expect(response.status).toBe(401);
+    const text = await response.text();
+    expect(text).toContain("UPSTREAM_AUTH");
+    expect(text).not.toContain(SECRET_KEY);
+  });
+
+  it("does not log the model name", async () => {
+    const { app, logs } = build(adapterWith({ listModels: async () => models }));
+    await generate(app, withBody({ model: "claude-evil" }));
+    expect(logs.join("\n")).not.toContain("claude-evil");
+  });
+});

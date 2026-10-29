@@ -23,6 +23,12 @@ export type StreamGenerateOptions = {
 
 const MAX_MESSAGE_CHARS = 200;
 
+export const KEY_HEADERS = {
+  anthropic: "X-User-Anthropic-Key",
+  openai: "X-User-OpenAI-Key",
+  gemini: "X-User-Gemini-Key",
+} as const;
+
 export function isAbortError(error: unknown): boolean {
   return (
     typeof error === "object" &&
@@ -75,7 +81,10 @@ export async function* streamGenerate(options: StreamGenerateOptions): AsyncGene
   try {
     response = await options.fetchFn(`${options.baseUrl.replace(/\/+$/, "")}/v1/generate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-User-Anthropic-Key": options.apiKey },
+      headers: {
+        "Content-Type": "application/json",
+        [KEY_HEADERS[options.request.provider ?? "anthropic"]]: options.apiKey,
+      },
       body: JSON.stringify(options.request),
       signal: options.signal,
     });

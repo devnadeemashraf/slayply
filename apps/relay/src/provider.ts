@@ -5,7 +5,13 @@ import {
   type ProviderId,
 } from "@slayply/providers";
 
-export type { GenerateChunk, ModelInfo, ProviderAdapter, ProviderId } from "@slayply/providers";
+export type {
+  GenerateChunk,
+  ModelInfo,
+  ProviderAdapter,
+  ProviderId,
+  ReasoningEffort,
+} from "@slayply/providers";
 export { PROVIDER_IDS, ProviderError };
 
 /** Lower-case header that carries the user's key for each provider (SPEC §5). */

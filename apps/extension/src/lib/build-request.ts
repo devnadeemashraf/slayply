@@ -1,4 +1,5 @@
 import {
+  type Effort,
   type GenerateRequest,
   LIMITS,
   type StoredProfile,
@@ -41,7 +42,15 @@ export function describeProfileUse(
 
 export type BuildResult = { ok: true; request: GenerateRequest } | { ok: false; message: string };
 
+/** The picker's choice; "" means the provider's default. */
+export type ProviderChoice = {
+  provider: "anthropic" | "openai" | "gemini";
+  model: string;
+  effort: Effort | "";
+};
+
 type BuildInput = {
+  choice?: ProviderChoice;
   jd: string;
   profile?: StoredProfile | null;
   resume?: StoredResume | null;
@@ -61,6 +70,13 @@ function buildRequest(
       : { track: "general", region: "any", text: NO_RESUME_TEXT },
     profile: input.profile ? toProfile(input.profile) : EMPTY_PROFILE,
     style: { tone: "crisp", length: "medium" },
+    ...(input.choice
+      ? {
+          provider: input.choice.provider,
+          ...(input.choice.model !== "" ? { model: input.choice.model } : {}),
+          ...(input.choice.effort !== "" ? { effort: input.choice.effort } : {}),
+        }
+      : {}),
   });
   return result.success ? result.data : { issues: result.issues };
 }
@@ -71,6 +87,9 @@ function explain(paths: string[], fallback: string): BuildResult {
       ok: false,
       message: `Paste a job description (up to ${LIMITS.jdChars.toLocaleString("en-US")} characters).`,
     };
+  }
+  if (paths.some((path) => path === "model" || path === "effort" || path === "provider")) {
+    return { ok: false, message: "That model choice is not valid. Pick a model from the list." };
   }
   if (paths.some((path) => path.startsWith("resume"))) {
     return { ok: false, message: "That resume is not valid. Remove it and upload the PDF again." };
