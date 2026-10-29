@@ -11,7 +11,15 @@ export type ProviderMessage = { role: "user" | "assistant"; content: string };
 /** A full conversation to send; `generateValidated` uses more than one message for the repair retry. */
 export type CompletionInput = { system: string; messages: readonly ProviderMessage[] };
 
-export type ModelInfo = { id: string; displayName: string };
+/** Reasoning effort the user can pick; each adapter maps it to its provider's parameter. */
+export type ReasoningEffort = "low" | "medium" | "high";
+
+export type ModelInfo = {
+  id: string;
+  displayName: string;
+  /** True when the model takes a reasoning effort; the UI hides the control when it is not true. */
+  supportsEffort?: boolean;
+};
 
 export type ProviderAdapter = {
   readonly id: ProviderId;
