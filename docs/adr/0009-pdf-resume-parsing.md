@@ -39,7 +39,7 @@ Chosen: **A, with the modern pdf.js build and random IDs.**
 - `pdf-loader.ts` imports `pdfjs-dist/build/pdf.min.mjs` and the worker with `?url` only when a file is chosen. Measured on the production build: sidepanel chunk 403 kB, pdf.js chunk 428 kB, worker 1.26 MB, total 2.10 MB of 3.5 MB.
 - IndexedDB version 3 adds a `resumes` store (keyPath `id`) without touching the others. Only the extracted text is stored, never the PDF. An unreadable record raises `ResumeCorruptError` and is never overwritten.
 - The generate panel has a Resume select ("No resume" by default; the last choice is remembered in `localStorage`, best effort). `buildAnswerRequest` sends the chosen resume's track, region and text; with none it keeps the no-resume marker. Auto-suggesting a resume is `FIT-01`.
-- The user sees the file name, page and character counts, a truncation warning and the first 1,500 characters before saving, and picks the tags.
+- The user sees the file name, page and character counts, a truncation warning and the whole extracted text before saving, and picks the tags.
 
 ### Known limits
 - Reading order is a heuristic: one gutter, so three columns or a boxed layout may read out of order. The preview is the safety net; there is no in-app text editing yet.

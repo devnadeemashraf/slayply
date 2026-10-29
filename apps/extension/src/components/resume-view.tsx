@@ -1,7 +1,5 @@
 import { RESUME_REGION_PRESETS, RESUME_TRACK_PRESETS, type StoredResume } from "@slayply/core";
 
-/** Characters of extracted text shown in the preview; the whole text is still what gets saved. */
-export const PREVIEW_CHARS = 1_500;
 const CUSTOM = "__custom__";
 
 function isPreset(value: string, presets: readonly string[]): boolean {
@@ -74,7 +72,6 @@ export function ResumePreviewView({
   onSave: () => void;
   onCancel: () => void;
 }) {
-  const shown = draft.text.slice(0, PREVIEW_CHARS);
   const canSave = draft.track.trim() !== "" && draft.region.trim() !== "";
   return (
     <div className="preview">
@@ -88,12 +85,7 @@ export function ResumePreviewView({
         </p>
       )}
       <label htmlFor="resume-preview">Extracted text (check the order reads correctly)</label>
-      <textarea id="resume-preview" rows={10} readOnly value={shown} />
-      {draft.text.length > shown.length && (
-        <p className="muted">
-          Showing the first {PREVIEW_CHARS.toLocaleString("en-US")} characters.
-        </p>
-      )}
+      <textarea id="resume-preview" rows={10} readOnly value={draft.text} />
       <TagField
         label="Track"
         value={draft.track}

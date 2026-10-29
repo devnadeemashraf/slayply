@@ -50,6 +50,7 @@
 
 ## Recent history
 - PR (pending) | `RES-01` | PDF resume upload: `pdf.js` text extraction with reading order for one gutter (core `itemsToText` / `assembleResume`), typed failures (size, pages, not a PDF, corrupt, encrypted, no text), preview before save, track/region tags, `resumes` store (IndexedDB v3), resume select in the generate panel; ADR-0009; extension 2.10 MB | Manual test: Yes
+- PR (pending) | `RES-01` fix | Resume preview showed only the first 1,500 characters, which looked like a failed read; it now shows the whole extracted text | Manual test: Yes
 - PR #21 | `PROF-02b` | Questionnaire wizard in the side panel: step per section with progress, autosave (`draft-saver.ts`), inline validation, add/remove/move entries, "Use these answers", answers JSON and context-pack markdown export, answers JSON import with preview; profile view marks items built from answers | Manual test: Yes
 - PR #20 | `PROF-02a` | Guided questionnaire: versioned answers schema and question list in core, `compileAnswers` (no inference, private section typed out), origin-tagged profile v2 with entry-keyed stable IDs, IndexedDB v2 with migration, atomic `saveWithCompiled`; ADR-0008 | Manual test: No (no UI until `PROF-02b`)
 - PR #19 | `PROF-01` | Context pack import (preview first), `parseContextPack` / `reconcileProfile` in core with persisted never-reused `F01` / `S01` IDs, `idb` profile store, side-panel profile viewer with edit/add/remove, profile sent with generation requests; rules stored but not applied; ADR-0007, `docs/CONTEXT_PACK.md` | Manual test: Yes
