@@ -7,6 +7,11 @@
 1. Read `docs/POINTER.md` (check FIX-FIRST QUEUE, then NEXT UP).
 2. Adhere strictly to the PR Loop described in `AGENTS.md`.
 
+## Harness
+
+- Hooks (`.claude/settings.json`, logic in `scripts/claude-guard.mjs`): inject POINTER at session start, block edits to SPEC/lockfile/generated/secret files, block commits or pushes to `main`, force-pushes, PR merges and `gh pr create` without a POINTER update, and format files after edits.
+- Subagents (`.claude/agents/`): `architect`, `reviewer`, `red-team`.
+
 ## Slash Commands / Shortcuts
 - `/next-pr`: Follows the PR Loop for the current `NEXT UP` roadmap item.
 - `/handoff`: Updates `docs/POINTER.md`, `docs/ROADMAP.md`, and `docs/HANDBOOK.md`.

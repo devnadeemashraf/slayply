@@ -257,6 +257,8 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `BP-002` done: README, CONTRIBUTING, SECURITY, Claude Code harness (`scripts/claude-guard.mjs`, `.claude/`).
+
 - **2026-10-29:** `CORE-01` in review: bounded, strict request schema; tolerant response schema; shared validators with one-shot retry prompt.
 
 - **2026-10-29:** `BP-001` fixed: lint/format scripts no longer swallow Biome failures; doctor enforces real pins; handoff guard also requires HANDBOOK updates for new modules; git hooks install via `prepare`; CI uses a frozen lockfile.

@@ -125,6 +125,7 @@ flowchart LR
 ---
 
 ## 11. How-to Recipes
+- **Agent guard:** `scripts/claude-guard.mjs` is the policy engine behind the Claude Code hooks; the rules are pure functions with tests.
 - **Hooks:** installed automatically by `pnpm install` (`scripts/setup-hooks.mjs`).
 - **Run the full test and lint suite:**
   ```bash
