@@ -29,7 +29,9 @@ export default defineConfig({
   manifest: {
     name: "Slayply",
     description: "Turn a job description and its questions into honest, grounded answers.",
-    permissions: ["sidePanel", "storage"],
+    // activeTab is granted by the user clicking the icon or a context menu item and lets Slayply read
+    // that one tab then; there is no broad host access.
+    permissions: ["sidePanel", "storage", "contextMenus", "activeTab", "scripting"],
     // Asked for at Direct Mode toggle time (chrome.permissions.request), not at install.
     optional_host_permissions: ["https://api.anthropic.com/*"],
     host_permissions: [`${new URL(relayUrl).origin}/*`],

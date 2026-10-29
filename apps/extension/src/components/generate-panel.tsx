@@ -1,5 +1,5 @@
 import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildAnswerRequest,
   buildFitRequest,
@@ -16,6 +16,7 @@ import {
   type GenerationState,
 } from "../lib/generate-controller.js";
 import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
+import type { Incoming } from "./capture-panel.js";
 import { type FitResult, FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
 
@@ -48,6 +49,7 @@ export function GeneratePanel({
   profile,
   resumes,
   fitStore,
+  incoming,
 }: {
   apiKey: string;
   choice: ProviderChoice;
@@ -55,6 +57,7 @@ export function GeneratePanel({
   profile: StoredProfile | null;
   resumes: readonly StoredResume[];
   fitStore: FitStore;
+  incoming: Incoming | null;
 }) {
   const [jd, setJd] = useState("");
   const [question, setQuestion] = useState("");
@@ -70,6 +73,22 @@ export function GeneratePanel({
     () => createFitRunner({ store: fitStore, onState: setFitState, onResult: setFitResult }),
     [fitStore],
   );
+
+  // Text the user captured replaces the matching field; a new job description drops the old fit result.
+  // Each capture applies once: a remount must not overwrite what the user has edited since.
+  const appliedSeq = useRef(0);
+  useEffect(() => {
+    if (!incoming || incoming.seq <= appliedSeq.current) return;
+    appliedSeq.current = incoming.seq;
+    if (incoming.field === "jd") {
+      setJd(incoming.text.slice(0, JD_MAX_CHARS));
+      fitRunner.stop();
+      setFitResult(null);
+      setFitState({ phase: "idle" });
+    } else {
+      setQuestion(incoming.text.slice(0, QUESTION_MAX_CHARS));
+    }
+  }, [incoming, fitRunner]);
 
   const feedback = useMemo(() => createCopyFeedback(navigator.clipboard, setCopyState), []);
 

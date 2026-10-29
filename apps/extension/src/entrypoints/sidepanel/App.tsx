@@ -1,10 +1,11 @@
 import type { StoredProfile, StoredResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
+import { CapturePanel, type Incoming } from "../../components/capture-panel.js";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
+import { ProviderPanel } from "../../components/provider-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
-import { ProviderPanel } from "../../components/provider-panel.js";
 import { SettingsPanel } from "../../components/settings-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
 import { RELAY_URL } from "../../lib/config.js";
@@ -103,6 +104,7 @@ export function App() {
   }, [resumeStore]);
 
   const [actionError, setActionError] = useState<string | null>(null);
+  const [incoming, setIncoming] = useState<Incoming | null>(null);
 
   const refresh = async () => setSettings(await store.load());
 
@@ -193,6 +195,7 @@ export function App() {
           unavailable. Reload the panel to try again.
         </p>
       )}
+      {settings?.privacyAcknowledged && <CapturePanel onIncoming={setIncoming} />}
       {settings?.privacyAcknowledged &&
         profileStatus === "ready" &&
         keyFor(settings, settings.provider) !== "" && (
@@ -203,6 +206,7 @@ export function App() {
             profile={profile}
             resumes={resumes}
             fitStore={fitStore}
+            incoming={incoming}
           />
         )}
       {settings?.privacyAcknowledged && resumesError && (

@@ -262,7 +262,7 @@
 #### `CAP-01`: Selection & Job Capture
 - **Spec Section:** §4 Feature 3 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review (PR pending)
 - **Acceptance Criteria:**
   - Context menu item "Capture for Slayply" → [JD | Question | Note].
   - On non-LinkedIn boards: "Capture visible JD" button.
