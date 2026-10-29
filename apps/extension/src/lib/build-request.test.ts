@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { parseContextPack, reconcileProfile, type StoredProfile } from "@slayply/core";
+import { describe, expect, it } from "vitest";
 import { buildAnswerRequest, describeProfileUse, NO_PROFILE_NOTICE } from "./build-request.js";
 
 describe("buildAnswerRequest", () => {

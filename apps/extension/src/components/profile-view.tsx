@@ -53,14 +53,20 @@ function ItemRow({
       ) : (
         <>
           <span className="answer">{item.text}</span>
-          <span className="row">
-            <button type="button" className="secondary" onClick={() => setEditing(true)}>
-              Edit
-            </button>
-            <button type="button" className="secondary" onClick={() => onRemove(item.id)}>
-              Remove
-            </button>
-          </span>
+          {item.origin === "answers" ? (
+            <span className="muted">
+              From your questionnaire answers. Change the answer to change this.
+            </span>
+          ) : (
+            <span className="row">
+              <button type="button" className="secondary" onClick={() => setEditing(true)}>
+                Edit
+              </button>
+              <button type="button" className="secondary" onClick={() => onRemove(item.id)}>
+                Remove
+              </button>
+            </span>
+          )}
         </>
       )}
     </li>
@@ -105,12 +111,14 @@ export function ProfileView({
       <p className="muted">No profile yet. Import a context pack (a markdown file) to begin.</p>
     );
   }
-  const prefs = Object.entries(profile.prefs);
+  // Preferences from the questionnaire win over imported ones with the same name.
+  const prefs = Object.entries({ ...profile.prefs, ...profile.answerPrefs });
+  const rules = [...profile.answerRules, ...profile.rules];
   return (
     <div>
       <p className="muted">
         {plural(profile.facts.length, "fact")}, {plural(profile.stories.length, "story")},{" "}
-        {plural(prefs.length, "preference")}, {plural(profile.rules.length, "rule")}.
+        {plural(prefs.length, "preference")}, {plural(rules.length, "rule")}.
       </p>
       <h3>Facts</h3>
       <ul className="items">
@@ -139,13 +147,13 @@ export function ProfileView({
           </ul>
         </>
       )}
-      {profile.rules.length > 0 && (
+      {rules.length > 0 && (
         <>
           <h3>Rules</h3>
           <p className="notice">Rules are saved but not yet applied to answers.</p>
           <ul className="items">
-            {profile.rules.map((rule) => (
-              <li key={rule}>
+            {rules.map((rule, index) => (
+              <li key={`${index}-${rule}`}>
                 <span className="answer">{rule}</span>
               </li>
             ))}

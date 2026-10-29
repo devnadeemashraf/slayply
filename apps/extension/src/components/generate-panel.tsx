@@ -1,8 +1,8 @@
 import type { StoredProfile } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
 import { buildAnswerRequest, describeProfileUse } from "../lib/build-request.js";
-import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import { RELAY_URL } from "../lib/config.js";
+import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import {
   copyTextOf,
   createGenerationRunner,

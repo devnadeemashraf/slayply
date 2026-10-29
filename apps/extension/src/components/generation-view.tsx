@@ -1,6 +1,6 @@
+import type { CopyState } from "../lib/copy.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
-import type { CopyState } from "../lib/copy.js";
 
 const COPY_LABEL: Record<CopyState, string> = {
   idle: "Copy to Clipboard",

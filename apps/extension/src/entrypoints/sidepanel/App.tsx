@@ -2,6 +2,8 @@ import type { StoredProfile } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
+import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
+import { createAnswersStore } from "../../lib/answers-store.js";
 import { PRIVACY_STATEMENT, RELAY_URL } from "../../lib/config.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
@@ -110,7 +112,9 @@ export function App() {
     store.load().then(setSettings, () => setLoadError("Could not read saved settings."));
   }, [store]);
 
-  const profileStore = useMemo(() => createProfileStore(openProfileDb()), []);
+  const db = useMemo(() => openProfileDb(), []);
+  const profileStore = useMemo(() => createProfileStore(db), [db]);
+  const answersStore = useMemo(() => createAnswersStore(db), [db]);
   const [profile, setProfile] = useState<StoredProfile | null>(null);
   // Nothing may import, edit or generate until the saved profile has loaded: acting on a missing
   // profile would restart the ID counters and could overwrite the record that failed to load.
@@ -225,6 +229,14 @@ export function App() {
         settings.anthropicKey !== "" && (
           <GeneratePanel apiKey={settings.anthropicKey} profile={profile} />
         )}
+      {settings?.privacyAcknowledged && profileStatus === "ready" && (
+        <QuestionnairePanel
+          store={answersStore}
+          onProfileChanged={() => {
+            profileStore.load().then(setProfile, () => setProfileStatus("error"));
+          }}
+        />
+      )}
       {settings?.privacyAcknowledged && profileStatus === "ready" && (
         <ProfilePanel profile={profile} store={profileStore} onChange={setProfile} />
       )}

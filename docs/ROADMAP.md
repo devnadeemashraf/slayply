@@ -151,7 +151,7 @@
 #### `PROF-02a`: Guided Context Questionnaire (core and storage)
 - **Spec Section:** §4 Feature 1 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** In review
+- **Status:** Done
 - **Acceptance Criteria:**
   - One versioned, standardized answers structure (sections for you, targets, most recent work experience first, education, skills, projects, STAR stories, voice, standard answers, never-claim, private).
   - Questionnaire definition with help text, examples and a per-section statement of what is sent.
@@ -162,7 +162,7 @@
 #### `PROF-02b`: Guided Context Questionnaire (wizard UI)
 - **Spec Section:** §4 Feature 1 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - Step-by-step wizard with progress, autosave, inline validation, add/remove/move for repeatable entries.
   - Shows per section what is sent and what stays on the device.
@@ -355,6 +355,8 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `PROF-02b` in review: the questionnaire in the side panel, one section per step with progress, autosave on a short delay, on blur and on step change, inline errors, add/remove/move for roles and other entries, "Use these answers" to build the profile, answers JSON export/import (preview first) and context-pack markdown export. Facts built from answers are marked and edited through the answers (ADR-0008).
+- **2026-10-29:** `PROF-02a` done (PR #20).
 - **2026-10-29:** `PROF-02a` in review: standardized, versioned answers structure and the question list, a compiler that turns answers into cited facts without inventing anything, private details typed out of it, origin-tagged profile (v2) with entry-keyed stable IDs, and IndexedDB v2 with a migration (ADR-0008). The wizard UI is `PROF-02b`.
 - **2026-10-29:** `PROF-01` done: import a markdown context pack (preview first), stable `F01` / `S01` IDs that survive re-import and are never reused, in-app view, edit, add and remove, stored in IndexedDB, and sent with generation requests. Rules are stored but not yet applied (ADR-0007, `docs/CONTEXT_PACK.md`).
 
