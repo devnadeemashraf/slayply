@@ -11,13 +11,22 @@ import {
   type GenerateChunk,
   KEY_HEADERS,
   PROVIDER_IDS,
+  type ProviderAdapter,
   type ProviderId,
   type ProviderRegistry,
+  type ReasoningEffort,
 } from "./provider.js";
 import { createRateLimiter } from "./rate-limit.js";
 
+export type AdapterChoice = { model?: string; effort?: ReasoningEffort };
+
 export type AppOptions = {
   providers: ProviderRegistry;
+  /**
+   * Builds the adapter for a request that names a model or effort. Defaults to the registered
+   * adapter, which uses its own settings.
+   */
+  adapterFor?: (providerId: ProviderId, choice: AdapterChoice) => ProviderAdapter | undefined;
   extensionIds: readonly string[];
   trustedHops: number;
   /** Receives one metadata-only line per request. */
@@ -194,6 +203,40 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
       );
     }
 
+    // Read the key straight into the call; it is never stored, logged or echoed.
+    const apiKey = (c.req.header(KEY_HEADERS[providerId]) ?? "").trim();
+    if (!API_KEY_PATTERN.test(apiKey)) return invalidKey(c);
+
+    const { provider: requestedProvider, model, effort } = parsed.data;
+    if (requestedProvider !== undefined && requestedProvider !== providerId) {
+      return fail(c, 400, "PROVIDER_MISMATCH", "The provider does not match the API key header");
+    }
+    let streamAdapter = adapter;
+    if (model !== undefined || effort !== undefined) {
+      // The model id is client text: it is used only if the provider's own list names it.
+      if (model !== undefined) {
+        try {
+          const listed = await adapter.listModels(
+            apiKey,
+            AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(MODELS_TIMEOUT_MS)]),
+          );
+          if (!listed.some((entry) => entry.id === model)) {
+            return fail(c, 400, "UNKNOWN_MODEL", "That model is not available for this key");
+          }
+        } catch (error) {
+          const failure = upstreamError(error);
+          return fail(c, MODELS_STATUS[failure.kind], failure.code, failure.message);
+        }
+      }
+      // Never fall back to the default adapter: the user would get a model they did not pick.
+      const chosen = options.adapterFor?.(providerId, {
+        ...(model !== undefined ? { model } : {}),
+        ...(effort !== undefined ? { effort } : {}),
+      });
+      if (chosen === undefined) throw new Error("no adapter factory for a chosen model");
+      streamAdapter = chosen;
+    }
+
     // The limiter counts requests per minute; this caps generations running at the same time.
     const clientIp = c.get("clientIp");
     const open = openStreams.get(clientIp) ?? 0;
@@ -203,9 +246,6 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
     }
     openStreams.set(clientIp, open + 1);
 
-    // Read the key straight into the call; it is never stored, logged or echoed.
-    const apiKey = (c.req.header(KEY_HEADERS[providerId]) ?? "").trim();
-    if (!API_KEY_PATTERN.test(apiKey)) return invalidKey(c);
     const abort = new AbortController();
     let timedOut = false;
     let released = false;
@@ -227,7 +267,7 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
     // A synchronous throw is an adapter bug: free the slot and let onError answer 500.
     let chunks: AsyncIterable<GenerateChunk>;
     try {
-      chunks = adapter.stream(parsed.data, apiKey, abort.signal);
+      chunks = streamAdapter.stream(parsed.data, apiKey, abort.signal);
     } catch (error) {
       release();
       throw error;

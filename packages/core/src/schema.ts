@@ -22,6 +22,11 @@ export type Length = z.infer<typeof lengthSchema>;
 export const styleSchema = z.strictObject({ tone: toneSchema, length: lengthSchema });
 export type Style = z.infer<typeof styleSchema>;
 
+export const providerIdSchema = z.enum(["anthropic", "openai", "gemini"]);
+
+export const effortSchema = z.enum(["low", "medium", "high"]);
+export type Effort = z.infer<typeof effortSchema>;
+
 export const jobSchema = z.strictObject({
   company: optionalText(LIMITS.shortTextChars),
   title: optionalText(LIMITS.shortTextChars),
@@ -84,6 +89,12 @@ export const generateRequestSchema = z
     resume: resumeSchema,
     profile: profileSchema,
     style: styleSchema,
+    provider: providerIdSchema.optional(),
+    model: z
+      .string()
+      .regex(/^[\w.:-]{1,64}$/)
+      .optional(),
+    effort: effortSchema.optional(),
   })
   .refine((req) => req.questions === undefined || hasUniqueIds(req.questions), {
     message: "Question IDs must be unique",

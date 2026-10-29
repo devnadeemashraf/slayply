@@ -12,6 +12,41 @@ import {
   NO_PROFILE_NOTICE,
 } from "./build-request.js";
 
+describe("provider choice in requests", () => {
+  const choice = { provider: "openai", model: "gpt-5.1", effort: "low" } as const;
+
+  it("adds the chosen provider, model and effort to answer and fit requests", () => {
+    for (const built of [
+      buildAnswerRequest({ jd: "JD", question: "Q", choice }),
+      buildFitRequest({ jd: "JD", choice }),
+    ]) {
+      if (!built.ok) throw new Error("expected ok");
+      expect(built.request).toMatchObject(choice);
+    }
+  });
+
+  it("omits model and effort when they are unset, but still names the provider", () => {
+    const built = buildAnswerRequest({
+      jd: "JD",
+      question: "Q",
+      choice: { provider: "gemini", model: "", effort: "" },
+    });
+    if (!built.ok) throw new Error("expected ok");
+    expect(built.request.provider).toBe("gemini");
+    expect(built.request).not.toHaveProperty("model");
+    expect(built.request).not.toHaveProperty("effort");
+  });
+
+  it("reports a model id that is not a plain id instead of sending it", () => {
+    const built = buildAnswerRequest({
+      jd: "JD",
+      question: "Q",
+      choice: { provider: "openai", model: "a/b", effort: "" },
+    });
+    expect(built.ok).toBe(false);
+  });
+});
+
 describe("buildAnswerRequest", () => {
   it("builds a valid answers request from a job description and one question", () => {
     const result = buildAnswerRequest({

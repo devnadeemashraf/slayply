@@ -134,6 +134,12 @@ export type GenerateRequest = {
     tone: "crisp" | "warm" | "bold";
     length: "short" | "medium" | "long";
   };
+  /** Optional. When set it must match the key header sent; the relay rejects a mismatch. */
+  provider?: "anthropic" | "openai" | "gemini";
+  /** Optional. Must be an id from the provider's models list; omitted means the newest model. */
+  model?: string;
+  /** Optional. Ignored by the provider when the model does not support effort. */
+  effort?: "low" | "medium" | "high";
 };
 
 export type GenerateResponse = {

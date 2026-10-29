@@ -25,6 +25,7 @@ export async function* streamDirect(options: StreamGenerateOptions): AsyncGenera
   const adapter = createClaudeAdapter({
     fetch: (input, init) => options.fetchFn(String(input), { ...init, redirect: "error" }),
     browserAccess: true,
+    ...(options.request.model !== undefined ? { model: options.request.model } : {}),
   });
   let finished = false;
   try {

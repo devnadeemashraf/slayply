@@ -133,4 +133,18 @@ describe("streamDirect", () => {
     });
     await expect(drain(run(fetchFn, controller.signal))).rejects.toBe(abortError);
   });
+
+  it("sends the chosen model instead of the newest one", async () => {
+    const fetchFn = route({ messages: () => streamBody(sse([["message_stop", {}]])) });
+    await streamDirect({
+      baseUrl: "https://relay.example",
+      apiKey: KEY,
+      request: { ...(REQUEST as object), model: "claude-picked" } as never,
+      fetchFn,
+      signal: new AbortController().signal,
+    }).next();
+    const call = fetchFn.mock.calls.find(([url]) => url.endsWith("/v1/messages"));
+    expect(JSON.parse(String(call?.[1]?.body)).model).toBe("claude-picked");
+    expect(fetchFn.mock.calls.some(([url]) => url.includes("/v1/models"))).toBe(false);
+  });
 });

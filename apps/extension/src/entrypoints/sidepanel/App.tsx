@@ -4,6 +4,7 @@ import { GeneratePanel } from "../../components/generate-panel.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
+import { ProviderPanel } from "../../components/provider-panel.js";
 import { SettingsPanel } from "../../components/settings-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
 import { RELAY_URL } from "../../lib/config.js";
@@ -12,7 +13,7 @@ import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../../lib/privacy.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createResumeStore } from "../../lib/resume-store.js";
-import { createSettingsStore, type Settings } from "../../lib/settings.js";
+import { createSettingsStore, keyFor, type Settings } from "../../lib/settings.js";
 
 const INITIAL_STATUS: RelayStatus = {
   phase: "checking",
@@ -52,58 +53,6 @@ function Onboarding({ onAccept }: { onAccept: () => void }) {
       <button type="button" onClick={onAccept}>
         I understand
       </button>
-    </section>
-  );
-}
-
-function KeyForm({
-  hasKey,
-  onSave,
-  onClear,
-}: {
-  hasKey: boolean;
-  onSave: (key: string) => Promise<string | null>;
-  onClear: () => Promise<void>;
-}) {
-  const [draft, setDraft] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-
-  return (
-    <section>
-      <h2>Anthropic API key</h2>
-      <p className="muted">{hasKey ? "A key is saved in this browser." : "No key saved yet."}</p>
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const error = await onSave(draft);
-          setMessage(error === "" ? null : error);
-          if (error === null) setDraft("");
-        }}
-      >
-        <label htmlFor="anthropic-key">Key</label>
-        <input
-          id="anthropic-key"
-          type="password"
-          autoComplete="off"
-          spellCheck={false}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="sk-ant-…"
-        />
-        <div className="row">
-          <button type="submit">Save key</button>
-          {hasKey && (
-            <button type="button" className="secondary" onClick={() => void onClear()}>
-              Remove key
-            </button>
-          )}
-        </div>
-        {message && (
-          <p className="error" role="alert">
-            {message}
-          </p>
-        )}
-      </form>
     </section>
   );
 }
@@ -169,10 +118,10 @@ export function App() {
     }
   }
 
-  async function saveKey(key: string): Promise<string | null> {
+  async function saveKey(provider: Settings["provider"], key: string): Promise<string | null> {
     let invalid: string | null = null;
     const saved = await attempt(async () => {
-      const result = await store.saveKey(key);
+      const result = await store.saveKey(key, provider);
       if (!result.ok) {
         invalid =
           result.reason === "empty"
@@ -246,9 +195,10 @@ export function App() {
       )}
       {settings?.privacyAcknowledged &&
         profileStatus === "ready" &&
-        settings.anthropicKey !== "" && (
+        keyFor(settings, settings.provider) !== "" && (
           <GeneratePanel
-            apiKey={settings.anthropicKey}
+            apiKey={keyFor(settings, settings.provider)}
+            choice={{ provider: settings.provider, model: settings.model, effort: settings.effort }}
             direct={settings.directMode}
             profile={profile}
             resumes={resumes}
@@ -275,12 +225,18 @@ export function App() {
         <ProfilePanel profile={profile} store={profileStore} onChange={setProfile} />
       )}
       {settings?.privacyAcknowledged && (
-        <KeyForm
-          hasKey={settings.anthropicKey !== ""}
-          onSave={saveKey}
-          onClear={async () => {
+        <ProviderPanel
+          settings={settings}
+          onChoice={(choice) =>
+            void attempt(async () => {
+              await store.setChoice(choice);
+              await refresh();
+            })
+          }
+          onSaveKey={saveKey}
+          onClearKey={async (provider) => {
             await attempt(async () => {
-              await store.clearKey();
+              await store.clearKey(provider);
               await refresh();
             });
           }}

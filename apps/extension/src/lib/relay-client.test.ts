@@ -23,6 +23,27 @@ async function drain(iterable: AsyncIterable<string>): Promise<string[]> {
   return out;
 }
 
+describe("streamGenerate key header", () => {
+  it.each([
+    ["openai", "X-User-OpenAI-Key"],
+    ["gemini", "X-User-Gemini-Key"],
+    ["anthropic", "X-User-Anthropic-Key"],
+  ] as const)("sends a %s key in %s only", async (provider, header) => {
+    const fetchFn = vi.fn(async () => sseResponse(relayStream(["x"]), 4));
+    await drain(
+      streamGenerate({
+        baseUrl: "http://relay.test",
+        apiKey: "the-key",
+        request: { task: "answers", provider } as never,
+        fetchFn,
+        signal: new AbortController().signal,
+      }),
+    );
+    const [, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.headers).toEqual({ "Content-Type": "application/json", [header]: "the-key" });
+  });
+});
+
 describe("streamGenerate", () => {
   it("posts JSON with the key header only and yields each delta", async () => {
     const fetchFn = vi.fn(async () => sseResponse(relayStream(["Hel", "lo"]), 4));
