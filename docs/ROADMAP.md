@@ -142,7 +142,7 @@
 #### `PROF-01`: Context Pack Profile Management
 - **Spec Section:** §4 Feature 1 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** Done
 - **Acceptance Criteria:**
   - Import context pack markdown file; parser assigns stable IDs (`F01`, `S01`…).
   - In-app profile viewer and editor with local persistence in IndexedDB.
@@ -313,7 +313,7 @@
 | **ADR-0004** | Provider Interface & Claude Adapter | Accepted | `ProviderAdapter` in `packages/providers`, one repair retry | n/a |
 | **ADR-0005** | Extension Shell & Testable Logic | Accepted | WXT (Vite + MV3); logic in injected-dependency modules | Plasmo, hand-rolled Vite, logic inside React components |
 | **ADR-0006** | Relay-Mode Validation, Retry & Streaming Preview | Accepted | Draft preview from partial JSON; re-request once, then raw text; no-resume marker request | Raw JSON stream, relay `repair` field, resume textarea |
-| ADR-0007 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (SPEC §10 DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
+| **ADR-0007** | Context Pack Profile, Stable IDs & Local Storage | Accepted | Heading-driven markdown parsed in core; persisted ID ledger; one `idb` record; rules stored but not applied | YAML/LLM import, hash or positional IDs, rules in prefs, per-item stores |
 | ADR-0008 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
 
 ---
@@ -332,6 +332,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-29:** `PROF-01` done: import a markdown context pack (preview first), stable `F01` / `S01` IDs that survive re-import and are never reused, in-app view, edit, add and remove, stored in IndexedDB, and sent with generation requests. Rules are stored but not yet applied (ADR-0007, `docs/CONTEXT_PACK.md`).
 
 - **2026-10-29:** `GEN-01` done: the side panel takes a job description and a question, streams a draft from the relay, validates the reply (one re-request, then raw text) and copies the answer with visible feedback. Answers are generic until `RES-01` / `PROF-01` (ADR-0006).
 

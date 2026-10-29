@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildAnswerRequest, NO_PROFILE_NOTICE } from "./build-request.js";
+import { parseContextPack, reconcileProfile, type StoredProfile } from "@slayply/core";
+import { buildAnswerRequest, describeProfileUse, NO_PROFILE_NOTICE } from "./build-request.js";
 
 describe("buildAnswerRequest", () => {
   it("builds a valid answers request from a job description and one question", () => {
@@ -52,5 +53,64 @@ describe("buildAnswerRequest", () => {
     const result = buildAnswerRequest({ jd: "Rôle ☕\nline two", question: "Pourquoi ?" });
     if (!result.ok) throw new Error("expected ok");
     expect(result.request.job.jd).toBe("Rôle ☕\nline two");
+  });
+
+  describe("with a saved profile", () => {
+    const profile = (markdown: string): StoredProfile => {
+      const result = reconcileProfile(null, parseContextPack(markdown), "2026-10-29T00:00:00.000Z");
+      if (!result.ok) throw new Error(result.message);
+      return result.profile;
+    };
+    const PACK =
+      "## Facts\n- Built billing\n- Led 4 engineers\n## Stories\n- The outage\n## Preferences\n- location: remote\n## Rules\n- Never claim a degree";
+
+    it("sends the profile's facts, stories and preferences with their IDs", () => {
+      const result = buildAnswerRequest({ jd: "JD", question: "Q", profile: profile(PACK) });
+      if (!result.ok) throw new Error("expected ok");
+      expect(result.request.profile.facts).toEqual([
+        { id: "F01", text: "Built billing" },
+        { id: "F02", text: "Led 4 engineers" },
+      ]);
+      expect(result.request.profile.stories).toEqual([{ id: "S01", text: "The outage" }]);
+      expect(result.request.profile.prefs).toEqual({ location: "remote" });
+    });
+
+    it("keeps rules out of the request: they are not applied yet", () => {
+      const result = buildAnswerRequest({ jd: "JD", question: "Q", profile: profile(PACK) });
+      if (!result.ok) throw new Error("expected ok");
+      expect(JSON.stringify(result.request)).not.toContain("Never claim a degree");
+    });
+
+    it("still sends the no-resume marker, since resumes come later", () => {
+      const result = buildAnswerRequest({ jd: "JD", question: "Q", profile: profile(PACK) });
+      if (!result.ok) throw new Error("expected ok");
+      expect(result.request.resume.text).toMatch(/no resume/i);
+    });
+
+    it("treats a null or empty profile like no profile", () => {
+      const none = buildAnswerRequest({ jd: "JD", question: "Q", profile: null });
+      if (!none.ok) throw new Error("expected ok");
+      expect(none.request.profile).toEqual({ facts: [], stories: [], prefs: {} });
+    });
+  });
+});
+
+describe("describeProfileUse", () => {
+  const stored = (markdown: string) => {
+    const result = reconcileProfile(null, parseContextPack(markdown), "2026-10-29T00:00:00.000Z");
+    if (!result.ok) throw new Error(result.message);
+    return result.profile;
+  };
+
+  it("warns that answers are generic when there is no profile or no facts", () => {
+    expect(describeProfileUse(null)).toBe(NO_PROFILE_NOTICE);
+    expect(describeProfileUse(stored("## Preferences\n- a: b"))).toBe(NO_PROFILE_NOTICE);
+  });
+
+  it("states how many facts and stories will be used, and that no resume is attached", () => {
+    const text = describeProfileUse(stored("## Facts\n- a\n- b\n## Stories\n- c"));
+    expect(text).toMatch(/2 facts/);
+    expect(text).toMatch(/1 story/);
+    expect(text).toMatch(/no resume/i);
   });
 });

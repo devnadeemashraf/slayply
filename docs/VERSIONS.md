@@ -36,6 +36,8 @@ Each row records how it was checked on the stated date (Rule 1: Verify, don't re
 | **hono** | `4.13.14` | 2026-10-29 | [npm hono](https://www.npmjs.com/package/hono) | Lightweight, fast web standard framework for Node relay |
 | **@hono/node-server** | `2.1.5` | 2026-10-29 | [npm @hono/node-server](https://www.npmjs.com/package/@hono/node-server) | Node adapter for Hono HTTP server |
 | **zod** | `4.6.7` | 2026-10-29 | [npm zod](https://www.npmjs.com/package/zod) | Runtime schema validation and TypeScript inference |
+| **idb** | `8.0.4` | 2026-10-29 | [npm idb](https://www.npmjs.com/package/idb) | Promise wrapper over IndexedDB for the local profile store (DEC-003, `PROF-01`); latest tag, published 2026-10-06 |
+| **fake-indexeddb** | `6.2.6` | 2026-10-29 | [npm fake-indexeddb](https://www.npmjs.com/package/fake-indexeddb) | Dev-only IndexedDB implementation so store tests run on Node (`PROF-01`); published 2026-10-16 |
 | **@types/chrome** | `0.3.7` | 2026-10-29 | [npm @types/chrome](https://www.npmjs.com/package/@types/chrome) | Types for `chrome.sidePanel` and `chrome.storage` in the extension (`EXT-01`) |
 | **tailwindcss** | `4.3.3` | 2026-10-29 | [npm tailwindcss](https://www.npmjs.com/package/tailwindcss) | Utility-first CSS framework |
 | **@types/node** | `26.6.6` | 2026-10-29 | [npm @types/node](https://www.npmjs.com/package/@types/node) | Node.js type definitions |

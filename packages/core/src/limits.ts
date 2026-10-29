@@ -13,6 +13,7 @@ export const LIMITS = {
   maxFacts: 500,
   maxStories: 100,
   maxPrefs: 100,
+  maxRules: 100,
   outputChars: 50_000,
   maxOutputs: 100,
   maxClaims: 1_000,
