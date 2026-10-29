@@ -7,6 +7,7 @@ import {
   type ProviderAdapter,
   ProviderError,
 } from "./types.js";
+import { fingerprint, isRecord, parseJson } from "./util.js";
 
 const DEFAULT_BASE_URL = "https://api.anthropic.com";
 // 2023-06-01 is still valid (docs/VERSIONS.md); 2026-10-21 only removes sampling parameters we never send.
@@ -47,24 +48,6 @@ function errorForEvent(type: unknown): ProviderError {
   }
   if (type === "invalid_request_error") return new ProviderError("invalid_request");
   return new ProviderError("upstream");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new ProviderError("upstream");
-  }
-}
-
-/** One-way fingerprint, so the model cache never holds a usable key. */
-async function fingerprint(apiKey: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(apiKey));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function createClaudeAdapter(options: ClaudeAdapterOptions = {}): ProviderAdapter {
