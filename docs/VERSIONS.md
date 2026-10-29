@@ -24,7 +24,7 @@ Each row records how it was checked on the stated date (Rule 1: Verify, don't re
 
 ## Frameworks & Core Libraries
 
-`zod`, `@types/node`, `hono` and `@hono/node-server` are installed. The rest (wxt, react, tailwind and their types) are *registry-verified* only: the exact version exists on npm, but nothing uses them yet. Re-verify when the roadmap item that introduces each one starts.
+`zod`, `@types/node`, `hono`, `@hono/node-server`, `wxt`, `react`, `react-dom` and their React types are installed. `tailwindcss` is *registry-verified* only: the exact version exists on npm, but nothing uses it yet. Re-verify when the roadmap item that introduces each one starts.
 
 | Package | Pinned Version | Verification Date | Source Link | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -36,6 +36,7 @@ Each row records how it was checked on the stated date (Rule 1: Verify, don't re
 | **hono** | `4.13.14` | 2026-10-29 | [npm hono](https://www.npmjs.com/package/hono) | Lightweight, fast web standard framework for Node relay |
 | **@hono/node-server** | `2.1.5` | 2026-10-29 | [npm @hono/node-server](https://www.npmjs.com/package/@hono/node-server) | Node adapter for Hono HTTP server |
 | **zod** | `4.6.7` | 2026-10-29 | [npm zod](https://www.npmjs.com/package/zod) | Runtime schema validation and TypeScript inference |
+| **@types/chrome** | `0.3.7` | 2026-10-29 | [npm @types/chrome](https://www.npmjs.com/package/@types/chrome) | Types for `chrome.sidePanel` and `chrome.storage` in the extension (`EXT-01`) |
 | **tailwindcss** | `4.3.3` | 2026-10-29 | [npm tailwindcss](https://www.npmjs.com/package/tailwindcss) | Utility-first CSS framework |
 | **@types/node** | `26.6.6` | 2026-10-29 | [npm @types/node](https://www.npmjs.com/package/@types/node) | Node.js type definitions |
 

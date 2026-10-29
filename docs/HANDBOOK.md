@@ -73,7 +73,7 @@ flowchart LR
 ---
 
 ## 5. Runtime Flows
-- **Health Warmup Flow (planned, `EXT-01`):** When the side panel opens, it pings `GET /health` on the relay. If asleep (Render cold start), the panel shows a warm-up animation ("cooking your answer… ☕"). If unreachable after 60s, UI invites user to switch to Direct Mode.
+- **Health Warmup Flow (`EXT-01`, ADR-0005):** When the side panel opens, it pings `GET /health` on the relay. If asleep (Render cold start), the panel shows a warm-up animation ("cooking your answer… ☕"). If unreachable after 60s, UI invites user to switch to Direct Mode.
 - **Generation & Claim Verification Flow:** (planned, `GEN-01` & `VERIF-01`)
 - **Direct Mode Execution:** (planned, `DIRECT-01`)
 
@@ -101,6 +101,14 @@ flowchart LR
 - `generate.ts`: `generateValidated(adapter, request, key, signal, onDelta?)` runs the prompt, validates with `validateGenerateResponse`, retries once with `retryPrompt`, then returns `{ ok: false, rawText }`.
 - Imports no `node:` module (tested), so it runs in the relay and in the extension.
 - Built to `dist/` by `tsc`; the relay depends on it.
+
+### 5d. `@slayply/extension` (`apps/extension`, ADR-0005)
+- `src/entrypoints/background.ts`: opens the side panel when the toolbar icon is clicked.
+- `src/entrypoints/sidepanel/`: React UI (`App.tsx`) that renders the relay status, the privacy statement and the API key form. It holds no logic of its own.
+- `src/lib/settings.ts`: `createSettingsStore(area)` with `load`, `saveKey`, `clearKey`, `acknowledgePrivacy`; keys are checked against the relay's printable-ASCII, 512-character rule; corrupt stored data falls back to defaults.
+- `src/lib/relay-status.ts`: `describeRelayStatus` (pure) and `monitorRelay` (probes `/health` every 3 s, 10 s per probe, gives up at 60 s and sets `offerDirectMode`).
+- `src/lib/config.ts`: build-time `RELAY_URL` and the SPEC §5 privacy text.
+- Not covered by automated tests: the React layer (see the roadmap manual test).
 
 ## 6. Data & Content Pipeline
 - **Profile Markdown Ingestion (planned, `PROF-01`):** Parses markdown bullet points into structured facts with IDs (`F01`, `F02`).
@@ -130,7 +138,7 @@ flowchart LR
 ## 9. Security Model
 - **Zero Server-Side Storage (`CORE-02`):** Relay holds no database, writes no files, and logs only `[timestamp] [status] [latency_ms] [provider] [model]`. The only state is the rate-limit counter map.
 - **Ephemeral Authentication (`CORE-02`):** BYOK API keys travel exclusively in HTTPS request headers, are passed to the adapter for one call and are never logged or echoed.
-- **Content Security Policy (planned, `EXT-01`):** Extension enforces strict Manifest V3 CSP with zero `eval()`.
+- **Content Security Policy (`EXT-01`):** Extension pages use `script-src 'self'; object-src 'self'`, so no `eval()` and no remote script. The only host permission is the relay origin.
 - **CORS Lockdown (`CORE-02`):** Relay accepts only `chrome-extension://<id>` for IDs in `EXTENSION_IDS` and `http://localhost:*`; any other `Origin` gets `403`. No wildcard.
 
 ---
@@ -138,7 +146,7 @@ flowchart LR
 ## 10. Operations & Deployment
 - **Relay (planned, `SITE-01`):** Automated deployment on Render using a root `render.yaml` blueprint.
 - **Landing Site (planned, `SITE-01`):** Render Static Site deployed from `apps/site`.
-- **Extension Packaging (planned, `EXT-01`):** `pnpm --filter @slayply/extension build` produces ready-to-load MV3 directory in `apps/extension/.output/chrome-mv3`.
+- **Extension Packaging (`EXT-01`):** `pnpm --filter @slayply/extension build` produces ready-to-load MV3 directory in `apps/extension/.output/chrome-mv3`.
 
 ---
 
@@ -153,11 +161,11 @@ flowchart LR
   ```bash
   pnpm run doctor
   ```
-- **Build the extension for local testing (planned, `EXT-01`):**
+- **Build the extension for local testing (`EXT-01`):** set `WXT_RELAY_URL` to the relay (default `http://localhost:3000`, which is `pnpm --filter @slayply/relay dev`).
   ```bash
   pnpm --filter @slayply/extension build
   ```
-- **Load extension into Chrome (planned, `EXT-01`):**
+- **Load extension into Chrome (`EXT-01`):**
   Navigate to `chrome://extensions`, enable Developer mode, click "Load unpacked", and select `apps/extension/.output/chrome-mv3`.
 
 ---
@@ -165,4 +173,5 @@ flowchart LR
 ## 12. Decision Log
 - `ADR-0001`: Monorepo Structure & Tooling (Turborepo + pnpm + Biome).
 - `ADR-0002`: Shared Request/Response Schema (Zod, strict requests, tolerant responses).
-- (planned, `ADR-0003` to `ADR-0005` during Phase 1 & 2).
+- `ADR-0005`: Extension shell (WXT + React) and testable logic.
+- (`ADR-0003` and `ADR-0004` are the relay and provider decisions; further ADRs planned during Phase 1 & 2).

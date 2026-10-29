@@ -6,14 +6,16 @@
 - Monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
 - Relay serves Claude for `/v1/generate` and `/v1/models` (`PROV-01`); OpenAI and Gemini still answer 501.
+- `apps/extension` builds an MV3 side panel (WXT + React, ADR-0005) with the privacy gate, Anthropic key form and relay health status (`EXT-01`). It cannot generate yet.
 
 ## FIX-FIRST QUEUE
 - None currently open.
 
 ## NEXT UP
 - **Item:** `GEN-01`: Basic Answer Generation Loop. Read its roadmap entry and SPEC §4 Feature 5 first. M-sized: use the `architect` subagent.
-- **Why now:** `PROV-01` landed the Claude adapter, `generateValidated` and the relay wiring; `GEN-01` is the first consumer.
+- **Why now:** `PROV-01` landed the Claude adapter and relay wiring, and `EXT-01` landed the side panel shell; `GEN-01` is the first consumer of both. Reuse `createSettingsStore` for the key and `RELAY_URL` for the endpoint; the panel only reads `settings.anthropicKey` after `privacyAcknowledged` is true.
 - **Carry into `GEN-01`:** `generateValidated` streams only the first attempt to `onDelta`; if it fails validation the UI must replace the shown text with the repaired reply (emit a "retrying" state). The relay streams raw text and never retries (ADR-0004), so a relay-mode client validates and retries itself. `GenerateRequest` has no model field, so the adapter uses the newest listed model; user model choice is a contract change.
+- **Open from `EXT-01`:** the production relay URL is a build-time `WXT_RELAY_URL` (default `http://localhost:3000`) and needs setting at `SITE-01`; the Direct Mode offer is text only until `DIRECT-01`; the monitor stops after the 60 s give-up until the panel is reopened (a Retry button is deferred); a release build must set `WXT_RELEASE=1` and `WXT_RELAY_URL` (https); the React layer has no automated tests (manual test only); no extension icons yet.
 - **Open from `PROV-01`:** key IPv6 clients on their /64 in the limiter and stream cap; `DIRECT-01` must test whether `anthropic-dangerous-direct-browser-access` is needed from an extension origin; `PROV-02` / `PROV-03` add adapters to `server.ts`; effort mapping is not built.
 - **Done-when:** see `GEN-01` in `docs/ROADMAP.md`.
 
@@ -41,6 +43,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #17 | `EXT-01` | `apps/extension`: WXT + React MV3 side panel opened from the toolbar icon; settings store (Anthropic key, privacy acknowledgement) on `chrome.storage.local`; `/health` monitor with warm-up state and 60 s Direct Mode offer; ADR-0005 | Manual test: Yes
 - PR #16 | `PROV-01` | `packages/providers`: shared adapter interface, Claude streaming adapter, cached model list, `generateValidated` (one repair retry, then raw text); relay serves Claude, `GET /v1/models`, stream deadline, per-IP open-stream cap, body timeout, API key charset check; ADR-0004 | Manual test: Yes
 - PR #15 | `CORE-03` | Prompt builder: `buildPrompt` returns provider-neutral `{ system, messages }` with the SPEC §7 rules, ID-tagged facts, per-question `maxChars`, and forged-tag neutralisation | Manual test: No
 - PR #14 | `CORE-02` | Stateless Hono relay: /health, /v1/generate SSE seam (501 until PROV-01), CORS allowlist, 500 KB cap, 60/min limiter, metadata-only logs, ADR-0003 | Manual test: Yes
