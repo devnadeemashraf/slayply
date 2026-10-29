@@ -6,10 +6,7 @@
   "scripts": {
     "dev": "echo 'skip: extension dev server planned in EXT-01'",
     "build": "echo 'skip: extension build planned in EXT-01'",
-    "lint": "echo 'skip: extension code empty (skeleton only)'",
-    "fmt:check": "echo 'skip: extension formatting empty (skeleton only)'",
-    "test": "echo 'skip: extension tests planned in EXT-01'",
-    "check": "echo 'skip: extension check passed (skeleton only)'"
+    "test": "echo 'skip: extension tests planned in EXT-01'"
   },
   "dependencies": {
     "@slayply/core": "workspace:*"

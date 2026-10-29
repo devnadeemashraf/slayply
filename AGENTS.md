@@ -1,6 +1,6 @@
 # Slayply Agent Instructions & Execution Protocol
 
-This document is the **single source of truth** for all autonomous and pair-programming AI coding agents working on Slayply. All tool-specific instructions (`CLAUDE.md`, `.cursor/rules/main.mdc`, `.github/copilot-instructions.md`) point to this file.
+This document is the **single source of truth** for all contributors and coding agents working on Slayply. All tool-specific instructions (`CLAUDE.md`, `.cursor/rules/main.mdc`, `.github/copilot-instructions.md`) point to this file.
 
 ---
 
@@ -18,7 +18,7 @@ At the beginning of every session, read files in this exact sequence:
 ## 2. Hierarchy of Truth
 
 When requirements appear ambiguous or conflict, resolve using this strict precedence:
-$$\text{docs/SPEC.md} > \text{docs/ROADMAP.md} > \text{docs/POINTER.md} > \text{docs/HANDBOOK.md}$$
+`docs/SPEC.md` > `docs/ROADMAP.md` > `docs/POINTER.md` > `docs/HANDBOOK.md`
 
 ---
 
@@ -71,13 +71,13 @@ $$\text{docs/SPEC.md} > \text{docs/ROADMAP.md} > \text{docs/POINTER.md} > \text{
 
 | Command | Action |
 | :--- | :--- |
-| `pnpm run doctor` | Validates environment against pins in `docs/VERSIONS.md` |
-| `pnpm run check` | Runs full suite: `lint`, `fmt:check`, `test`, `handoff:check` |
+| `pnpm run doctor` | Validates the toolchain against the pins in `package.json` / `docs/VERSIONS.md` |
+| `pnpm run check` | Everything CI runs: `doctor`, `handoff:check`, `fmt:check`, `lint`, `test`, `typecheck` |
 | `pnpm run fmt` | Auto-formats workspace files via Biome |
 | `pnpm run fmt:check` | Verifies formatting compliance without writing |
-| `pnpm run lint` | Runs Biome static linter |
+| `pnpm run lint` | Runs the Biome linter (fails on any finding) |
 | `pnpm test` | Runs workspace test suite |
-| `pnpm run handoff:check` | Enforces that code PRs update `docs/POINTER.md` |
+| `pnpm run handoff:check` | Validates `docs/POINTER.md`; in CI, code changes must update POINTER and new modules must update HANDBOOK |
 
 ---
 

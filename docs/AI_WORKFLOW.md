@@ -1,6 +1,6 @@
 # Slayply AI Workflow & Harness Integration
 
-This guide details how autonomous and pair-programming AI coding agents (Antigravity, Claude Code, Cursor, Copilot) interact with the Slayply codebase.
+This guide details how coding agents (Claude Code, Cursor, Copilot, and similar tools) interact with the Slayply codebase.
 
 ---
 
@@ -38,7 +38,7 @@ flowchart TD
 
 ## 3. Tool Harness & Integrations
 
-### Antigravity / CLI Harness
+### Generic CLI Harness
 - **Context Injection:** `AGENTS.md` and `docs/POINTER.md` provide instant context on initialization.
 - **Verification Rule:** Agents run `pnpm run check` before concluding any turn.
 - **Subagent Roles:**

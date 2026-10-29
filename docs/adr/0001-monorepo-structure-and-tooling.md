@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-29
-- **Deciders:** Human Architect, AI Tech Lead
+- **Deciders:** Nadeem Ashraf
 - **Roadmap ID:** `BOOT-01`
 
 ---

@@ -7,9 +7,6 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "echo 'skip: core build planned in CORE-01'",
-    "lint": "echo 'skip: core code empty (skeleton only)'",
-    "fmt:check": "echo 'skip: core formatting empty (skeleton only)'",
-    "test": "echo 'skip: core tests planned in CORE-01'",
-    "check": "echo 'skip: core check passed (skeleton only)'"
+    "test": "echo 'skip: core tests planned in CORE-01'"
   }
 }

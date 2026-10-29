@@ -86,7 +86,8 @@ flowchart LR
 ---
 
 ## 7. Testing Strategy
-- **Static Analysis:** Biome checks syntax, formatting, and lint rules across the repository.
+- **Static Analysis:** Biome checks formatting and lint rules for code and JSON (Markdown/YAML are excluded). Any finding fails `pnpm run check`.
+- **Tooling Tests:** `scripts/*.test.mjs` run on Node's built-in test runner; every repo script has one.
 - **Unit Testing:** Vitest tests individual Zod schemas, claim parsing algorithms, and prompt formatting in `packages/core`.
 - **Recorded Fixtures:** Provider adapters tested using recorded API fixture responses.
 - **End-to-End:** Playwright tests extension panel mounting and state transitions.
@@ -118,6 +119,7 @@ flowchart LR
 ---
 
 ## 11. How-to Recipes
+- **Hooks:** installed automatically by `pnpm install` (`scripts/setup-hooks.mjs`).
 - **Run the full test and lint suite:**
   ```bash
   pnpm run check

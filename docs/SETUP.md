@@ -39,13 +39,13 @@ pnpm run doctor
 
 ## 3. Git Hooks Setup
 
-Ensure git hooks are enabled so pre-commit and commit-msg checks run automatically:
+`pnpm install` runs `scripts/setup-hooks.mjs` (the `prepare` script), which sets `core.hooksPath` to `.githooks`. To do it manually:
 ```powershell
 git config core.hooksPath .githooks
 ```
 
 Verify that hooks have execution permissions:
-- `.githooks/pre-commit`: runs format and lint checks.
+- `.githooks/pre-commit`: rejects unformatted staged files (fix with `pnpm run fmt`).
 - `.githooks/commit-msg`: validates Conventional Commit format.
 - `.githooks/pre-push`: guards against direct pushes to `main`.
 
@@ -60,9 +60,7 @@ For GitHub Free (Public / Private):
    - Branch pattern: `main`
    - Check **Require a pull request before merging** (Require approvals: 1).
    - Check **Require status checks to pass before merging**:
-     - `ci/test`
-     - `ci/lint`
-     - `ci/handoff-check`
+     - `check` (the single CI job: doctor, handoff, format, lint, test, typecheck)
    - Check **Require linear history** (enforces squash or rebase merge).
    - Check **Do not allow bypassing the above settings**.
 

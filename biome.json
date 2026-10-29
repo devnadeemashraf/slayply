@@ -7,18 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": [
-      "apps/**/*.ts",
-      "apps/**/*.tsx",
-      "apps/**/*.js",
-      "apps/**/*.mjs",
-      "packages/**/*.ts",
-      "packages/**/*.tsx",
-      "packages/**/*.js",
-      "packages/**/*.mjs",
-      "scripts/**/*.mjs",
-      "scripts/**/*.js"
-    ]
+    "includes": ["**", "!**/*.md", "!**/*.yaml", "!**/*.yml"]
   },
   "formatter": {
     "enabled": true,
@@ -30,7 +19,8 @@
     "enabled": true,
     "rules": {
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noVar": "error"
       }
     }
   },

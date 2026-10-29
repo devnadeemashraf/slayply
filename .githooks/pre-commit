@@ -1,7 +1,6 @@
 #!/bin/sh
-# Slayply pre-commit hook: verify formatting and handoff pointer
-node scripts/fmt-check.mjs
-if [ $? -ne 0 ]; then
-  echo "Pre-commit hook failed: formatting check failed. Run 'pnpm run fmt' to fix."
+# Refuse to commit unformatted staged files. Fix with: pnpm run fmt
+if ! pnpm exec biome format --staged --no-errors-on-unmatched; then
+  echo "Pre-commit: staged files are not formatted. Run 'pnpm run fmt', re-stage, and commit again."
   exit 1
 fi
