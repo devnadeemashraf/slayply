@@ -98,7 +98,8 @@ When requirements appear ambiguous or conflict, resolve using this strict preced
 Claude Code enforces some rules mechanically (`.claude/settings.json` → `scripts/claude-guard.mjs`). Other tools must follow them by hand.
 
 **Before every edit**
-- [ ] Not touching `docs/SPEC.md` (needs an approved Spec change proposal), `pnpm-lock.yaml`, `dist/`, `.output/`, `.wxt/`, `temp/`, `.env*` or `*.pem`.
+- [ ] Not editing `docs/SPEC.md` (needs an approved Spec change proposal), `pnpm-lock.yaml`, `dist/`, `.output/`, `.wxt/` or `node_modules/`. Reading them is fine.
+- [ ] Not reading or editing `temp/`, `.env*` (`.env.example` is allowed) or `*.pem`.
 
 **Before every commit**
 - [ ] Not on `main`. Branch is `<type>/<ID>-<slug>`.

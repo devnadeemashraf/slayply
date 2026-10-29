@@ -125,7 +125,7 @@ flowchart LR
 ---
 
 ## 11. How-to Recipes
-- **Agent guard:** `scripts/claude-guard.mjs` is the policy engine behind the Claude Code hooks; the rules are pure functions with tests.
+- **Agent guard:** `scripts/claude-guard.mjs` is the policy engine behind the Claude Code hooks; the rules are pure functions with tests. Edit-only rules (SPEC, lockfile, generated output, `node_modules/`) still allow reads; secrets and `temp/` block reads too. Commands are checked against the *committed* state before they run, so commit and push first, then run `gh pr create` as a separate step.
 - **Hooks:** installed automatically by `pnpm install` (`scripts/setup-hooks.mjs`).
 - **Run the full test and lint suite:**
   ```bash
