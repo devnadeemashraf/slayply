@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CAPTURE_TEXT_MAX,
   captureFromTab,
+  captureOneClick,
   isLinkedInUrl,
   parsePending,
   type TabInfo,
@@ -138,5 +139,59 @@ describe("parsePending", () => {
 
   it("drops an oversized text rather than staging it", () => {
     expect(parsePending({ ...good, text: "a".repeat(CAPTURE_TEXT_MAX + 1) })).toBeNull();
+  });
+});
+
+describe("captureOneClick", () => {
+  const board = tab("https://boards.greenhouse.io/acme/jobs/1");
+
+  it("uses the selection when there is one, without reading the page", async () => {
+    const readPage = vi.fn();
+    const result = await captureOneClick(board, {
+      readPage,
+      readSelection: async () => "Only this paragraph",
+    });
+    expect(readPage).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true, capture: { text: "Only this paragraph" } });
+  });
+
+  it("reads the visible page when nothing is selected", async () => {
+    const result = await captureOneClick(board, {
+      readPage: async () => snapshot,
+      readSelection: async () => "",
+    });
+    expect(result).toMatchObject({ ok: true, capture: { text: snapshot.text } });
+  });
+
+  it("on LinkedIn with no selection, reads nothing and asks for a selection", async () => {
+    const readPage = vi.fn();
+    const result = await captureOneClick(tab(LINKEDIN_URL), {
+      readPage,
+      readSelection: async () => "",
+    });
+    expect(readPage).not.toHaveBeenCalled();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.message).toMatch(/select/i);
+  });
+
+  it("on LinkedIn with a selection, captures just the selection", async () => {
+    const readPage = vi.fn();
+    const result = await captureOneClick(tab(LINKEDIN_URL), {
+      readPage,
+      readSelection: async () => "Selected on LinkedIn",
+    });
+    expect(readPage).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true, capture: { text: "Selected on LinkedIn" } });
+  });
+
+  it("explains a restricted page in one line", async () => {
+    const boom = async () => {
+      throw new Error("Cannot access chrome:// pages");
+    };
+    const result = await captureOneClick(tab("chrome://extensions"), {
+      readPage: boom,
+      readSelection: boom,
+    });
+    expect(result.ok).toBe(false);
   });
 });

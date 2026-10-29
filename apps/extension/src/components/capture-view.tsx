@@ -10,8 +10,7 @@ export type CaptureViewProps = {
   job: JobFields;
   notes: string;
   paste: string;
-  onCaptureSelection: () => void;
-  onCapturePage: () => void;
+  onCapture: () => void;
   onDraftKind: (kind: CaptureKind) => void;
   onDraftText: (text: string) => void;
   onUse: () => void;
@@ -41,20 +40,13 @@ export function CaptureView(props: CaptureViewProps) {
     <section>
       <h2>Capture</h2>
       <p className="muted">
-        Select text on a job page and right-click it, or use the buttons. Slayply reads a page only
-        when you press a button, never in the background, and never on LinkedIn.
+        Click the Slayply icon (or press Alt+Shift+S) on a job page. Selected text is used if there
+        is any, otherwise the visible page. Slayply reads a page only when you click, never in the
+        background, and on LinkedIn only the text you select.
       </p>
       <div className="row">
-        <button
-          type="button"
-          className="secondary"
-          disabled={busy}
-          onClick={props.onCaptureSelection}
-        >
-          Capture selection
-        </button>
-        <button type="button" className="secondary" disabled={busy} onClick={props.onCapturePage}>
-          Capture visible JD
+        <button type="button" disabled={busy} onClick={props.onCapture}>
+          Capture this job
         </button>
       </div>
       {error && (

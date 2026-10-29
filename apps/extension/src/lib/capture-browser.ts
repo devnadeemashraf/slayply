@@ -3,6 +3,7 @@ import {
   type CaptureMode,
   type CaptureOutcome,
   captureFromTab,
+  captureOneClick,
 } from "./capture.js";
 import { snapshotPage } from "./page-snapshot.js";
 
@@ -30,4 +31,10 @@ export async function captureFromActiveTab(mode: CaptureMode): Promise<CaptureOu
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   if (!tab) return { ok: false, message: "No page is open to capture from." };
   return captureFromTab(mode, { id: tab.id, url: tab.url, title: tab.title }, browserCaptureDeps);
+}
+
+export async function captureOneClickFromActiveTab(): Promise<CaptureOutcome> {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (!tab) return { ok: false, message: "No page is open to capture from." };
+  return captureOneClick({ id: tab.id, url: tab.url, title: tab.title }, browserCaptureDeps);
 }

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import type { CaptureKind, CaptureOutcome } from "../lib/capture.js";
-import { captureFromActiveTab } from "../lib/capture-browser.js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Capture, CaptureKind, CaptureOutcome } from "../lib/capture.js";
+import { captureOneClickFromActiveTab } from "../lib/capture-browser.js";
 import type { JobFields } from "../lib/capture-fields.js";
 import { createCaptureInbox, PENDING_CAPTURE_KEY } from "../lib/capture-inbox.js";
 import { CaptureView, type Draft } from "./capture-view.js";
@@ -18,25 +18,44 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
   const [job, setJob] = useState<JobFields>(EMPTY_JOB);
   const [notes, setNotes] = useState("");
   const [paste, setPaste] = useState("");
-  const [seq, setSeq] = useState(0);
-  // Fields found by the last capture; applied to the job details only when the user uses a JD.
-  const [found, setFound] = useState<JobFields>(EMPTY_JOB);
+  const seq = useRef(0);
+  const onIncomingRef = useRef(onIncoming);
+  onIncomingRef.current = onIncoming;
 
-  function stage(outcome: CaptureOutcome) {
-    if (!outcome.ok) {
-      setError(outcome.message);
+  /** Puts a capture where it belongs at once; the user reviews it in the boxes it lands in. */
+  function apply(capture: Pick<Capture, "kind" | "text"> & { fields: JobFields }) {
+    setError(null);
+    if (capture.kind === "note") {
+      setNotes((current) => (current === "" ? capture.text : `${current}\n\n${capture.text}`));
       return;
     }
-    setError(null);
-    setDraft({ kind: outcome.capture.kind, text: outcome.capture.text, url: outcome.capture.url });
-    setFound(outcome.capture.fields);
+    seq.current += 1;
+    onIncomingRef.current({
+      seq: seq.current,
+      field: capture.kind === "jd" ? "jd" : "question",
+      text: capture.text,
+    });
+    if (capture.kind === "jd") {
+      // Only fill what was found; a blank never overwrites what the user already typed.
+      setJob((current) => ({
+        title: capture.fields.title || current.title,
+        company: capture.fields.company || current.company,
+        location: capture.fields.location || current.location,
+        salary: capture.fields.salary || current.salary,
+      }));
+    }
   }
 
-  // Take what the context menu left, once on open and whenever the worker adds another.
+  function receive(outcome: CaptureOutcome) {
+    if (outcome.ok) apply(outcome.capture);
+    else setError(outcome.message);
+  }
+
+  // Take what the icon or the context menu left, once on open and whenever the worker adds another.
   useEffect(() => {
     const takeNow = () =>
       void inbox.take().then(
-        (outcome) => outcome && stage(outcome),
+        (outcome) => outcome && receive(outcome),
         () => {},
       );
     takeNow();
@@ -50,39 +69,15 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
     return () => chrome.storage.onChanged.removeListener(onChanged);
   }, [inbox]);
 
-  async function capture(mode: "selection" | "page") {
+  async function capture() {
     setBusy(true);
     try {
-      stage(await captureFromActiveTab(mode));
+      receive(await captureOneClickFromActiveTab());
     } catch {
       setError("Slayply could not read the page.");
     } finally {
       setBusy(false);
     }
-  }
-
-  function use() {
-    if (!draft) return;
-    if (draft.kind === "note") {
-      setNotes((current) => (current === "" ? draft.text : `${current}\n\n${draft.text}`));
-    } else {
-      onIncoming({
-        seq: seq + 1,
-        field: draft.kind === "jd" ? "jd" : "question",
-        text: draft.text,
-      });
-      setSeq(seq + 1);
-    }
-    if (draft.kind === "jd") {
-      // Only fill what was found; a blank never overwrites what the user already typed.
-      setJob((current) => ({
-        title: found.title || current.title,
-        company: found.company || current.company,
-        location: found.location || current.location,
-        salary: found.salary || current.salary,
-      }));
-    }
-    setDraft(null);
   }
 
   return (
@@ -93,11 +88,13 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
       job={job}
       notes={notes}
       paste={paste}
-      onCaptureSelection={() => void capture("selection")}
-      onCapturePage={() => void capture("page")}
+      onCapture={() => void capture()}
       onDraftKind={(kind: CaptureKind) => setDraft((d) => d && { ...d, kind })}
       onDraftText={(text) => setDraft((d) => d && { ...d, text })}
-      onUse={use}
+      onUse={() => {
+        if (draft) apply({ kind: draft.kind, text: draft.text, fields: EMPTY_JOB });
+        setDraft(null);
+      }}
       onDiscard={() => setDraft(null)}
       onJobChange={(field, value) => setJob((current) => ({ ...current, [field]: value }))}
       onNotesChange={setNotes}
@@ -105,7 +102,6 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
       onPasteAdd={() => {
         setError(null);
         setDraft({ kind: "jd", text: paste.trim(), url: "" });
-        setFound(EMPTY_JOB);
         setPaste("");
       }}
     />

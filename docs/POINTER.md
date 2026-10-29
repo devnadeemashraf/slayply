@@ -5,7 +5,7 @@
 - Git repository active with branch PR workflow.
 - Monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
-- `CAP-01`: right-click selected text → "Capture for Slayply" (job description, question or note), a "Capture visible job description" menu item, panel buttons for both, and a paste box; the staged text is editable, then "Use as…" fills the generate panel. Title, company, location and salary are read from JobPosting data or labelled lines and are editable. Permissions added: `contextMenus`, `activeTab`, `scripting` (no host access); page reads are refused on LinkedIn (ADR-0015).
+- `CAP-01`/`CAP-02`: right-click menu, paste box and Job details (CAP-01, ADR-0015); the toolbar icon / Alt+Shift+S opens the panel and captures once (selection wins, else the visible page; LinkedIn selection only) and fills the generate panel at once; the icon is handled by `action.onClicked` (not open-on-click) so `activeTab` is granted (ADR-0016). **SPEC §2 / Feature 3 wording still needs a human edit** (text in ADR-0016). Next in the plan: `CAP-03` question detection.
 - `PROV-04`: Settings keep a key per provider and a provider, model and effort choice; the panel's Provider section lists models from `GET /v1/models` and hides Effort unless the model supports it. `GenerateRequest` has optional `provider`, `model`, `effort` (Spec change approved); the relay rejects a provider that differs from the key header and a model the provider does not list (ADR-0014). Direct Mode stays Claude only.
 - `DIRECT-01`: a "Direct Mode" switch in Settings calls Anthropic straight from the side panel (same Claude adapter, key never sent to the relay); turning it on asks the browser for `https://api.anthropic.com/*` (optional host permission). Claude only (ADR-0013).
 - `PROV-03`: `createGeminiAdapter` in `packages/providers` (streamed, key in a header, anything but a `STOP` finish is an error); the relay registers it, so all three providers are served. Effort becomes `thinkingBudget` (2.5) or `thinkingLevel` (3+) only for thinking models (ADR-0012).
@@ -20,7 +20,7 @@
 - None currently open.
 
 ## NEXT UP
-- **Item:** `HIST-01` (Job Log & Saved History), the next Phase 4 item (check `docs/ROADMAP.md`; `GEN-02` follows).
+- **Item:** `CAP-03` (detect application questions) per `docs/research/one-click-capture-ux.md` §7, or `HIST-01` if the human prefers.
 - **Why now:** `CAP-01` gives it captured jobs to save.
 - **Open from `CAP-01`:** needs a manual test in a real unpacked extension (steps in the roadmap entry; plus the toolbar-icon path for the panel buttons, and LinkedIn: "Capture visible JD" must refuse, selection must work). `capture-panel.tsx`, `background.ts` and `capture-browser.ts` have no automated tests. Job fields and notes live in panel memory only (`JOBS-01` / `HIST-01` should persist them). The panel's page button needs `activeTab`, so after a tab switch the user may need to click the toolbar icon first. `innerText` behaviour is untested (tests use linkedom `textContent`). Workday and other script-rendered boards may give little text. Only the top frame is read by the panel buttons (a job post inside an iframe needs the right-click path); `info.selectionText` length limits are unchecked; "Use as…" before a key and profile exist shows nothing until the generate panel appears. The context-menu "page" item shows on LinkedIn too and answers with a refusal message.
 - **Open from `PROV-04`:** needs a manual test in a real extension (see the roadmap entry; `provider-panel.tsx`, `generate-panel.tsx` and `App.tsx` have no automated tests). OpenAI and Gemini remain live-untested (no keys), so model filtering and effort support are still guessed from ids. Claude has no effort control (the Claude adapter never sets `supportsEffort`). Direct Mode is Claude only and picks the newest Claude model (no list in Direct Mode); OpenAI/Gemini direct calls need host permissions and a CORS check (own PR, own ADR). The saved fit result is keyed by job description only, so changing provider or model does not refresh it (use Run again). The model list is fetched through the relay whenever the panel opens or the key or provider changes (the relay caches it for 10 minutes). The relay now checks the key format before taking the stream slot (a bad key used to leak one slot until restart).
@@ -52,7 +52,6 @@
 - The agent guard checks the committed state: create the branch, commit and push first, then run `gh pr create`, each as a separate command.
 - Large inline `node -` or heredoc scripts can fail to parse in this shell; write the script to a file and run it. Backslashes in inline strings get mangled, so use the Edit tool.
 - After opening a PR, watch it with `gh pr checks --watch` before reporting success; CI runs on Linux and has caught bugs local Windows runs cannot.
-- Optional cleanup: `stash@{0}` holds a superseded draft of CORE-01; run `git stash drop` when convenient.
 - Relay deploy (`SITE-01`) must set `TRUST_PROXY_HOPS` to the verified Render hop count and `EXTENSION_IDS`; the default of 0 puts all clients behind a proxy in one rate-limit bucket.
 - Localhost origins are allowed in production too (SPEC §5 and the roadmap say so literally). Tighten only through a Spec change.
 
@@ -60,7 +59,8 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
-- PR (pending) | `CAP-01` | Capture: context menu + panel buttons + paste box, `snapshotPage` / `extractJobFields`, LinkedIn page-read guard, session-storage hand-off, `activeTab` + `scripting` + `contextMenus` permissions; ADR-0015; `linkedom` dev dependency | Manual test: Yes
+- PR (pending) | `CAP-02` | One-click capture: `captureOneClick`, `action.onClicked` + `sidePanel.open`, Alt+Shift+S, captures applied at once, single Capture button; ADR-0016; research note | Manual test: Yes
+- PR #31 | `CAP-01` | Capture: context menu + panel buttons + paste box, `snapshotPage` / `extractJobFields`, LinkedIn page-read guard, session-storage hand-off, `activeTab` + `scripting` + `contextMenus` permissions; ADR-0015; `linkedom` dev dependency | Manual test: Yes
 - PR #30 | `PROV-04` | Provider, model and effort picker: optional `provider`/`model`/`effort` on `GenerateRequest` (Spec change), relay provider-match and model-list checks with per-request adapters, per-provider keys in settings, `fetchModels`, picker and provider panel, Direct Mode kept to Claude; ADR-0014 | Manual test: Yes
 - PR (pending) | `DIRECT-01` | Direct Mode: `streamDirect`, `createDirectModeController`, `directMode` setting, `direct` flag in `runGeneration`, switch in Settings, optional host permission for api.anthropic.com; ADR-0013 | Manual test: Yes
 - PR (pending) | `PROV-03` | Gemini adapter (SSE stream, header key, STOP-only completion, text-model list, thinking effort by family), relay registers it; ADR-0012 | Manual test: Not possible for now (no key)

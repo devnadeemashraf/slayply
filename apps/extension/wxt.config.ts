@@ -35,7 +35,14 @@ export default defineConfig({
     // Asked for at Direct Mode toggle time (chrome.permissions.request), not at install.
     optional_host_permissions: ["https://api.anthropic.com/*"],
     host_permissions: [`${new URL(relayUrl).origin}/*`],
-    action: { default_title: "Open Slayply" },
+    action: { default_title: "Capture this job with Slayply" },
+    // Alt+Shift+S does what clicking the icon does. Users can rebind it at chrome://extensions/shortcuts.
+    commands: {
+      _execute_action: {
+        suggested_key: { default: "Alt+Shift+S" },
+        description: "Capture this job with Slayply",
+      },
+    },
     // Blocks remote script and eval. Network access is limited only by host_permissions, which
     // grants (not restricts) cross-origin fetches; Direct Mode adds the provider host as an optional one.
     content_security_policy: {
