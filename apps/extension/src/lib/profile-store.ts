@@ -1,8 +1,9 @@
 import { parseStoredProfile, type StoredProfile } from "@slayply/core";
 import { type IDBPDatabase, openDB } from "idb";
 
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "profile";
+export const ANSWERS_STORE = "answers";
 const KEY = "current";
 
 /** The stored record exists but does not match the schema. Loading stops so nothing overwrites it. */
@@ -23,14 +24,33 @@ export class StaleProfileError extends Error {
   }
 }
 
-/** Opens the extension database. Later items (resumes, history) add stores in `upgrade`. */
+/**
+ * Opens the extension database. Each version adds stores and never touches existing records:
+ * version 1 has `profile`, version 2 adds `answers`. Later items (resumes, history) add more.
+ */
 export function openProfileDb(name = "slayply"): Promise<IDBPDatabase> {
   return openDB(name, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) db.createObjectStore(STORE);
+      if (oldVersion < 2) db.createObjectStore(ANSWERS_STORE);
     },
   });
 }
+
+/**
+ * Throws if writing `incoming` over `existing` would lose data: an unreadable record, or ID
+ * counters older than the stored ones (which would hand out a retired ID again).
+ */
+export function assertProfileWritable(existing: unknown, incoming: StoredProfile): void {
+  if (existing === undefined) return;
+  const stored = parseStoredProfile(existing);
+  if (!stored.success) throw new ProfileCorruptError();
+  if (stored.data.nextFact > incoming.nextFact || stored.data.nextStory > incoming.nextStory) {
+    throw new StaleProfileError();
+  }
+}
+
+export { KEY as RECORD_KEY, STORE as PROFILE_STORE };
 
 /** The whole profile is one record, so a save is atomic: it is either fully replaced or not at all. */
 export function createProfileStore(dbPromise: Promise<IDBPDatabase>) {
@@ -53,17 +73,7 @@ export function createProfileStore(dbPromise: Promise<IDBPDatabase>) {
       if (!checked.success) throw new Error("The profile is not valid and was not saved.");
       const db = await dbPromise;
       const tx = db.transaction(STORE, "readwrite");
-      const existing: unknown = await tx.store.get(KEY);
-      if (existing !== undefined) {
-        const stored = parseStoredProfile(existing);
-        if (!stored.success) throw new ProfileCorruptError();
-        if (
-          stored.data.nextFact > checked.data.nextFact ||
-          stored.data.nextStory > checked.data.nextStory
-        ) {
-          throw new StaleProfileError();
-        }
-      }
+      assertProfileWritable(await tx.store.get(KEY), checked.data);
       await tx.store.put(checked.data, KEY);
       await tx.done;
     },

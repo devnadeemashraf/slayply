@@ -180,7 +180,8 @@ export function ImportPreviewView({
         <p>
           Found {plural(pack.facts.length, "fact")}, {plural(pack.stories.length, "story")},{" "}
           {plural(prefCount, "preference")} and {plural(pack.rules.length, "rule")}. Importing
-          replaces your current profile; unchanged items keep their IDs.
+          replaces the items you imported or typed before; unchanged items keep their IDs. Items
+          built from your questionnaire answers are kept.
         </p>
       )}
       {pack.warnings.length > 0 && (
