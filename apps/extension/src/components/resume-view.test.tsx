@@ -1,7 +1,7 @@
 import type { StoredResume } from "@slayply/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { PREVIEW_CHARS, ResumeListView, ResumePreviewView } from "./resume-view.js";
+import { ResumeListView, ResumePreviewView } from "./resume-view.js";
 
 const noop = () => {};
 const draft = {
@@ -45,10 +45,9 @@ describe("ResumePreviewView", () => {
     expect(html).not.toContain("<script>");
   });
 
-  it("shows only the first part of a long text and says so", () => {
-    const html = preview({ text: "a".repeat(PREVIEW_CHARS + 500) });
-    expect(html).toMatch(/Showing the first/);
-    expect(html).not.toContain("a".repeat(PREVIEW_CHARS + 1));
+  it("shows the whole extracted text, not a cut-off", () => {
+    const text = `${"a".repeat(4_000)}END`;
+    expect(preview({ text })).toContain(text);
   });
 
   it("warns when the text was cut to fit", () => {
