@@ -3,8 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
   "scripts": {
     "build": "echo 'skip: ui build planned in THEME-01'",
     "test": "echo 'skip: ui tests planned in THEME-01'"

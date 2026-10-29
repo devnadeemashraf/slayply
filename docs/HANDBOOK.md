@@ -29,7 +29,8 @@ slayply/
 │   ├── core/            # Zod schemas and validators (CORE-01); prompt builder, claim checker (planned)
 │   ├── providers/       # LLM provider adapters (Claude, OpenAI, Gemini) (planned, PROV-01)
 │   └── ui/              # Shared UI components & Gen-Z theme tokens (planned, THEME-01)
-├── docs/                # Architecture, roadmap, standards, handoff pointers
+├── docs/                # Spec, roadmap, standards, handoff pointer; docs/adr/ holds decisions
+├── .claude/             # Claude Code hooks config, skills and subagents
 ├── scripts/             # Workspace doctor, validation, and handoff scripts
 ├── .github/             # CI workflows and PR templates
 ├── .githooks/           # Git pre-commit, commit-msg, and pre-push hooks
@@ -72,21 +73,21 @@ flowchart LR
 ---
 
 ## 5. Runtime Flows
-- **Health Warmup Flow:** When the side panel opens, it pings `GET /health` on the relay. If asleep (Render cold start), the panel shows a warm-up animation ("cooking your answer… ☕"). If unreachable after 60s, UI invites user to switch to Direct Mode.
+- **Health Warmup Flow (planned, `EXT-01`):** When the side panel opens, it pings `GET /health` on the relay. If asleep (Render cold start), the panel shows a warm-up animation ("cooking your answer… ☕"). If unreachable after 60s, UI invites user to switch to Direct Mode.
 - **Generation & Claim Verification Flow:** (planned, `GEN-01` & `VERIF-01`)
 - **Direct Mode Execution:** (planned, `DIRECT-01`)
 
 ---
 
-### `@slayply/core` contract
+### 5a. `@slayply/core` contract
 - `schema.ts`: Zod schemas and inferred types for `GenerateRequest` / `GenerateResponse`. Requests are strict and bounded; responses tolerate extra keys.
 - `limits.ts`: size ceilings (`LIMITS`, `MAX_PAYLOAD_BYTES`) and the `F01` / `S03` citation ID patterns.
 - `validate.ts`: `validateGenerateRequest` (relay) and `validateGenerateResponse` (providers). Both take an object or JSON string and return `{ success, data }` or `{ success: false, issues, rawInput }`; the response variant adds `retryPrompt` for the single repair attempt.
 - Built to `dist/` by `tsc`; Turbo builds it before dependents typecheck or test.
 
 ## 6. Data & Content Pipeline
-- **Profile Markdown Ingestion:** Parses markdown bullet points into structured facts with IDs (`F01`, `F02`).
-- **Resume PDF Extraction:** Runs `pdf.js` inside client sandbox to produce plain text partitioned by track (FDE/SDE) and region.
+- **Profile Markdown Ingestion (planned, `PROF-01`):** Parses markdown bullet points into structured facts with IDs (`F01`, `F02`).
+- **Resume PDF Extraction (planned, `RES-01`):** Runs `pdf.js` inside client sandbox to produce plain text partitioned by track (FDE/SDE) and region.
 - **Client Storage:** (planned, `PROF-01`, `RES-01`)
 
 ---
@@ -95,8 +96,8 @@ flowchart LR
 - **Static Analysis:** Biome checks formatting and lint rules for code and JSON (Markdown/YAML are excluded). Any finding fails `pnpm run check`.
 - **Tooling Tests:** `scripts/*.test.mjs` run on Node's built-in test runner; every repo script has one.
 - **Unit Testing:** Vitest tests individual Zod schemas, claim parsing algorithms, and prompt formatting in `packages/core`.
-- **Recorded Fixtures:** Provider adapters tested using recorded API fixture responses.
-- **End-to-End:** Playwright tests extension panel mounting and state transitions.
+- **Recorded Fixtures (planned, `PROV-01`):** Provider adapters tested using recorded API fixture responses.
+- **End-to-End (planned, `QA-01`):** Playwright tests extension panel mounting and state transitions.
 - **Zero-Failure Day-One Check:** Every script or test in an unbuilt package outputs `"skip: <reason>"` and exits with 0.
 
 ---
@@ -110,17 +111,17 @@ flowchart LR
 ---
 
 ## 9. Security Model
-- **Zero Server-Side Storage:** Relay holds no database, writes no files, and never logs request or response bodies.
-- **Ephemeral Authentication:** BYOK API keys travel exclusively in HTTPS request headers and are immediately discarded.
-- **Content Security Policy:** Extension enforces strict Manifest V3 CSP with zero `eval()`.
-- **CORS Lockdown:** Relay restricts incoming origins to the extension ID and local development server.
+- **Zero Server-Side Storage (planned, `CORE-02`):** Relay holds no database, writes no files, and never logs request or response bodies.
+- **Ephemeral Authentication (planned, `CORE-02`):** BYOK API keys travel exclusively in HTTPS request headers and are immediately discarded.
+- **Content Security Policy (planned, `EXT-01`):** Extension enforces strict Manifest V3 CSP with zero `eval()`.
+- **CORS Lockdown (planned, `CORE-02`):** Relay restricts incoming origins to the extension ID and local development server.
 
 ---
 
 ## 10. Operations & Deployment
-- **Relay:** Automated deployment on Render using root `render.yaml` blueprint.
-- **Landing Site:** Render Static Site deployed from `apps/site`.
-- **Extension Packaging:** `pnpm --filter extension build` produces ready-to-load MV3 directory in `apps/extension/.output/chrome-mv3`.
+- **Relay (planned, `SITE-01`):** Automated deployment on Render using a root `render.yaml` blueprint.
+- **Landing Site (planned, `SITE-01`):** Render Static Site deployed from `apps/site`.
+- **Extension Packaging (planned, `EXT-01`):** `pnpm --filter @slayply/extension build` produces ready-to-load MV3 directory in `apps/extension/.output/chrome-mv3`.
 
 ---
 
@@ -135,11 +136,11 @@ flowchart LR
   ```bash
   pnpm run doctor
   ```
-- **Build the extension for local testing:**
+- **Build the extension for local testing (planned, `EXT-01`):**
   ```bash
-  pnpm --filter extension build
+  pnpm --filter @slayply/extension build
   ```
-- **Load extension into Chrome:**
+- **Load extension into Chrome (planned, `EXT-01`):**
   Navigate to `chrome://extensions`, enable Developer mode, click "Load unpacked", and select `apps/extension/.output/chrome-mv3`.
 
 ---

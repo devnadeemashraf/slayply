@@ -22,7 +22,7 @@ All third-party dependencies used across the monorepo must adhere to compatible 
 ## 3. Platform Terms of Service & Compliance
 
 ### LinkedIn User Agreement (Section 8.2)
-- **Constraint:** LinkedIn strictly prohibits the use of automated software, bots, scrapers, crawlers, or browser extensions that automate browsing, data extraction, or form submission.
+- **Constraint:** Section 8.2 of the User Agreement prohibits, among other things, using software, scripts or robots to scrape or copy the Services, using bots or other unauthorized automated methods to access them, and overlaying or modifying them. Re-read the current text at https://www.linkedin.com/legal/user-agreement before citing a specific sub-item.
 - **Slayply Guarantee:**
   1. Zero DOM mutation on LinkedIn pages.
   2. Zero automated browsing, auto-filling, or auto-submission.
@@ -30,9 +30,9 @@ All third-party dependencies used across the monorepo must adhere to compatible 
   4. User must manually select text, trigger "Capture Selection", and manually copy/paste output into LinkedIn.
 
 ### Google Chrome Web Store Policy
-- Extension adheres to Google's Manifest V3 Single Purpose Policy.
+- Extension adheres to the Chrome Web Store single-purpose policy and Manifest V3 requirements (no remotely hosted code).
 - Side Panel API used strictly within user-initiated sessions.
-- Zero obfuscated or dynamically evaluated code (`eval()`).
+- No obfuscated code, and no `eval()` or `new Function()` (Manifest V3's extension-page CSP forbids them).
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Slayply Master Agent Rule
-globs: *
+alwaysApply: true
 ---
 # Slayply Cursor Rules
 
