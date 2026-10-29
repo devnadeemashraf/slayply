@@ -11,7 +11,13 @@ export type GenerationState =
   | { phase: "idle" }
   /** `preview` is unvalidated and only for display; `attempt` 2 is the single automatic retry. */
   | { phase: "streaming"; attempt: 1 | 2; preview: string }
-  | { phase: "done"; response: GenerateResponse; attempts: 1 | 2 }
+  /** `profile` is the facts and stories that were sent, which the claim check cites against. */
+  | {
+      phase: "done";
+      response: GenerateResponse;
+      attempts: 1 | 2;
+      profile: Pick<GenerateRequest["profile"], "facts" | "stories">;
+    }
   /** Both attempts failed validation: the last reply, shown as unvalidated text. */
   | { phase: "raw"; rawText: string; issues: { path: string; message: string }[] }
   | { phase: "error"; message: string; code: string };
@@ -66,7 +72,12 @@ export async function runGeneration(options: RunGenerationOptions): Promise<void
 
     const result = validateGenerateResponse(stripCodeFence(buffer));
     if (result.success) {
-      onState({ phase: "done", response: result.data, attempts: attempt });
+      onState({
+        phase: "done",
+        response: result.data,
+        attempts: attempt,
+        profile: { facts: options.request.profile.facts, stories: options.request.profile.stories },
+      });
       return;
     }
     lastIssues = result.issues;
@@ -101,10 +112,13 @@ export function createGenerationRunner(onState: (state: GenerationState) => void
   };
 }
 
-/** The text the Copy button writes, or `null` while there is nothing safe to copy. */
-export function copyTextOf(state: GenerationState): string | null {
+/** The text the Copy button writes (with the user's removals applied), or `null` while unsafe. */
+export function copyTextOf(
+  state: GenerationState,
+  edits: Readonly<Record<string, string>> = {},
+): string | null {
   if (state.phase === "done")
-    return state.response.outputs.map((output) => output.text).join("\n\n");
+    return state.response.outputs.map((output) => edits[output.id] ?? output.text).join("\n\n");
   if (state.phase === "raw") return state.rawText;
   return null;
 }

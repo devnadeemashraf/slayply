@@ -240,6 +240,41 @@ describe("runGeneration (against a stubbed relay)", () => {
     expect(states.at(-1)).toEqual({ phase: "idle" });
   });
 
+  it("carries the facts that were sent, so claims are checked against them", async () => {
+    const states: GenerationState[] = [];
+    await runGeneration({
+      baseUrl: "http://relay.test",
+      apiKey: "sk-ant-secret",
+      request: {
+        ...REQUEST,
+        profile: { facts: [{ id: "F01", text: "Built a thing." }], stories: [], prefs: {} },
+      },
+      fetchFn: vi.fn(async () => sseResponse(relayStream([validReply("I built a thing.")]))),
+      signal: new AbortController().signal,
+      onState: (state) => states.push(state),
+    });
+    const last = states.at(-1);
+    if (last?.phase !== "done") throw new Error("expected done");
+    expect(last.profile.facts).toEqual([{ id: "F01", text: "Built a thing." }]);
+  });
+
+  it("copies the edited text of an output instead of the original", () => {
+    const state: GenerationState = {
+      phase: "done",
+      attempts: 1,
+      profile: { facts: [], stories: [] },
+      response: {
+        outputs: [
+          { id: "a", label: "A", text: "One. Two.", claims: [], charCount: 9 },
+          { id: "b", label: "B", text: "Three.", claims: [], charCount: 6 },
+        ],
+        warnings: [],
+      },
+    };
+    expect(copyTextOf(state, { a: "One." })).toBe("One.\n\nThree.");
+    expect(copyTextOf(state, {})).toBe("One. Two.\n\nThree.");
+  });
+
   it("cannot copy before an answer is validated", () => {
     expect(copyTextOf({ phase: "idle" })).toBeNull();
     expect(copyTextOf({ phase: "streaming", attempt: 1, preview: "partial" })).toBeNull();

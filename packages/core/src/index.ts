@@ -1,3 +1,4 @@
+export * from "./claim-check.js";
 export * from "./context-answers.js";
 export * from "./context-compile.js";
 export * from "./context-pack.js";

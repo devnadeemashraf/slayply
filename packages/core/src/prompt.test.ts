@@ -68,6 +68,12 @@ describe("buildPrompt: happy path", () => {
     expect(system).toMatch(/reviewed by them/i);
   });
 
+  it("asks for one verbatim claim entry per sentence about the user", () => {
+    const { system } = buildPrompt(request());
+    expect(system).toMatch(/one claim entry for every sentence/i);
+    expect(system).toMatch(/copied verbatim from text/i);
+  });
+
   it("includes every fact and story with its ID", () => {
     const { messages } = buildPrompt(request());
     const content = messages[0]?.content ?? "";

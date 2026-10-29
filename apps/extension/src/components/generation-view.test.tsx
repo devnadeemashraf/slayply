@@ -3,13 +3,41 @@ import { describe, expect, it } from "vitest";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { GenerationView } from "./generation-view.js";
 
-function render(state: GenerationState, copy: "idle" | "copied" | "failed" = "idle"): string {
-  return renderToString(<GenerationView state={state} copyState={copy} onCopy={() => {}} />);
+function render(
+  state: GenerationState,
+  copy: "idle" | "copied" | "failed" = "idle",
+  edits: Record<string, string> = {},
+): string {
+  return renderToString(
+    <GenerationView
+      state={state}
+      copyState={copy}
+      onCopy={() => {}}
+      edits={edits}
+      onEdit={() => {}}
+    />,
+  );
+}
+
+function doneWith(
+  text: string,
+  claims: { sentence: string; factIds: string[] }[],
+): GenerationState {
+  return {
+    phase: "done",
+    attempts: 1,
+    profile: { facts: [{ id: "F01", text: "Built the billing system." }], stories: [] },
+    response: {
+      outputs: [{ id: "q1", label: "Answer", text, claims, charCount: text.length }],
+      warnings: [],
+    },
+  };
 }
 
 const DONE: GenerationState = {
   phase: "done",
   attempts: 1,
+  profile: { facts: [], stories: [] },
   response: {
     outputs: [
       {
@@ -76,5 +104,50 @@ describe("GenerationView", () => {
     });
     expect(html).toContain('role="alert"');
     expect(html).toContain("The provider rejected the API key");
+  });
+
+  it("marks a cited first-person sentence as checked and names its source fact", () => {
+    const html = render(
+      doneWith("I built billing.", [{ sentence: "I built billing.", factIds: ["F01"] }]),
+    );
+    expect(html).toContain("F01");
+    expect(html).toContain("Built the billing system.");
+    expect(html).not.toContain("Remove");
+    expect(html).toContain("1 sentence checked against your profile");
+  });
+
+  it("highlights an uncited sentence with a Remove button and says why", () => {
+    const html = render(doneWith("I built billing. I won an award.", []));
+    expect(html).toMatch(/class="[^"]*uncited[^"]*"/);
+    expect(html).toContain("Remove");
+    expect(html).toContain("2 sentences have no matching citation");
+  });
+
+  it("says a forged ID is not in the profile", () => {
+    const html = render(
+      doneWith("I built billing.", [{ sentence: "I built billing.", factIds: ["F99"] }]),
+    );
+    expect(html).toContain("F99");
+    expect(html).toContain("not in your profile");
+  });
+
+  it("shows removals and leaves other sentences alone", () => {
+    const html = render(doneWith("I built billing. I won an award.", []), "idle", {
+      q1: "I built billing.",
+    });
+    expect(html).not.toContain("won an award");
+    expect(html).toContain("I built billing.");
+  });
+
+  it("does not flag text that does not speak about the user", () => {
+    const html = render(doneWith("The role needs Go.", []));
+    expect(html).not.toContain("Remove");
+    expect(html).not.toMatch(/uncited/);
+  });
+
+  it("escapes sentences in a flagged answer", () => {
+    const html = render(doneWith("I run <script>alert(1)</script>.", []));
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
   });
 });

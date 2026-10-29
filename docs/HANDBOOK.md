@@ -74,7 +74,7 @@ flowchart LR
 
 ## 5. Runtime Flows
 - **Health Warmup Flow (`EXT-01`, ADR-0005):** When the side panel opens, it pings `GET /health` on the relay. If asleep (Render cold start), the panel shows a warm-up animation ("cooking your answer… ☕"). If unreachable after 60s, UI invites user to switch to Direct Mode.
-- **Generation Flow (`GEN-01`, ADR-0006):** Slay builds an `answers` request, streams `delta` events from the relay and shows the first answer text as a draft. On `done` the full reply is validated; if invalid the panel says "Reformatting answer, attempt 2 of 2" and asks once more, then shows the raw text as unvalidated. Copy is enabled only for validated text (or the labelled raw fallback). Claim verification is planned (`VERIF-01`).
+- **Generation Flow (`GEN-01`, ADR-0006):** Slay builds an `answers` request, streams `delta` events from the relay and shows the first answer text as a draft. On `done` the full reply is validated; if invalid the panel says "Reformatting answer, attempt 2 of 2" and asks once more, then shows the raw text as unvalidated. Copy is enabled only for validated text (or the labelled raw fallback). **Claim check (`VERIF-01`, ADR-0010):** `checkClaims` in core marks each first-person sentence `cited` (the model quoted it exactly and every ID exists in the profile that was sent) or `uncited`; uncited sentences show red with a reason and a Remove button, and Copy writes the text after removals.
 - **Direct Mode Execution:** (planned, `DIRECT-01`)
 
 ---
