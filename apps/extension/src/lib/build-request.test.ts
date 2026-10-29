@@ -1,4 +1,9 @@
-import { parseContextPack, reconcileProfile, type StoredProfile } from "@slayply/core";
+import {
+  parseContextPack,
+  reconcileProfile,
+  type StoredProfile,
+  type StoredResume,
+} from "@slayply/core";
 import { describe, expect, it } from "vitest";
 import { buildAnswerRequest, describeProfileUse, NO_PROFILE_NOTICE } from "./build-request.js";
 
@@ -112,5 +117,54 @@ describe("describeProfileUse", () => {
     expect(text).toMatch(/2 facts/);
     expect(text).toMatch(/1 story/);
     expect(text).toMatch(/no resume/i);
+  });
+});
+
+describe("with a chosen resume", () => {
+  const resume: StoredResume = {
+    id: "r1",
+    name: "cv.pdf",
+    track: "fde",
+    region: "gulf",
+    text: "Jane Doe. Built billing at Acme.",
+    charCount: 32,
+    pageCount: 1,
+    truncated: false,
+    createdAt: "2026-10-29T00:00:00.000Z",
+  };
+
+  it("sends the resume text, track and region instead of the no-resume marker", () => {
+    const result = buildAnswerRequest({ jd: "JD", question: "Q", resume });
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.request.resume).toEqual({
+      track: "fde",
+      region: "gulf",
+      text: "Jane Doe. Built billing at Acme.",
+    });
+  });
+
+  it("puts the resume text only in the request body, never in the user-facing line", () => {
+    const line = describeProfileUse(null, resume);
+    expect(line).toContain("cv.pdf");
+    expect(line).toContain("fde");
+    expect(line).toContain("gulf");
+    expect(line).not.toContain("Built billing");
+  });
+
+  it("combines profile and resume in one sentence of what is used", () => {
+    const profile = reconcileProfile(
+      null,
+      parseContextPack("## Facts\n- a"),
+      "2026-10-29T00:00:00.000Z",
+    );
+    if (!profile.ok) throw new Error(profile.message);
+    const line = describeProfileUse(profile.profile, resume);
+    expect(line).toMatch(/1 fact/);
+    expect(line).toContain("cv.pdf");
+    expect(line).not.toMatch(/no resume/i);
+  });
+
+  it("warns when the resume was cut to fit", () => {
+    expect(describeProfileUse(null, { ...resume, truncated: true })).toMatch(/cut/i);
   });
 });

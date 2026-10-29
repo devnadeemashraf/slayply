@@ -2,6 +2,7 @@ import {
   type GenerateRequest,
   LIMITS,
   type StoredProfile,
+  type StoredResume,
   toProfile,
   validateGenerateRequest,
 } from "@slayply/core";
@@ -21,13 +22,21 @@ function plural(count: number, noun: string): string {
 }
 
 /** The line under the form that tells the user exactly what the answer will be grounded in. */
-export function describeProfileUse(profile: StoredProfile | null): string {
-  if (!profile || (profile.facts.length === 0 && profile.stories.length === 0)) {
-    return NO_PROFILE_NOTICE;
+export function describeProfileUse(
+  profile: StoredProfile | null,
+  resume: StoredResume | null = null,
+): string {
+  const hasProfile = profile !== null && (profile.facts.length > 0 || profile.stories.length > 0);
+  if (!hasProfile && !resume) return NO_PROFILE_NOTICE;
+  const used: string[] = [];
+  if (hasProfile) {
+    const parts = [plural(profile.facts.length, "fact"), plural(profile.stories.length, "story")];
+    used.push(`${parts.filter((part) => !part.startsWith("0 ")).join(" and ")} from your profile`);
   }
-  const parts = [plural(profile.facts.length, "fact"), plural(profile.stories.length, "story")];
-  const used = parts.filter((part) => !part.startsWith("0 ")).join(" and ");
-  return `Using ${used} from your profile. No resume is attached yet.`;
+  if (resume) used.push(`the resume "${resume.name}" (${resume.track}, ${resume.region})`);
+  const cut = resume?.truncated ? " The resume was cut to fit the size limit." : "";
+  const noResume = resume ? "" : " No resume is attached.";
+  return `Using ${used.join(" and ")}.${noResume}${cut}`;
 }
 
 export type BuildResult = { ok: true; request: GenerateRequest } | { ok: false; message: string };
@@ -36,12 +45,15 @@ export function buildAnswerRequest(input: {
   jd: string;
   question: string;
   profile?: StoredProfile | null;
+  resume?: StoredResume | null;
 }): BuildResult {
   const result = validateGenerateRequest({
     task: "answers",
     job: { jd: input.jd },
     questions: [{ id: "q1", text: input.question }],
-    resume: { track: "general", region: "any", text: NO_RESUME_TEXT },
+    resume: input.resume
+      ? { track: input.resume.track, region: input.resume.region, text: input.resume.text }
+      : { track: "general", region: "any", text: NO_RESUME_TEXT },
     profile: input.profile ? toProfile(input.profile) : EMPTY_PROFILE,
     style: { tone: "crisp", length: "medium" },
   });
@@ -53,6 +65,9 @@ export function buildAnswerRequest(input: {
       ok: false,
       message: `Paste a job description (up to ${LIMITS.jdChars.toLocaleString("en-US")} characters).`,
     };
+  }
+  if (paths.some((path) => path.startsWith("resume"))) {
+    return { ok: false, message: "That resume is not valid. Remove it and upload the PDF again." };
   }
   if (paths.some((path) => path.startsWith("profile"))) {
     return {

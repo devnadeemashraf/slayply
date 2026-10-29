@@ -1,12 +1,14 @@
-import type { StoredProfile } from "@slayply/core";
+import type { StoredProfile, StoredResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
+import { ResumesPanel } from "../../components/resumes-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
 import { PRIVACY_STATEMENT, RELAY_URL } from "../../lib/config.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
+import { createResumeStore } from "../../lib/resume-store.js";
 import { createSettingsStore, type Settings } from "../../lib/settings.js";
 
 const INITIAL_STATUS: RelayStatus = {
@@ -115,6 +117,9 @@ export function App() {
   const db = useMemo(() => openProfileDb(), []);
   const profileStore = useMemo(() => createProfileStore(db), [db]);
   const answersStore = useMemo(() => createAnswersStore(db), [db]);
+  const resumeStore = useMemo(() => createResumeStore(db), [db]);
+  const [resumes, setResumes] = useState<StoredResume[]>([]);
+  const [resumesError, setResumesError] = useState<string | null>(null);
   const [profile, setProfile] = useState<StoredProfile | null>(null);
   // Nothing may import, edit or generate until the saved profile has loaded: acting on a missing
   // profile would restart the ID counters and could overwrite the record that failed to load.
@@ -132,6 +137,16 @@ export function App() {
         setProfileStatus(error instanceof ProfileCorruptError ? "corrupt" : "error"),
     );
   }, [profileStore]);
+
+  useEffect(() => {
+    resumeStore
+      .list()
+      .then(setResumes, (error: unknown) =>
+        setResumesError(
+          error instanceof Error ? error.message : "Saved resumes could not be read.",
+        ),
+      );
+  }, [resumeStore]);
 
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -227,8 +242,16 @@ export function App() {
       {settings?.privacyAcknowledged &&
         profileStatus === "ready" &&
         settings.anthropicKey !== "" && (
-          <GeneratePanel apiKey={settings.anthropicKey} profile={profile} />
+          <GeneratePanel apiKey={settings.anthropicKey} profile={profile} resumes={resumes} />
         )}
+      {settings?.privacyAcknowledged && resumesError && (
+        <p className="error" role="alert">
+          {resumesError}
+        </p>
+      )}
+      {settings?.privacyAcknowledged && profileStatus === "ready" && !resumesError && (
+        <ResumesPanel resumes={resumes} store={resumeStore} onChange={setResumes} />
+      )}
       {settings?.privacyAcknowledged && profileStatus === "ready" && (
         <QuestionnairePanel
           store={answersStore}

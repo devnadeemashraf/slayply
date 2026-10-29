@@ -37,7 +37,7 @@ const withName = (name: string) =>
   });
 
 describe("database upgrade from version 1", () => {
-  it("keeps the saved profile and adds the answers store", async () => {
+  it("keeps the saved profile and adds the answers and resumes stores", async () => {
     const name = uniqueName();
     // Build a version 1 database exactly as the previous release did.
     const v1 = await openDB(name, 1, { upgrade: (db) => void db.createObjectStore("profile") });
@@ -55,7 +55,7 @@ describe("database upgrade from version 1", () => {
     v1.close();
 
     const db = openProfileDb(name);
-    expect([...(await db).objectStoreNames].sort()).toEqual(["answers", "profile"]);
+    expect([...(await db).objectStoreNames].sort()).toEqual(["answers", "profile", "resumes"]);
     const loaded = await createProfileStore(db).load();
     expect(loaded).toMatchObject({
       schemaVersion: 2,
