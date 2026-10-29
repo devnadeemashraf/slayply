@@ -24,7 +24,7 @@ Each row records how it was checked on the stated date (Rule 1: Verify, don't re
 
 ## Frameworks & Core Libraries
 
-`zod` and `@types/node` are installed. The rest (wxt, react, hono, tailwind and their types) are *registry-verified* only: the exact version exists on npm, but nothing uses them yet. Re-verify when the roadmap item that introduces each one starts.
+`zod`, `@types/node`, `hono` and `@hono/node-server` are installed. The rest (wxt, react, tailwind and their types) are *registry-verified* only: the exact version exists on npm, but nothing uses them yet. Re-verify when the roadmap item that introduces each one starts.
 
 | Package | Pinned Version | Verification Date | Source Link | Notes |
 | :--- | :--- | :--- | :--- | :--- |

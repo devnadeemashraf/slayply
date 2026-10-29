@@ -72,18 +72,19 @@ For GitHub Free on a **public** repository (classic branch protection is not ava
 
 Slayply follows a strict zero-server-secrets architecture:
 - No shared database credentials or cloud secret managers are required for local development.
-- The relay will read `PORT` and `NODE_ENV` from the environment (planned, `CORE-02`, which also adds `apps/relay/.env.example`).
+- The relay reads `PORT`, `NODE_ENV`, `EXTENSION_IDS` and `TRUST_PROXY_HOPS` from the environment; copy `apps/relay/.env.example` for a template. `EXTENSION_IDS` is required when `NODE_ENV=production`.
 - **User API Keys:** Stored exclusively in your browser's `chrome.storage.local` during local testing.
 
 ---
 
 ## 6. Running Local Development
 
-### Run Relay Server (planned, `CORE-02`)
+### Run Relay Server
 ```powershell
 pnpm --filter @slayply/relay dev
-# Once CORE-02 lands, the relay starts at http://localhost:3000
+# Builds, then starts the relay at http://localhost:3000 (restart to pick up changes)
 # Test health: curl http://localhost:3000/health
+# /v1/generate validates input but answers 501 until provider adapters land (PROV-01)
 ```
 
 ### Run Extension in Development Mode (planned, `EXT-01`)
