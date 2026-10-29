@@ -1,22 +1,30 @@
 import { z } from "zod";
 import { LIMITS } from "./limits.js";
-import { factSchema, type Profile, storySchema } from "./schema.js";
+import { factSchema, type Profile, profileSchema, storySchema } from "./schema.js";
 
 // --- Types ---
 
-export type StoredItem = { id: string; text: string };
+/** Where an item came from: compiled from questionnaire answers, or imported / typed by hand. */
+export type ItemOrigin = "answers" | "manual";
+
+/** `key` ties an `answers` item to the answer that produced it, so editing the answer keeps the ID. */
+export type StoredItem = { id: string; text: string; origin: ItemOrigin; key?: string };
 
 /**
  * What the extension persists. `nextFact` / `nextStory` only ever grow, so an ID that was ever
  * issued is never issued again, even after the item is deleted (ADR-0007).
- * `rules` are kept locally; the request contract has no field for them.
+ * `rules` and `answerRules` are kept locally; the request contract has no field for them.
+ * `prefs` / `rules` come from a context-pack import; `answerPrefs` / `answerRules` from the
+ * questionnaire (ADR-0008).
  */
 export type StoredProfile = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   facts: StoredItem[];
   stories: StoredItem[];
   prefs: Record<string, string>;
   rules: string[];
+  answerPrefs: Record<string, string>;
+  answerRules: string[];
   nextFact: number;
   nextStory: number;
   updatedAt: string;
@@ -46,13 +54,23 @@ function highestNumber(items: readonly StoredItem[]): number {
   return items.reduce((max, item) => Math.max(max, Number.parseInt(item.id.slice(1), 10)), 0);
 }
 
+const originFields = {
+  origin: z.enum(["answers", "manual"]),
+  key: z.string().min(1).max(100).optional(),
+};
+const storedFactSchema = factSchema.extend(originFields);
+const storedStorySchema = storySchema.extend(originFields);
+const ruleListSchema = z.array(z.string().trim().min(1).max(LIMITS.factChars)).max(LIMITS.maxRules);
+
 export const storedProfileSchema = z
   .strictObject({
-    schemaVersion: z.literal(1),
-    facts: z.array(factSchema).max(LIMITS.maxFacts),
-    stories: z.array(storySchema).max(LIMITS.maxStories),
+    schemaVersion: z.literal(2),
+    facts: z.array(storedFactSchema).max(LIMITS.maxFacts),
+    stories: z.array(storedStorySchema).max(LIMITS.maxStories),
     prefs: prefsSchema,
-    rules: z.array(z.string().trim().min(1).max(LIMITS.factChars)).max(LIMITS.maxRules),
+    rules: ruleListSchema,
+    answerPrefs: prefsSchema,
+    answerRules: ruleListSchema,
     nextFact: z.number().int().min(1).max(1_000_000),
     nextStory: z.number().int().min(1).max(1_000_000),
     updatedAt: z.string().max(40),
@@ -68,10 +86,31 @@ export const storedProfileSchema = z
     path: ["nextFact"],
   });
 
+/** Upgrades a version 1 record (no origin) to version 2: every item was typed or imported by hand. */
+function upgradeStoredProfile(input: unknown): unknown {
+  if (typeof input !== "object" || input === null) return input;
+  const record = input as Record<string, unknown>;
+  if (record.schemaVersion !== 1) return input;
+  const asManual = (items: unknown) =>
+    Array.isArray(items)
+      ? items.map((item) =>
+          typeof item === "object" && item !== null ? { ...item, origin: "manual" } : item,
+        )
+      : items;
+  return {
+    ...record,
+    schemaVersion: 2,
+    facts: asManual(record.facts),
+    stories: asManual(record.stories),
+    answerPrefs: {},
+    answerRules: [],
+  };
+}
+
 export function parseStoredProfile(
   input: unknown,
 ): { success: true; data: StoredProfile } | { success: false; issues: string[] } {
-  const result = storedProfileSchema.safeParse(input);
+  const result = storedProfileSchema.safeParse(upgradeStoredProfile(input));
   if (result.success) return { success: true, data: result.data };
   return {
     success: false,
@@ -81,24 +120,43 @@ export function parseStoredProfile(
 
 export function emptyStoredProfile(now: string): StoredProfile {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     facts: [],
     stories: [],
     prefs: {},
     rules: [],
+    answerPrefs: {},
+    answerRules: [],
     nextFact: 1,
     nextStory: 1,
     updatedAt: now,
   };
 }
 
-/** The part of the profile that goes in a `GenerateRequest`. Rules are deliberately left out. */
+/**
+ * The part of the profile that goes in a `GenerateRequest`: IDs and text only (the request is
+ * strict, so `origin` and `key` must not leak), and preferences from the questionnaire win over
+ * imported ones. Rules are deliberately left out.
+ */
 export function toProfile(stored: StoredProfile): Profile {
   return {
-    facts: stored.facts.map((item) => ({ ...item })),
-    stories: stored.stories.map((item) => ({ ...item })),
-    prefs: { ...stored.prefs },
+    facts: stored.facts.map(({ id, text }) => ({ id, text })),
+    stories: stored.stories.map(({ id, text }) => ({ id, text })),
+    prefs: { ...stored.prefs, ...stored.answerPrefs },
   };
+}
+
+/** A candidate profile is only acceptable if it is valid stored data AND fits the request contract. */
+function checkCandidate(candidate: StoredProfile): EditResult {
+  const stored = parseStoredProfile(candidate);
+  if (!stored.success) return { ok: false, message: "The profile is not valid." };
+  if (!profileSchema.safeParse(toProfile(stored.data)).success) {
+    return {
+      ok: false,
+      message: "That would put the profile over its limits (too many items or preferences).",
+    };
+  }
+  return { ok: true, profile: stored.data };
 }
 
 // --- Text helpers ---
@@ -363,35 +421,47 @@ function formatId(prefix: "F" | "S", n: number): string {
   return `${prefix}${String(n).padStart(2, "0")}`;
 }
 
+/** Matches imported text to existing manual items by normalized text; the rest take new IDs. */
 function reconcileItems(
   prefix: "F" | "S",
   previous: readonly StoredItem[],
   incoming: readonly string[],
   counter: number,
+  taken: ReadonlySet<string>,
 ): { items: StoredItem[]; next: number } {
   const byText = new Map<string, StoredItem>();
   for (const item of previous) byText.set(normalizeText(item.text), item);
   const used = new Set<string>();
   let next = counter;
-  const items = incoming.map((raw) => {
+  const items: StoredItem[] = [];
+  for (const raw of incoming) {
     const text = raw.trim();
-    const key = normalizeText(text);
-    const match = byText.get(key);
+    const norm = normalizeText(text);
+    // The questionnaire already states this: do not store the same sentence twice.
+    if (taken.has(norm)) continue;
+    const match = byText.get(norm);
     if (match && !used.has(match.id)) {
       used.add(match.id);
-      return { id: match.id, text };
+      items.push({ id: match.id, text, origin: "manual" });
+      continue;
     }
-    const id = formatId(prefix, next);
+    items.push({ id: formatId(prefix, next), text, origin: "manual" });
     next += 1;
-    return { id, text };
-  });
+  }
   return { items, next };
 }
+
+const ofOrigin = (items: readonly StoredItem[], origin: ItemOrigin) =>
+  items.filter((item) => item.origin === origin);
+
+const textsOf = (items: readonly StoredItem[]) =>
+  new Set(items.map((item) => normalizeText(item.text)));
 
 /**
  * Merges a freshly parsed pack into the stored profile. An item whose normalized text is
  * unchanged keeps its ID (so reordering is safe); anything new takes the next counter value;
- * anything missing from the pack is removed and its ID retired.
+ * anything missing from the pack is removed and its ID retired. Only `manual` items are
+ * replaced: items compiled from questionnaire answers are left alone (ADR-0008).
  */
 export function reconcileProfile(
   previous: StoredProfile | null,
@@ -409,26 +479,166 @@ export function reconcileProfile(
   }
 
   const base = previous ?? emptyStoredProfile(now);
-  const facts = reconcileItems("F", base.facts, pack.facts, base.nextFact);
-  const stories = reconcileItems("S", base.stories, pack.stories, base.nextStory);
-  const candidate: StoredProfile = {
-    schemaVersion: 1,
-    facts: facts.items,
-    stories: stories.items,
+  const answerFacts = ofOrigin(base.facts, "answers");
+  const answerStories = ofOrigin(base.stories, "answers");
+  const facts = reconcileItems(
+    "F",
+    ofOrigin(base.facts, "manual"),
+    pack.facts,
+    base.nextFact,
+    textsOf(answerFacts),
+  );
+  const stories = reconcileItems(
+    "S",
+    ofOrigin(base.stories, "manual"),
+    pack.stories,
+    base.nextStory,
+    textsOf(answerStories),
+  );
+  return checkCandidate({
+    ...base,
+    facts: [...answerFacts, ...facts.items],
+    stories: [...answerStories, ...stories.items],
     prefs: { ...pack.prefs },
     rules: [...pack.rules],
     nextFact: facts.next,
     nextStory: stories.next,
     updatedAt: now,
-  };
-  const checked = parseStoredProfile(candidate);
-  if (!checked.success) return { ok: false, message: "The imported profile is not valid." };
-  return { ok: true, profile: checked.data };
+  });
+}
+
+// --- Compiled questionnaire answers ---
+
+/** One compiled sentence and the answer it came from (for example `exp:3:ach:1`). */
+export type KeyedText = { key: string; text: string };
+
+export type CompiledContext = {
+  facts: KeyedText[];
+  stories: KeyedText[];
+  prefs: Record<string, string>;
+  rules: string[];
+};
+
+export type MergeResult =
+  | { ok: true; profile: StoredProfile; warnings: string[] }
+  | { ok: false; message: string };
+
+/**
+ * Gives compiled items their IDs. Order of preference: unchanged text keeps its ID (so a reorder
+ * can never swap two IDs' meanings); otherwise the same answer key keeps its ID (an edited
+ * answer); otherwise a new ID. Counters only grow, so retired IDs are never reissued.
+ */
+function assignAnswerItems(
+  prefix: "F" | "S",
+  previous: readonly StoredItem[],
+  incoming: readonly KeyedText[],
+  counter: number,
+  taken: ReadonlySet<string>,
+  warnings: string[],
+): { items: StoredItem[]; next: number } {
+  const unique: KeyedText[] = [];
+  const seen = new Set<string>();
+  for (const entry of incoming) {
+    const norm = normalizeText(entry.text);
+    if (seen.has(norm) || taken.has(norm)) {
+      warnings.push(`Skipped a duplicate sentence (${entry.key}).`);
+      continue;
+    }
+    seen.add(norm);
+    unique.push(entry);
+  }
+
+  const assigned: Array<StoredItem | null> = unique.map(() => null);
+  const used = new Set<string>();
+  const byText = new Map(previous.map((item) => [normalizeText(item.text), item]));
+  unique.forEach((entry, i) => {
+    const match = byText.get(normalizeText(entry.text));
+    if (match && !used.has(match.id)) {
+      used.add(match.id);
+      assigned[i] = { id: match.id, text: entry.text, origin: "answers", key: entry.key };
+    }
+  });
+  const byKey = new Map<string, StoredItem>();
+  for (const item of previous) if (item.key !== undefined) byKey.set(item.key, item);
+  unique.forEach((entry, i) => {
+    if (assigned[i]) return;
+    const match = byKey.get(entry.key);
+    if (match && !used.has(match.id)) {
+      used.add(match.id);
+      assigned[i] = { id: match.id, text: entry.text, origin: "answers", key: entry.key };
+    }
+  });
+
+  let next = counter;
+  const items = unique.map((entry, i) => {
+    const existing = assigned[i];
+    if (existing) return existing;
+    const item: StoredItem = {
+      id: formatId(prefix, next),
+      text: entry.text,
+      origin: "answers",
+      key: entry.key,
+    };
+    next += 1;
+    return item;
+  });
+  return { items, next };
+}
+
+/**
+ * Applies compiled questionnaire output to the stored profile. Only `answers` items are
+ * replaced; `manual` items stay. Compiled preferences and rules replace the previous
+ * questionnaire ones (and win over imported preferences with the same key).
+ */
+export function mergeCompiledContext(
+  previous: StoredProfile | null,
+  compiled: CompiledContext,
+  now: string,
+): MergeResult {
+  const base = previous ?? emptyStoredProfile(now);
+  const warnings: string[] = [];
+  const manualFacts = ofOrigin(base.facts, "manual");
+  const manualStories = ofOrigin(base.stories, "manual");
+  const facts = assignAnswerItems(
+    "F",
+    ofOrigin(base.facts, "answers"),
+    compiled.facts,
+    base.nextFact,
+    textsOf(manualFacts),
+    warnings,
+  );
+  const stories = assignAnswerItems(
+    "S",
+    ofOrigin(base.stories, "answers"),
+    compiled.stories,
+    base.nextStory,
+    textsOf(manualStories),
+    warnings,
+  );
+  for (const key of Object.keys(compiled.prefs)) {
+    if (Object.hasOwn(base.prefs, key)) {
+      warnings.push(`Preference "${key}" from your answers replaces the imported one.`);
+    }
+  }
+  const checked = checkCandidate({
+    ...base,
+    facts: [...facts.items, ...manualFacts],
+    stories: [...stories.items, ...manualStories],
+    answerPrefs: { ...compiled.prefs },
+    answerRules: [...compiled.rules],
+    nextFact: facts.next,
+    nextStory: stories.next,
+    updatedAt: now,
+  });
+  return checked.ok ? { ok: true, profile: checked.profile, warnings } : checked;
 }
 
 // --- In-app edits ---
 
 type Kind = "fact" | "story";
+
+const FROM_ANSWERS_MESSAGE =
+  "This item is built from your questionnaire answers. Change the answer instead.";
 
 function cleanItemText(text: string): { ok: true; text: string } | { ok: false; message: string } {
   const cleaned = text.split(/\r?\n/).map(tidy).join("\n").trim();
@@ -464,7 +674,11 @@ export function addProfileItem(
     return { ok: false, message: "That is already in your profile." };
   }
   const counter = isFact ? profile.nextFact : profile.nextStory;
-  const added = { id: formatId(isFact ? "F" : "S", counter), text: cleaned.text };
+  const added: StoredItem = {
+    id: formatId(isFact ? "F" : "S", counter),
+    text: cleaned.text,
+    origin: "manual",
+  };
   return {
     ok: true,
     profile: isFact
@@ -488,12 +702,13 @@ export function editProfileItem(
   if (!cleaned.ok) return cleaned;
   const isFact = id.startsWith("F");
   const items = isFact ? profile.facts : profile.stories;
-  if (!items.some((item) => item.id === id))
-    return { ok: false, message: "That item no longer exists." };
+  const target = items.find((item) => item.id === id);
+  if (!target) return { ok: false, message: "That item no longer exists." };
+  if (target.origin === "answers") return { ok: false, message: FROM_ANSWERS_MESSAGE };
   if (isDuplicate(items, cleaned.text, id)) {
     return { ok: false, message: "That is already in your profile." };
   }
-  const updated = items.map((item) => (item.id === id ? { id, text: cleaned.text } : item));
+  const updated = items.map((item) => (item.id === id ? { ...item, text: cleaned.text } : item));
   return {
     ok: true,
     profile: isFact
@@ -505,8 +720,9 @@ export function editProfileItem(
 export function removeProfileItem(profile: StoredProfile, id: string, now: string): EditResult {
   const isFact = id.startsWith("F");
   const items = isFact ? profile.facts : profile.stories;
-  if (!items.some((item) => item.id === id))
-    return { ok: false, message: "That item no longer exists." };
+  const target = items.find((item) => item.id === id);
+  if (!target) return { ok: false, message: "That item no longer exists." };
+  if (target.origin === "answers") return { ok: false, message: FROM_ANSWERS_MESSAGE };
   const remaining = items.filter((item) => item.id !== id);
   return {
     ok: true,

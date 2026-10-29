@@ -320,7 +320,11 @@ describe("in-app edits", () => {
   it("adds a fact with the next ID", () => {
     const result = addProfileItem(base(), "fact", "  New thing I did  ", NOW);
     if (!result.ok) throw new Error(result.message);
-    expect(result.profile.facts.at(-1)).toEqual({ id: "F06", text: "New thing I did" });
+    expect(result.profile.facts.at(-1)).toEqual({
+      id: "F06",
+      text: "New thing I did",
+      origin: "manual",
+    });
     expect(result.profile.nextFact).toBe(7);
   });
 
@@ -347,6 +351,7 @@ describe("in-app edits", () => {
       facts: Array.from({ length: LIMITS.maxFacts }, (_, i) => ({
         id: `F${String(i + 1).padStart(2, "0")}`,
         text: `fact ${i}`,
+        origin: "manual" as const,
       })),
       nextFact: LIMITS.maxFacts + 1,
     };
@@ -356,7 +361,11 @@ describe("in-app edits", () => {
   it("edits text and keeps the ID", () => {
     const result = editProfileItem(base(), "F02", "Led a team of 6 engineers", NOW);
     if (!result.ok) throw new Error(result.message);
-    expect(result.profile.facts[1]).toEqual({ id: "F02", text: "Led a team of 6 engineers" });
+    expect(result.profile.facts[1]).toEqual({
+      id: "F02",
+      text: "Led a team of 6 engineers",
+      origin: "manual",
+    });
   });
 
   it("rejects editing an unknown ID, to empty text, or onto another item's text", () => {
@@ -405,7 +414,7 @@ describe("toProfile and parseStoredProfile", () => {
     const bad: unknown[] = [
       null,
       "string",
-      { ...good, schemaVersion: 2 },
+      { ...good, schemaVersion: 3 },
       { ...good, nextFact: 1 },
       { ...good, nextStory: 0 },
       { ...good, facts: [{ id: "X1", text: "bad id" }] },

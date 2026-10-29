@@ -148,6 +148,27 @@
   - In-app profile viewer and editor with local persistence in IndexedDB.
 - **Required Tests:** Markdown parser tests for fact extraction and stable ID assignment.
 
+#### `PROF-02a`: Guided Context Questionnaire (core and storage)
+- **Spec Section:** §4 Feature 1 `[MUST]`
+- **Size:** M (2 sessions)
+- **Status:** In review
+- **Acceptance Criteria:**
+  - One versioned, standardized answers structure (sections for you, targets, most recent work experience first, education, skills, projects, STAR stories, voice, standard answers, never-claim, private).
+  - Questionnaire definition with help text, examples and a per-section statement of what is sent.
+  - Answers compile to facts, stories and preferences with stable IDs; private details cannot reach the output.
+  - Answers saved locally in IndexedDB (version 2) with a migration that keeps the existing profile.
+- **Required Tests:** PII sentinel, compiler honesty and 2000-character limits, ID stability (edit, reorder, delete), v1 to v2 migration, atomic save.
+
+#### `PROF-02b`: Guided Context Questionnaire (wizard UI)
+- **Spec Section:** §4 Feature 1 `[MUST]`
+- **Size:** M (2 sessions)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - Step-by-step wizard with progress, autosave, inline validation, add/remove/move for repeatable entries.
+  - Shows per section what is sent and what stays on the device.
+  - Answers JSON export/import (preview first) and compiled markdown export.
+- **Required Tests:** Renderer tests, reducer tests, markdown round trip.
+
 #### `RES-01`: PDF Resume Upload & Parsing
 - **Spec Section:** §4 Feature 2 `[MUST]`
 - **Size:** M (2 sessions)
@@ -314,7 +335,8 @@
 | **ADR-0005** | Extension Shell & Testable Logic | Accepted | WXT (Vite + MV3); logic in injected-dependency modules | Plasmo, hand-rolled Vite, logic inside React components |
 | **ADR-0006** | Relay-Mode Validation, Retry & Streaming Preview | Accepted | Draft preview from partial JSON; re-request once, then raw text; no-resume marker request | Raw JSON stream, relay `repair` field, resume textarea |
 | **ADR-0007** | Context Pack Profile, Stable IDs & Local Storage | Accepted | Heading-driven markdown parsed in core; persisted ID ledger; one `idb` record; rules stored but not applied | YAML/LLM import, hash or positional IDs, rules in prefs, per-item stores |
-| ADR-0008 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
+| **ADR-0008** | Guided Context Questionnaire & Standardized Answers | Accepted | Answers record is the truth; compiled, origin-tagged profile (v2); typed-out `private` section; entry-keyed stable IDs; one context | Derive-only, compile-to-markdown, text-only IDs, named contexts |
+| ADR-0010 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
 
 ---
 
@@ -333,6 +355,7 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `PROF-02a` in review: standardized, versioned answers structure and the question list, a compiler that turns answers into cited facts without inventing anything, private details typed out of it, origin-tagged profile (v2) with entry-keyed stable IDs, and IndexedDB v2 with a migration (ADR-0008). The wizard UI is `PROF-02b`.
 - **2026-10-29:** `PROF-01` done: import a markdown context pack (preview first), stable `F01` / `S01` IDs that survive re-import and are never reused, in-app view, edit, add and remove, stored in IndexedDB, and sent with generation requests. Rules are stored but not yet applied (ADR-0007, `docs/CONTEXT_PACK.md`).
 
 - **2026-10-29:** `GEN-01` done: the side panel takes a job description and a question, streams a draft from the relay, validates the reply (one re-request, then raw text) and copies the answer with visible feedback. Answers are generic until `RES-01` / `PROF-01` (ADR-0006).
