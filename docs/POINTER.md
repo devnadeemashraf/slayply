@@ -7,7 +7,7 @@
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
 
 ## FIX-FIRST QUEUE
-- **BP-002** (docs/harness): add `README.md`, `CONTRIBUTING.md`, `SECURITY.md`; add the Claude Code harness the scaffold promised (`.claude/` hooks, `/next-pr` `/handoff` `/review` commands, reviewer and red-team subagents).
+- **BP-002** (docs/harness): add `CONTRIBUTING.md`, `SECURITY.md` (README done); add the Claude Code harness the scaffold promised (`.claude/` hooks, `/next-pr` `/handoff` `/review` commands, reviewer and red-team subagents).
 
 ## NEXT UP
 - **Item:** `CORE-02` — Stateless relay (`apps/relay`). Fix-first items above go before it.
@@ -29,6 +29,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #4 | `BP-002` (part) | Product README | Manual test: No
 - PR #3 | `CORE-01` | Bounded strict request schema, tolerant response schema, shared validators, ADR-0002 | Manual test: No
 - PR #2 | `BP-001` | Make check/lint/format truthful, wire hooks, harden doctor + handoff guard, CI frozen lockfile, LICENSE | Manual test: No
 - PR #1 | `BOOT-01` | Finalize package skeleton, doctor checks, and Turborepo orchestration | Manual test: No
