@@ -26,7 +26,7 @@ slayply/
 │   ├── relay/           # Stateless Hono proxy server on Render (Node.js)
 │   └── site/            # Static landing page & privacy documentation (planned, SITE-01)
 ├── packages/
-│   ├── core/            # Zod schemas and validators (CORE-01); prompt builder, claim checker (planned)
+│   ├── core/            # Zod schemas and validators (CORE-01), prompt builder (CORE-03); claim checker (planned)
 │   ├── providers/       # LLM provider adapters (Claude, OpenAI, Gemini) (planned, PROV-01)
 │   └── ui/              # Shared UI components & Gen-Z theme tokens (planned, THEME-01)
 ├── docs/                # Spec, roadmap, standards, handoff pointer; docs/adr/ holds decisions
@@ -83,6 +83,7 @@ flowchart LR
 - `schema.ts`: Zod schemas and inferred types for `GenerateRequest` / `GenerateResponse`. Requests are strict and bounded; responses tolerate extra keys.
 - `limits.ts`: size ceilings (`LIMITS`, `MAX_PAYLOAD_BYTES`) and the `F01` / `S03` citation ID patterns.
 - `validate.ts`: `validateGenerateRequest` (relay) and `validateGenerateResponse` (providers). Both take an object or JSON string and return `{ success, data }` or `{ success: false, issues, rawInput }`; the response variant adds `retryPrompt` for the single repair attempt.
+- `prompt.ts` (`CORE-03`): `buildPrompt(request)` returns `{ system, messages: [user] }`. `system` is a fixed constant holding the SPEC §7 rules, the untrusted-input notice and the JSON output contract, so user data can never alter it. The user message holds `<slayply-task>`, `-job`, `-questions`, `-resume` and `-profile` blocks; facts and stories carry their `[F01]` / `[S01]` IDs, each question its `maxChars`. Any `<slayply-` tag inside user text is escaped to `&lt;slayply-` so data cannot close or forge a block. Adapters map `system` and `messages` onto their vendor format.
 - Built to `dist/` by `tsc`; Turbo builds it before dependents typecheck or test.
 
 ### 5b. `@slayply/relay` (`apps/relay`, ADR-0003)
