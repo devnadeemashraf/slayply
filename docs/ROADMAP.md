@@ -256,5 +256,7 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `BP-001` fixed: lint/format scripts no longer swallow Biome failures; doctor enforces real pins; handoff guard also requires HANDBOOK updates for new modules; git hooks install via `prepare`; CI uses a frozen lockfile.
+
 - **2026-10-29:** `BOOT-01` completed. Package skeleton finalized, doctor pins verified (Node, pnpm, git, VERSIONS, turbo, Biome), Turborepo test and pipeline checks integrated into root CI script.
 - **2026-10-29:** Phase 0 initiated. Monorepo skeleton initialized, git repo initialized on `main`, scaffolding docs and CI pipelines created.

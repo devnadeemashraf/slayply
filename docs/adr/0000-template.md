@@ -2,7 +2,7 @@
 
 - **Status:** Proposed | Accepted | Deprecated | Superseded
 - **Date:** YYYY-MM-DD
-- **Deciders:** Human Architect, AI Tech Lead
+- **Deciders:** Nadeem Ashraf
 - **Roadmap ID:** `<ROADMAP-ID>`
 
 ---

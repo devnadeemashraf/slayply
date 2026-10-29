@@ -6,11 +6,12 @@
   "packageManager": "pnpm@12.6.0",
   "scripts": {
     "build": "turbo run build",
+    "prepare": "node scripts/setup-hooks.mjs",
     "doctor": "node scripts/doctor.mjs",
     "check": "node scripts/check.mjs",
-    "fmt": "node scripts/fmt.mjs",
-    "fmt:check": "node scripts/fmt-check.mjs",
-    "lint": "node scripts/lint.mjs",
+    "fmt": "biome format --write .",
+    "fmt:check": "biome format .",
+    "lint": "biome lint --error-on-warnings .",
     "test": "node scripts/test.mjs",
     "handoff:check": "node scripts/handoff-check.mjs"
   },
@@ -20,5 +21,9 @@
     "turbo": "2.11.10",
     "typescript": "7.0.2",
     "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=24.21.0",
+    "pnpm": ">=12.6.0"
   }
 }

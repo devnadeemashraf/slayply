@@ -1,39 +1,24 @@
 #!/usr/bin/env node
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import process from "node:process";
 
-console.log("=================================================");
-console.log("       SLAYPLY FULL CI & WORKSPACE CHECK        ");
-console.log("=================================================\n");
-
+// Everything CI runs, in cheapest-first order. Stops at the first failure.
 const tasks = [
-  { name: "Doctor (Environment Pins)", cmd: "node scripts/doctor.mjs" },
-  { name: "Handoff Guard (docs/POINTER.md)", cmd: "node scripts/handoff-check.mjs" },
-  { name: "Format Check", cmd: "node scripts/fmt-check.mjs" },
-  { name: "Lint Check", cmd: "node scripts/lint.mjs" },
-  { name: "Workspace & Tooling Tests", cmd: "node scripts/test.mjs" },
-  { name: "Turborepo Workspace Pipeline Check", cmd: "pnpm exec turbo run check" },
+  { name: "doctor", cmd: "pnpm run doctor" },
+  { name: "handoff", cmd: "pnpm run handoff:check" },
+  { name: "format", cmd: "pnpm run fmt:check" },
+  { name: "lint", cmd: "pnpm run lint" },
+  { name: "test", cmd: "pnpm run test" },
+  { name: "typecheck", cmd: "pnpm exec turbo run typecheck" },
 ];
 
-let failed = false;
-
 for (const task of tasks) {
-  console.log(`\n--- Running [${task.name}] ---`);
-  try {
-    execSync(task.cmd, { stdio: "inherit" });
-  } catch (_err) {
-    console.error(`\n✗ [${task.name}] failed.`);
-    failed = true;
-    break;
+  console.log(`\n--- ${task.name}: ${task.cmd} ---`);
+  const { status } = spawnSync(task.cmd, { stdio: "inherit", shell: true });
+  if (status !== 0) {
+    console.error(`\ncheck failed at [${task.name}].`);
+    process.exit(status ?? 1);
   }
 }
 
-console.log("\n=================================================");
-if (failed) {
-  console.error("CHECK SUITE FAILED. Fix issues above before committing.");
-  process.exit(1);
-} else {
-  console.log("CHECK SUITE PASSED. All tasks green on skeleton.");
-  console.log("=================================================\n");
-  process.exit(0);
-}
+console.log("\ncheck passed.");
