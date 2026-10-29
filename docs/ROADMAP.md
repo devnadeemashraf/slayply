@@ -271,6 +271,14 @@
   - 🧪 **Manual Test:** Highlight text on Greenhouse job page, right-click, capture as JD; confirm side panel opens with text populated.
 - **Required Tests:** Extraction tests on fixture HTML; a test that nothing is captured on LinkedIn without an explicit selection.
 
+#### `CAP-02`: One-Click Capture
+- **Spec Section:** §4 Feature 3 `[MUST]` (wording change needed, ADR-0016)
+- **Size:** M
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** Toolbar icon or Alt+Shift+S opens the panel and captures once (selection wins, else the visible page); nothing is read on LinkedIn without a selection; the capture fills the generate panel and Job details without extra clicks.
+- 🧪 **Manual Test:** Greenhouse page, click the icon: panel opens with the job description filled. LinkedIn job, click with nothing selected: a refusal message; select text, click: it is used.
+- **Plan (from `docs/research/one-click-capture-ux.md`):** `CAP-03` detect application questions (M), `CAP-04` single review screen with per-question generate (M), `CAP-05` optional job-site host permissions and iframes (M), `CAP-06` Greenhouse questions API (S), `CAP-07` stale-tab banner (S), `CAP-08` docs and hardening (S).
+
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S (1 session)

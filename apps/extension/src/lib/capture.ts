@@ -25,9 +25,9 @@ export const CAPTURE_TEXT_MAX = 60_000;
 const KINDS: readonly string[] = ["jd", "question", "note"];
 
 const LINKEDIN_MESSAGE =
-  "Slayply does not read LinkedIn pages. Select the text you want, then right-click and choose Capture for Slayply.";
+  "Slayply does not read LinkedIn pages. Select the job text you want, then click the Slayply icon (or right-click it and choose Capture for Slayply).";
 const BLOCKED_MESSAGE =
-  "Slayply could not read this page. Click the Slayply toolbar icon on the page first, or select text and right-click it.";
+  "Slayply could not read this page. Browser pages and the web store are off limits; on other pages click the Slayply toolbar icon, or select text and right-click it.";
 
 // linkedin.cn is LinkedIn China; lnkd.in is its short-link host.
 const LINKEDIN_HOSTS = ["linkedin.com", "linkedin.cn", "lnkd.in"];
@@ -77,6 +77,23 @@ export async function captureFromTab(
     return { ok: false, message: BLOCKED_MESSAGE };
   }
   return captureSelection(selected, tab, "jd");
+}
+
+/**
+ * The one-click capture behind the toolbar icon and its shortcut: a selection wins; with none, the
+ * visible page is read, except on LinkedIn, where `captureFromTab` refuses before any script runs.
+ */
+export async function captureOneClick(tab: TabInfo, deps: CaptureDeps): Promise<CaptureOutcome> {
+  if (tab.id !== undefined && tab.url !== undefined) {
+    let selected = "";
+    try {
+      selected = await deps.readSelection(tab.id);
+    } catch {
+      // A page that cannot be scripted is reported by the page read below.
+    }
+    if (selected.trim() !== "") return captureSelection(selected, tab, "jd");
+  }
+  return captureFromTab("page", tab, deps);
 }
 
 /** Builds a capture from selected text. The tab title is what the user already sees in the tab strip. */

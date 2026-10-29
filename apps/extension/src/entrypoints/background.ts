@@ -1,4 +1,10 @@
-import { type CaptureKind, captureFromTab, captureSelection } from "../lib/capture.js";
+import {
+  type CaptureKind,
+  type CaptureOutcome,
+  captureFromTab,
+  captureOneClick,
+  captureSelection,
+} from "../lib/capture.js";
 import { browserCaptureDeps } from "../lib/capture-browser.js";
 import { createCaptureInbox } from "../lib/capture-inbox.js";
 
@@ -11,9 +17,22 @@ const PARENT_ID = "capture";
 const PAGE_ID = "capture-page";
 
 export default defineBackground(() => {
-  // Clicking the toolbar icon opens the side panel.
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error: unknown) => {
-    console.error("Could not enable the side panel on icon click", error);
+  // The icon click (or its shortcut) is handled here, not by the browser's open-on-click setting:
+  // `action.onClicked` is a documented `activeTab` grant, so the same click can open the panel and
+  // read the page once. The panel opens first, before any await, to stay inside the user gesture.
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch((error: unknown) => {
+    console.error("Could not turn off open-on-click", error);
+  });
+
+  chrome.action.onClicked.addListener((tab) => {
+    if (tab.windowId !== undefined) {
+      chrome.sidePanel.open({ windowId: tab.windowId }).catch((error: unknown) => {
+        console.error("Could not open the side panel", error);
+      });
+    }
+    void stageOutcome(
+      captureOneClick({ id: tab.id, url: tab.url, title: tab.title }, browserCaptureDeps),
+    );
   });
 
   chrome.runtime.onInstalled.addListener(() => {
@@ -58,12 +77,16 @@ export default defineBackground(() => {
 
 async function stage(id: string, selected: string, tab: chrome.tabs.Tab): Promise<void> {
   const info = { id: tab.id, url: tab.url, title: tab.title };
-  const outcome =
+  await stageOutcome(
     id === PAGE_ID
-      ? await captureFromTab("page", info, browserCaptureDeps)
-      : captureSelection(selected, info, SELECTION_ITEMS[id] ?? "jd");
+      ? captureFromTab("page", info, browserCaptureDeps)
+      : Promise.resolve(captureSelection(selected, info, SELECTION_ITEMS[id] ?? "jd")),
+  );
+}
+
+async function stageOutcome(pending: Promise<CaptureOutcome>): Promise<void> {
   try {
-    await createCaptureInbox(chrome.storage.session).put(outcome);
+    await createCaptureInbox(chrome.storage.session).put(await pending);
   } catch (error) {
     console.error("Could not hand the capture to the side panel", error);
   }

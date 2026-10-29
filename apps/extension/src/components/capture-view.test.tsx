@@ -10,8 +10,7 @@ const base: CaptureViewProps = {
   job: { title: "", company: "", location: "", salary: "" },
   notes: "",
   paste: "",
-  onCaptureSelection: noop,
-  onCapturePage: noop,
+  onCapture: noop,
   onDraftKind: noop,
   onDraftText: noop,
   onUse: noop,
@@ -23,10 +22,9 @@ const base: CaptureViewProps = {
 };
 
 describe("CaptureView", () => {
-  it("offers selection, visible page and paste capture", () => {
+  it("offers one capture button and a paste box", () => {
     const html = renderToString(<CaptureView {...base} />);
-    expect(html).toContain("Capture selection");
-    expect(html).toContain("Capture visible JD");
+    expect(html).toContain("Capture this job");
     expect(html).toContain("Paste text");
   });
 
@@ -58,8 +56,8 @@ describe("CaptureView", () => {
     expect(html).toContain("Nothing is selected.");
   });
 
-  it("disables the capture buttons while one is running", () => {
+  it("disables the capture button while one is running", () => {
     const html = renderToString(<CaptureView {...base} busy />);
-    expect(html.match(/disabled/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(html.match(/disabled/g)?.length).toBeGreaterThanOrEqual(1);
   });
 });
