@@ -6,19 +6,20 @@
 - Monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
 - Relay serves Claude for `/v1/generate` and `/v1/models` (`PROV-01`); OpenAI and Gemini still answer 501.
-- `apps/extension` builds an MV3 side panel (WXT + React, ADR-0005) with the privacy gate, Anthropic key form and relay health status (`EXT-01`). With `GEN-01` it generates a draft answer from a pasted job description and question, validates it, and copies it (ADR-0006); answers are generic until a resume or profile exists.
+- `apps/extension` builds an MV3 side panel (WXT + React, ADR-0005) with the privacy gate, Anthropic key form and relay health status (`EXT-01`). With `GEN-01` it generates a draft answer from a pasted job description and question, validates it, and copies it (ADR-0006); answers are grounded in the saved profile (`PROF-01`) but have no resume text until `RES-01`.
 
 ## FIX-FIRST QUEUE
 - None currently open.
 
 ## NEXT UP
-- **Item:** `PROF-01`: Context Pack Profile Management. Read its roadmap entry and SPEC first. Check its size: if M or touching the data model (IndexedDB), use the `architect` subagent and write an ADR (ADR-0007 is reserved for it).
-- **Why now:** `GEN-01` closed the Phase 1 loop. `buildAnswerRequest` (`apps/extension/src/lib/build-request.ts`) sends an empty profile and a no-resume marker; `PROF-01` / `RES-01` replace those with real facts and resume text so answers stop being generic.
-- **Carry into `PROF-01`:** facts need stable IDs (`F01`, stories `S01`) that the prompt and the claim checker cite. Send profile data only in the request body (never logs).
+- **Item:** `RES-01`: PDF Resume Upload & Parsing. Read its roadmap entry and SPEC §4 Feature 2 first. Check its size: PDF parsing (`pdf.js`) is a new dependency and a bundle-budget risk (3.5 MB), so verify the version in `docs/VERSIONS.md`, use the `architect` subagent and write an ADR (ADR-0008 is next free; renumber the planned `VERIF-01` row if needed).
+- **Why now:** `PROF-01` landed the profile; `buildAnswerRequest` still sends the no-resume marker (`NO_RESUME_TEXT`) and `track: general`, `region: any`. `RES-01` should replace those with the chosen resume's text, track and region, and update `describeProfileUse`.
+- **Carry into `RES-01`:** the profile DB is `slayply` (version 1, store `profile`); add a `resumes` store by bumping the version in `openProfileDb`'s `upgrade`, keyed by ID, and keep `oldVersion` checks. Resume text goes only in the request body, never logs.
+- **Open from `PROF-01`:** rules are stored but not sent (a contract change plus prompt rendering as untrusted data is needed); `VERIF-01` must check citations against the fact text in force when an answer was generated (history should snapshot cited text or a hash), because an in-app edit keeps the ID; no export of the profile to markdown yet (`SET-01` covers export/import of data); preferences and rules change only by re-import; an unreadable profile record blocks the profile features until the user discards it (IDs restart); a window with older ID counters is refused (`StaleProfileError`) rather than merged; `profile-panel.tsx` has no automated tests (manual test only).
 - **Open from `GEN-01`:** a reply that fails validation costs a second generation on the user's key (ADR-0006); revisit a relay `repair` field if repairs are common. The streaming preview shows only the first output's text. Direct Mode will use `generateValidated` instead. The panel cannot pick a model, tone or length yet (fixed `crisp` / `medium`). Click handling and the real clipboard are manual-test only.
 - **Open from `EXT-01`:** the production relay URL is a build-time `WXT_RELAY_URL` (default `http://localhost:3000`) and needs setting at `SITE-01`; the Direct Mode offer is text only until `DIRECT-01`; the monitor stops after the 60 s give-up until the panel is reopened (a Retry button is deferred); a release build must set `WXT_RELEASE=1` and `WXT_RELAY_URL` (https); `generate-panel.tsx` and `App.tsx` have no automated tests (manual test only; `generation-view.tsx` is covered with `renderToString`); no extension icons yet.
 - **Open from `PROV-01`:** key IPv6 clients on their /64 in the limiter and stream cap; `DIRECT-01` must test whether `anthropic-dangerous-direct-browser-access` is needed from an extension origin; `PROV-02` / `PROV-03` add adapters to `server.ts`; effort mapping is not built.
-- **Done-when:** see `PROF-01` in `docs/ROADMAP.md`.
+- **Done-when:** see `RES-01` in `docs/ROADMAP.md`.
 
 ## Open questions for the human
 - None blocking. Confirmed defaults: BUILD mode active, Render free tier for relay, WXT for Chrome Side Panel.
@@ -44,6 +45,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #19 | `PROF-01` | Context pack import (preview first), `parseContextPack` / `reconcileProfile` in core with persisted never-reused `F01` / `S01` IDs, `idb` profile store, side-panel profile viewer with edit/add/remove, profile sent with generation requests; rules stored but not applied; ADR-0007, `docs/CONTEXT_PACK.md` | Manual test: Yes
 - PR #18 | `GEN-01` | Side panel generation loop: JD + question form, SSE relay client, live draft preview from partial JSON, client-side validation with one re-request then labelled raw text, Copy with feedback; ADR-0006 | Manual test: Yes
 - PR #17 | `EXT-01` | `apps/extension`: WXT + React MV3 side panel opened from the toolbar icon; settings store (Anthropic key, privacy acknowledgement) on `chrome.storage.local`; `/health` monitor with warm-up state and 60 s Direct Mode offer; ADR-0005 | Manual test: Yes
 - PR #16 | `PROV-01` | `packages/providers`: shared adapter interface, Claude streaming adapter, cached model list, `generateValidated` (one repair retry, then raw text); relay serves Claude, `GET /v1/models`, stream deadline, per-IP open-stream cap, body timeout, API key charset check; ADR-0004 | Manual test: Yes

@@ -82,6 +82,7 @@ flowchart LR
 ### 5a. `@slayply/core` contract
 - `schema.ts`: Zod schemas and inferred types for `GenerateRequest` / `GenerateResponse`. Requests are strict and bounded; responses tolerate extra keys.
 - `limits.ts`: size ceilings (`LIMITS`, `MAX_PAYLOAD_BYTES`) and the `F01` / `S03` citation ID patterns.
+- `context-pack.ts` (`PROF-01`): `parseContextPack` (never throws on content; warnings with line numbers), `reconcileProfile` (stable IDs via a persisted ledger), `addProfileItem` / `editProfileItem` / `removeProfileItem`, `storedProfileSchema` / `parseStoredProfile`, `toProfile` (facts, stories, preferences only; rules stay local).
 - `validate.ts`: `validateGenerateRequest` (relay) and `validateGenerateResponse` (providers). Both take an object or JSON string and return `{ success, data }` or `{ success: false, issues, rawInput }`; the response variant adds `retryPrompt` for the single repair attempt.
 - `prompt.ts` (`CORE-03`): `buildPrompt(request)` returns `{ system, messages: [user] }`. `system` is a fixed constant holding the SPEC §7 rules, the untrusted-input notice and the JSON output contract, so user data can never alter it. The user message holds `<slayply-task>`, `-job`, `-questions`, `-resume` and `-profile` blocks; facts and stories carry their `[F01]` / `[S01]` IDs, each question its `maxChars`. Any `<slayply-` tag inside user text is escaped to `&lt;slayply-` so data cannot close or forge a block. Adapters map `system` and `messages` onto their vendor format.
 - Built to `dist/` by `tsc`; Turbo builds it before dependents typecheck or test.
@@ -107,15 +108,16 @@ flowchart LR
 - `src/entrypoints/sidepanel/`: React UI (`App.tsx`) that renders the relay status, the privacy statement and the API key form. It holds no logic of its own.
 - `src/lib/settings.ts`: `createSettingsStore(area)` with `load`, `saveKey`, `clearKey`, `acknowledgePrivacy`; keys are checked against the relay's printable-ASCII, 512-character rule; corrupt stored data falls back to defaults.
 - `src/lib/relay-status.ts`: `describeRelayStatus` (pure) and `monitorRelay` (probes `/health` every 3 s, 10 s per probe, gives up at 60 s and sets `offerDirectMode`).
+- Profile (`PROF-01`, ADR-0007): `src/lib/profile-store.ts` (`openProfileDb`, `createProfileStore` with `load` / `save`; schema-checked both ways, `ProfileCorruptError` on a bad record, never overwritten); `src/components/profile-view.tsx` (plain-text views of the profile and the import preview, tested with `renderToString`) and `profile-panel.tsx` (file picker, preview, save, edit; manual-test only). `build-request.ts` now sends the saved facts, stories and preferences (`describeProfileUse` tells the user what an answer uses).
 - `src/lib/config.ts`: build-time `RELAY_URL` and the SPEC §5 privacy text.
 - Generation (`GEN-01`, ADR-0006): `sse.ts` (`readSse`, chunk-safe, 1 MB event cap); `relay-client.ts` (`streamGenerate` posts to `/v1/generate` with the key in `X-User-Anthropic-Key` and yields deltas; failures are `RelayError` with the relay's static message); `partial-text.ts` (`extractAnswerPreview` for the live draft); `build-request.ts` (`buildAnswerRequest`: JD + one question, empty profile, no-resume marker); `generate-controller.ts` (`createGenerationRunner` keeps only the newest run reporting; `runGeneration` state machine, 200,000-character reply cap: streaming, done, raw, error, idle; one re-request on validation failure; `copyTextOf`); `copy.ts` (`copyText`, `createCopyFeedback`, 2 s reset).
 - `src/components/`: `generation-view.tsx` (renders a `GenerationState` as plain text, tested with `renderToString`) and `generate-panel.tsx` (the form and wiring; shown once the privacy statement is acknowledged and a key is saved).
 - Not covered by automated tests: the React layer (see the roadmap manual test).
 
 ## 6. Data & Content Pipeline
-- **Profile Markdown Ingestion (planned, `PROF-01`):** Parses markdown bullet points into structured facts with IDs (`F01`, `F02`).
+- **Profile Markdown Ingestion (`PROF-01`, ADR-0007):** `parseContextPack` reads headings `Facts`, `Stories`, `Preferences`, `Rules` (format in `docs/CONTEXT_PACK.md`); `reconcileProfile` assigns `F01` / `S01` IDs that survive re-import and are never reused.
 - **Resume PDF Extraction (planned, `RES-01`):** Runs `pdf.js` inside client sandbox to produce plain text partitioned by track (FDE/SDE) and region.
-- **Client Storage:** (planned, `PROF-01`, `RES-01`)
+- **Client Storage:** the profile is one `idb` record in the `slayply` database (`PROF-01`); resumes (`RES-01`) will add a store.
 
 ---
 
@@ -177,4 +179,5 @@ flowchart LR
 - `ADR-0002`: Shared Request/Response Schema (Zod, strict requests, tolerant responses).
 - `ADR-0005`: Extension shell (WXT + React) and testable logic.
 - `ADR-0006`: Relay-mode validation, retry and streaming preview.
+- `ADR-0007`: Context pack profile, stable IDs and local storage.
 - (`ADR-0003` and `ADR-0004` are the relay and provider decisions; further ADRs planned during Phase 1 & 2).

@@ -1,6 +1,9 @@
+import type { StoredProfile } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
 import { GeneratePanel } from "../../components/generate-panel.js";
+import { ProfilePanel } from "../../components/profile-panel.js";
 import { PRIVACY_STATEMENT, RELAY_URL } from "../../lib/config.js";
+import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createSettingsStore, type Settings } from "../../lib/settings.js";
 
@@ -107,6 +110,25 @@ export function App() {
     store.load().then(setSettings, () => setLoadError("Could not read saved settings."));
   }, [store]);
 
+  const profileStore = useMemo(() => createProfileStore(openProfileDb()), []);
+  const [profile, setProfile] = useState<StoredProfile | null>(null);
+  // Nothing may import, edit or generate until the saved profile has loaded: acting on a missing
+  // profile would restart the ID counters and could overwrite the record that failed to load.
+  const [profileStatus, setProfileStatus] = useState<"loading" | "ready" | "corrupt" | "error">(
+    "loading",
+  );
+
+  useEffect(() => {
+    profileStore.load().then(
+      (loaded) => {
+        setProfile(loaded);
+        setProfileStatus("ready");
+      },
+      (error: unknown) =>
+        setProfileStatus(error instanceof ProfileCorruptError ? "corrupt" : "error"),
+    );
+  }, [profileStore]);
+
   const [actionError, setActionError] = useState<string | null>(null);
 
   const refresh = async () => setSettings(await store.load());
@@ -172,8 +194,39 @@ export function App() {
           }}
         />
       )}
-      {settings?.privacyAcknowledged && settings.anthropicKey !== "" && (
-        <GeneratePanel apiKey={settings.anthropicKey} />
+      {settings?.privacyAcknowledged && profileStatus === "corrupt" && (
+        <section>
+          <p className="error" role="alert">
+            Your saved profile could not be read. Discarding it deletes it, and your IDs (F01, S01…)
+            restart. Only do this if you will import your context pack again.
+          </p>
+          <button
+            type="button"
+            onClick={() =>
+              void attempt(async () => {
+                await profileStore.discard();
+                setProfile(null);
+                setProfileStatus("ready");
+              })
+            }
+          >
+            Discard the unreadable profile
+          </button>
+        </section>
+      )}
+      {settings?.privacyAcknowledged && profileStatus === "error" && (
+        <p className="error" role="alert">
+          Could not open the local profile storage, so profile features and generating are
+          unavailable. Reload the panel to try again.
+        </p>
+      )}
+      {settings?.privacyAcknowledged &&
+        profileStatus === "ready" &&
+        settings.anthropicKey !== "" && (
+          <GeneratePanel apiKey={settings.anthropicKey} profile={profile} />
+        )}
+      {settings?.privacyAcknowledged && profileStatus === "ready" && (
+        <ProfilePanel profile={profile} store={profileStore} onChange={setProfile} />
       )}
       {settings?.privacyAcknowledged && (
         <KeyForm

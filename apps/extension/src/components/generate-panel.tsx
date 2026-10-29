@@ -1,5 +1,6 @@
+import type { StoredProfile } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
-import { buildAnswerRequest, NO_PROFILE_NOTICE } from "../lib/build-request.js";
+import { buildAnswerRequest, describeProfileUse } from "../lib/build-request.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import { RELAY_URL } from "../lib/config.js";
 import {
@@ -12,7 +13,13 @@ import { GenerationView } from "./generation-view.js";
 const JD_MAX_CHARS = 60_000;
 const QUESTION_MAX_CHARS = 5_000;
 
-export function GeneratePanel({ apiKey }: { apiKey: string }) {
+export function GeneratePanel({
+  apiKey,
+  profile,
+}: {
+  apiKey: string;
+  profile: StoredProfile | null;
+}) {
   const [jd, setJd] = useState("");
   const [question, setQuestion] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -34,7 +41,7 @@ export function GeneratePanel({ apiKey }: { apiKey: string }) {
   const running = state.phase === "streaming";
 
   async function slay() {
-    const built = buildAnswerRequest({ jd, question });
+    const built = buildAnswerRequest({ jd, question, profile });
     if (!built.ok) {
       setFormError(built.message);
       return;
@@ -52,7 +59,7 @@ export function GeneratePanel({ apiKey }: { apiKey: string }) {
   return (
     <section>
       <h2>Draft an answer</h2>
-      <p className="muted">{NO_PROFILE_NOTICE}</p>
+      <p className="muted">{describeProfileUse(profile)}</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
