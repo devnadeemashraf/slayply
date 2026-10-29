@@ -27,7 +27,7 @@ slayply/
 │   └── site/            # Static landing page & privacy documentation (planned, SITE-01)
 ├── packages/
 │   ├── core/            # Zod schemas and validators (CORE-01), prompt builder (CORE-03); claim checker (planned)
-│   ├── providers/       # LLM provider adapters: Claude (PROV-01) and OpenAI (PROV-02) built; Gemini planned
+│   ├── providers/       # LLM provider adapters: Claude (PROV-01), OpenAI (PROV-02) and Gemini (PROV-03) built
 │   └── ui/              # Shared UI components & Gen-Z theme tokens (planned, THEME-01)
 ├── docs/                # Spec, roadmap, standards, handoff pointer; docs/adr/ holds decisions
 ├── .claude/             # Claude Code hooks config, skills and subagents
@@ -90,7 +90,7 @@ flowchart LR
 
 ### 5b. `@slayply/relay` (`apps/relay`, ADR-0003)
 - `app.ts`: `createApp(options)` builds the Hono app from injected providers, clock, logger and config, so tests need no network. Middleware order: access log, CORS, rate limiter, routes. Routes: `GET /health`, `POST /v1/generate` (SSE `delta` / `done` / `error` events). `GET /v1/models?provider=` returns the provider's cached model list (`400` unknown provider or missing key, `501` no adapter, `401` / `429` / `503` / `502` for provider failures).
-- `server.ts`: entry point; reads env via `config.ts` and registers the Claude and OpenAI adapters. Gemini answers `501 PROVIDER_NOT_IMPLEMENTED` until `PROV-03`.
+- `server.ts`: entry point; reads env via `config.ts` and registers the Claude, OpenAI and Gemini adapters. A provider with no adapter would answer `501 PROVIDER_NOT_IMPLEMENTED`.
 - `provider.ts`: re-exports the adapter types from `@slayply/providers` and holds the key header per provider.
 - Guards (ADR-0004): stream deadline 120 s (`STREAM_TIMEOUT`), at most 2 open streams per IP (`429 TOO_MANY_STREAMS`), 15 s body-read timeout (`408 REQUEST_TIMEOUT`). Provider failures become static SSE `error` codes (`UPSTREAM_AUTH`, `UPSTREAM_RATE_LIMITED`, `UPSTREAM_OVERLOADED`, `UPSTREAM_REJECTED`, `UPSTREAM_ERROR`). The provider is whichever `X-User-<Provider>-Key` header is present (exactly one).
 - `cors.ts`, `client-ip.ts`, `rate-limit.ts`, `body.ts`: exact-origin check, proxy-aware client IP, in-memory fixed-window limiter (60/min, resets on restart), counting body reader (500 KB, UTF-8 only).
@@ -100,6 +100,7 @@ flowchart LR
 - `types.ts`: `ProviderAdapter` (`stream`, `streamCompletion`, `listModels`), `GenerateChunk`, `ModelInfo` (optional `supportsEffort`), `ReasoningEffort`, `ProviderError` (kinds `auth`, `rate_limit`, `overloaded`, `invalid_request`, `upstream`, `network`; message never carries upstream text).
 - `claude.ts`: `createClaudeAdapter({ fetch?, baseUrl?, browserAccess?, model?, now? })`. Streams `text_delta` events from `POST /v1/messages`; lists models from `GET /v1/models` with a 10 minute cache keyed by a SHA-256 fingerprint of the key. Uses the newest listed model unless `model` is set. Set `browserAccess` in Direct Mode to send the browser opt-in header.
 - `openai.ts` (`PROV-02`, ADR-0011): `createOpenAiAdapter({ fetch?, baseUrl?, model?, effort?, now? })`. Streams `choices[0].delta.content` from `POST /v1/chat/completions` until `[DONE]`; lists chat models from `GET /v1/models` (filtered by id, newest first, same cache as Claude). `effort` is sent as `reasoning_effort` only when `supportsReasoningEffort(model)` is true, and `ModelInfo.supportsEffort` says so for the UI. `util.ts` holds the helpers shared with `claude.ts`.
+- `gemini.ts` (`PROV-03`, ADR-0012): `createGeminiAdapter({ fetch?, baseUrl?, model?, effort?, now? })`. Streams text parts (thoughts skipped) from `:streamGenerateContent?alt=sse`, key in the `x-goog-api-key` header; ends only on `finishReason: STOP`. Lists `gemini-*` text models by version, newest first. `effort` becomes `thinkingBudget` (2.5) or `thinkingLevel` (3+) only when `supportsThinking(model)` is true.
 - `sse.ts`: `readSse(body)` incremental SSE parser (chunk-split safe, 1 MB event cap).
 - `generate.ts`: `generateValidated(adapter, request, key, signal, onDelta?)` runs the prompt, validates with `validateGenerateResponse`, retries once with `retryPrompt`, then returns `{ ok: false, rawText }`.
 - Imports no `node:` module (tested), so it runs in the relay and in the extension.

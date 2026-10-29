@@ -228,7 +228,7 @@
 #### `PROV-03`: Gemini Adapter & Relay Model Listing
 - **Spec Section:** §4 Feature 8 `[SHOULD]`, §8 Hosting
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - Gemini adapter behind the `PROV-01` interface; thinking/effort mapped per model and hidden when unsupported.
   - Relay `GET /v1/models?provider=` returns each provider's cached model list.
@@ -339,6 +339,7 @@
 | **ADR-0009** | PDF Resume Parsing | Accepted | `pdf.js` in the side panel; reading order for one gutter; text only is stored | See `docs/adr/0009-pdf-resume-parsing.md` |
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 | **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
+| **ADR-0012** | Gemini Adapter | Accepted | Key in header; ends only on `STOP`; thinking budget (2.5) or level (3+) by model id; models ordered by version | Key in URL, trusting a partial stream, relying on the models `thinking` field |
 
 ---
 
@@ -357,6 +358,7 @@
 
 ## 8. Status Log
 
+- **2026-10-30:** `PROV-03` in review: Gemini adapter (streamed, key in a header, incomplete replies are errors), text-model list, thinking effort mapped per model family and flagged for the UI; the relay serves all three providers and `GET /v1/models?provider=` already covered unknown-provider and missing-key cases (ADR-0012). Live-untested.
 - **2026-10-29:** `PROV-02` in review: OpenAI adapter behind the provider interface (Chat Completions, streamed), chat-model list from `GET /v1/models`, reasoning effort mapped to `reasoning_effort` and flagged per model so the UI can hide it; the relay now serves OpenAI too (ADR-0011). The side panel still sends only the Anthropic key.
 - **2026-10-29:** `RES-01` in review: upload a PDF resume, read it in the browser (nothing uploaded), preview the extracted text, tag it with a track and region, store the text locally (IndexedDB v3) and pick a resume per answer. Extension is 2.10 MB of 3.5 MB (ADR-0009).
 - **2026-10-29:** `PROF-02b` in review: the questionnaire in the side panel, one section per step with progress, autosave on a short delay, on blur and on step change, inline errors, add/remove/move for roles and other entries, "Use these answers" to build the profile, answers JSON export/import (preview first) and context-pack markdown export. Facts built from answers are marked and edited through the answers (ADR-0008).
