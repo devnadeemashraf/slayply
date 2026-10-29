@@ -105,7 +105,7 @@
 #### `EXT-01`: WXT Side Panel Shell & Settings
 - **Spec Section:** §2 What It Is, §8 Models `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** Done
 - **Acceptance Criteria:**
   - Chrome Manifest V3 side panel opens via toolbar icon.
   - Basic settings screen to enter Anthropic API key, saved locally to `chrome.storage.local`.
@@ -309,9 +309,11 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **ADR-0001** | Monorepo Structure & Tooling | Accepted | pnpm workspaces + Turborepo + Biome | npm workspaces, Nx, ESLint/Prettier |
 | **ADR-0002** | Shared Request/Response Schema | Accepted | Zod schemas, inferred types, result-union validators | JSON Schema + Ajv, ad-hoc `parse()` |
-| ADR-0003 (planned, EXT-01) | Extension Framework | Proposed | WXT (Vite + MV3) | Plasmo, Custom Webpack MV3 |
-| ADR-0004 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (SPEC §10 DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
-| ADR-0005 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
+| **ADR-0003** | Relay Runtime, Build and Request Guards | Accepted | Hono on Node, tsc build, guards in the app | n/a |
+| **ADR-0004** | Provider Interface & Claude Adapter | Accepted | `ProviderAdapter` in `packages/providers`, one repair retry | n/a |
+| **ADR-0005** | Extension Shell & Testable Logic | Accepted | WXT (Vite + MV3); logic in injected-dependency modules | Plasmo, hand-rolled Vite, logic inside React components |
+| ADR-0006 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (SPEC §10 DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
+| ADR-0007 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
 
 ---
 
@@ -329,6 +331,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-29:** `EXT-01` done: `apps/extension` builds an MV3 side panel with WXT and React (227 kB). It stores the Anthropic key in `chrome.storage.local`, shows the SPEC §5 privacy statement until acknowledged, and pings the relay `/health` with a warm-up state and a 60 s Direct Mode offer (ADR-0005).
 
 - **2026-10-29:** `PROV-01` done: `packages/providers` has the shared adapter interface, the Claude streaming adapter, a cached model list and `generateValidated` (one repair retry, then raw text). The relay now serves Claude, `GET /v1/models`, a stream deadline, a per-IP open-stream cap and a body-read timeout (ADR-0004).
 

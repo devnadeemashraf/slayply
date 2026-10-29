@@ -4,11 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'skip: extension dev server planned in EXT-01'",
-    "build": "echo 'skip: extension build planned in EXT-01'",
-    "test": "echo 'skip: extension tests planned in EXT-01'"
+    "dev": "wxt",
+    "build": "wxt build",
+    "postinstall": "wxt prepare",
+    "typecheck": "wxt prepare && tsc -p tsconfig.json",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@slayply/core": "workspace:*"
+    "@slayply/core": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "wxt": "0.21.5"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.3.7",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   }
 }
