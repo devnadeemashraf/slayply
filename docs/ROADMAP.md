@@ -48,8 +48,8 @@
 - **Status:** Done
 - **Acceptance Criteria:**
   - `pnpm install` succeeds across all workspaces (`apps/*`, `packages/*`).
-  - Turborepo orchestrates `check`, `lint`, `fmt:check`, and `test`.
-  - Empty skeleton scripts print `"skip: skeleton only"` and exit with 0.
+  - Turborepo orchestrates `build`, `typecheck` and `test`; the root `pnpm run check` runs everything else.
+  - Tasks for unbuilt code print `skip: <reason>` (naming the roadmap item that adds them) and exit 0.
 - **Required Tests:** `scripts/doctor.test.mjs`, `scripts/handoff-check.test.mjs`.
 
 #### `BOOT-02`: Agent Harness, Standards & CI
@@ -58,9 +58,9 @@
 - **Status:** Done
 - **Acceptance Criteria:**
   - `AGENTS.md` acts as single source of truth for agent rules.
-  - GitHub Actions runs `check`, `lint`, `test`, and `handoff-check`.
+  - GitHub Actions runs one `check` job (doctor, handoff, format, lint, test, typecheck).
   - Git pre-commit, commit-msg, and pre-push hooks installed.
-- **Required Tests:** CI runs green on PR.
+- **Required Tests:** `scripts/*.test.mjs` cover doctor, handoff guard, hook setup and the agent guard; CI runs green on every PR.
 
 ---
 
@@ -69,7 +69,7 @@
 #### `CORE-01`: Shared Schema & Core Types
 - **Spec Section:** §6 Request/Response Contract `[MUST]`
 - **Size:** S (1 session)
-- **Status:** In review
+- **Status:** Done
 - **Acceptance Criteria:**
   - `GenerateRequest` and `GenerateResponse` Zod schemas exported from `packages/core`.
   - Full TypeScript types inferred and exported.
@@ -81,12 +81,26 @@
 - **Size:** M (2 sessions)
 - **Status:** Planned
 - **Acceptance Criteria:**
+  - Decide how Node runs and bundles the TypeScript (ADR first).
   - Hono HTTP server running on Node with `@hono/node-server`.
   - `GET /health` endpoint returns `{ status: "ok", timestamp: ... }`.
   - `POST /v1/generate` receives `GenerateRequest` + user API key header, validates with Zod, and streams SSE.
   - Request size limited to 500 KB; IP rate limiter active (60 req/min).
   - Logs status and latency only; zero request/response payloads in logs.
-- **Required Tests:** Vitest integration tests for `/health`, `/v1/generate` input validation, and header security.
+  - CORS allows only `chrome-extension://<EXTENSION_ID>` and `http://localhost:*`; no wildcard.
+  - Provider keys are read only from `X-User-Anthropic-Key`, `X-User-OpenAI-Key`, `X-User-Gemini-Key`, never logged, echoed or stored.
+  - Errors use the structured JSON shape in `docs/CODING_STANDARDS.md`; non-JSON and binary bodies are rejected.
+  - The in-memory rate limiter resets on restart (Render free may restart at any time): document this.
+- **Required Tests:** Vitest integration tests for `/health`, `/v1/generate` input validation, header security, CORS allow/deny, the 500 KB cap, rate limiting, and that no payload or key appears in log output.
+
+#### `CORE-03`: Prompt Builder
+- **Spec Section:** §7 System Prompt, §3 Core `[MUST]`
+- **Size:** S (1 session)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - `packages/core` turns a validated `GenerateRequest` into provider-neutral messages that encode the seven §7 rules, including the track-specific structure and the honest answer to AI-detection questions.
+  - Every profile fact and story is included with its ID so the model can cite it.
+- **Required Tests:** Snapshot tests per task kind; `maxChars`, tone and length appear in the prompt; a job description containing instructions cannot alter the system rules (prompt-injection probe).
 
 #### `EXT-01`: WXT Side Panel Shell & Settings
 - **Spec Section:** §2 What It Is, §8 Models `[MUST]`
@@ -96,7 +110,19 @@
   - Chrome Manifest V3 side panel opens via toolbar icon.
   - Basic settings screen to enter Anthropic API key, saved locally to `chrome.storage.local`.
   - Side panel pings relay `/health` on open and displays connection status indicator.
+  - First run shows the privacy statement from SPEC §5 and requires acknowledgement before any generation.
   - 🧪 **Manual Test:** Click extension icon in Chrome; confirm side panel opens cleanly, status shows "Connected" or "Relay Awake".
+- **Required Tests:** Unit tests for the settings store and the relay-status state machine (awake, warming, 60 s timeout offers Direct Mode).
+
+#### `PROV-01`: Provider Interface & Claude Adapter
+- **Spec Section:** §4 Feature 8 `[MUST]`, §3 Providers
+- **Size:** M (2 sessions)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - One provider interface in `packages/providers`; the Claude adapter streams text and returns JSON validated with `validateGenerateResponse` (retry once with the retry prompt, then surface the raw text).
+  - Model list is fetched from the provider's models endpoint and cached, never hard-coded.
+  - Runs in both Node (relay) and the browser (Direct Mode).
+- **Required Tests:** Recorded-fixture tests (no live network): happy stream, malformed JSON then repaired retry, repeated failure falls back to raw text, provider error mapping.
 
 #### `GEN-01`: Basic Answer Generation Loop
 - **Spec Section:** §4 Feature 5 `[MUST]`
@@ -107,6 +133,7 @@
   - User clicks "Slay"; request sent to relay; streaming tokens render in UI.
   - "Copy to Clipboard" button copies text with visual feedback.
   - 🧪 **Manual Test:** Paste a 1-paragraph JD and 1 question; verify stream completes and clipboard contains identical text.
+- **Required Tests:** Component tests for the stream renderer and copy button; an end-to-end test against a stubbed relay.
 
 ---
 
@@ -130,6 +157,7 @@
   - Tag resume with track (FDE, SDE, custom) and region (master, gulf, india, remote).
   - Resumes stored locally in IndexedDB.
   - 🧪 **Manual Test:** Upload sample 2-page resume PDF; confirm plain text preview matches layout without garbage symbols.
+- **Required Tests:** Parser tests on fixture PDFs (text, multi-column, scanned with no text layer, oversized file, corrupt file).
 
 #### `VERIF-01`: Claim Checker & Grounding Engine
 - **Spec Section:** §4 Feature 6 `[MUST]`
@@ -137,6 +165,7 @@
 - **Status:** Planned
 - **Acceptance Criteria:**
   - System prompt enforces fact citing (`F01`, `S02`).
+  - Questions that try to detect AI-written answers get an honest reply that discloses AI-assisted drafting.
   - Claim checker flags any first-person sentence missing a valid Fact ID.
   - UI highlights uncited sentences in red with a "Remove" action button.
 - **Required Tests:** Unit tests with mocked LLM outputs containing valid and invalid fact references.
@@ -147,22 +176,42 @@
 - **Status:** Planned
 - **Acceptance Criteria:**
   - Generate match table (they want → you have), gaps, chance rating (low/medium/high), deal-breakers.
-  - Suggests recommended resume track.
+  - Suggests recommended resume track and region; the user can override it.
+  - Includes a suggested salary answer; runs once per job and caches the result.
 - **Required Tests:** Fixture tests verifying parsing of structured fit check response.
 
 ---
 
-### Phase 3: Multi-Provider Support & Direct Mode
-
-#### `PROV-01`: OpenAI & Gemini Adapters
-- **Spec Section:** §4 Feature 8 `[SHOULD]`
-- **Size:** M (2 sessions)
+#### `SET-01`: Settings, Export/Import & Data Wipe
+- **Spec Section:** §4 Feature 9 `[MUST]` / `[SHOULD]`
+- **Size:** S (1 session)
 - **Status:** Planned
 - **Acceptance Criteria:**
-  - Provider interface implemented for Claude, OpenAI (GPT-4o), and Google Gemini (2.5 Flash / Pro).
-  - Dynamic model list retrieval via `/v1/models?provider=`.
-  - Reasoning effort controls (low, medium, high) mapped to provider-specific params.
-- **Required Tests:** Recorded replay fixtures (VCR-style) for each provider adapter.
+  - Export and import everything (settings, profile, resumes, jobs, history) as JSON, validated on import.
+  - One-tap wipe of all local data, with confirmation. `[MUST]`
+  - Warn before sending data to a provider tier that trains on inputs. `[SHOULD]`
+  - Privacy statement is reachable from settings.
+- **Required Tests:** Round-trip export/import; malformed and hostile import files are rejected without partial writes; wipe leaves no stored keys or records.
+
+### Phase 3: Multi-Provider Support & Direct Mode
+
+#### `PROV-02`: OpenAI Adapter
+- **Spec Section:** §4 Feature 8 `[SHOULD]`
+- **Size:** S (1 session)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - OpenAI adapter behind the `PROV-01` interface; record the Chat Completions vs Responses choice in an ADR.
+  - Models fetched from `GET /v1/models`; reasoning effort (low, medium, high) mapped to the provider parameter and hidden when the model does not support it.
+- **Required Tests:** Recorded-fixture replay for stream, error and effort mapping.
+
+#### `PROV-03`: Gemini Adapter & Relay Model Listing
+- **Spec Section:** §4 Feature 8 `[SHOULD]`, §8 Hosting
+- **Size:** S (1 session)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - Gemini adapter behind the `PROV-01` interface; thinking/effort mapped per model and hidden when unsupported.
+  - Relay `GET /v1/models?provider=` returns each provider's cached model list.
+- **Required Tests:** Recorded-fixture replay; relay endpoint tests for an unknown provider and a missing key.
 
 #### `DIRECT-01`: Direct Mode Client Toggle
 - **Spec Section:** §4 Feature 8 `[SHOULD]`
@@ -172,6 +221,7 @@
   - Toggle switch in settings for "Direct Mode" (bypasses relay entirely).
   - Direct calls use identical `packages/providers` adapters in browser context.
   - 🧪 **Manual Test:** Turn off relay, enable Direct Mode with personal key; verify generations still succeed.
+- **Required Tests:** Unit tests that Direct Mode bypasses the relay client and never sends the key to any non-provider origin.
 
 ---
 
@@ -184,8 +234,10 @@
 - **Acceptance Criteria:**
   - Context menu item "Capture for Slayply" → [JD | Question | Note].
   - On non-LinkedIn boards: "Capture visible JD" button.
-  - Auto-extract company, title, location where possible.
+  - A "Capture selection" panel button alongside the context menu, and a paste box fallback.
+  - Auto-extract company, title, location and salary text where possible; every field is editable.
   - 🧪 **Manual Test:** Highlight text on Greenhouse job page, right-click, capture as JD; confirm side panel opens with text populated.
+- **Required Tests:** Extraction tests on fixture HTML; a test that nothing is captured on LinkedIn without an explicit selection.
 
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
@@ -193,7 +245,7 @@
 - **Status:** Planned
 - **Acceptance Criteria:**
   - Saved jobs view with status pipeline (Saved, Applied, Interviewing, Rejected, Offer).
-  - Store answers submitted per job in IndexedDB for future reuse.
+  - Store answers submitted per job in IndexedDB; offer a past answer when a similar question appears.
 - **Required Tests:** IndexedDB repository tests for CRUD operations on job applications.
 
 #### `GEN-02`: Cover Letter & Cold Messages
@@ -202,7 +254,8 @@
 - **Status:** Planned
 - **Acceptance Criteria:**
   - Specialized prompts for cover letters, recruiter messages, and cold emails.
-  - Tone options: crisp, warm, bold.
+  - Tone options: crisp, warm, bold; regenerate a single answer; shorten or lengthen.
+  - Relocation note task.
   - Character limit fitter respects strict recruiter limits (e.g. 300 chars for LinkedIn note).
 - **Required Tests:** Character-limit boundary tests and tone prompt generation tests.
 
@@ -228,6 +281,26 @@
   - `render.yaml` blueprint tested for one-click self-hosting of relay.
 - **Required Tests:** Playwright smoke test on static site build.
 
+#### `QA-01`: End-to-End Smoke Test & Budget Gates
+- **Spec Section:** §3 Tests, §5 Performance Budgets `[MUST]`
+- **Size:** M (2 sessions)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - Playwright smoke test loads the built extension and opens the panel.
+  - CI fails when the extension exceeds 3.5 MB uncompressed; a recorded check of panel memory against the 60 MB budget.
+  - Relay first-token latency measured against a stubbed provider.
+- **Required Tests:** The smoke test itself, plus a deliberate over-budget fixture that proves the gate fails.
+
+#### `REL-01`: Security Review, Web Store Packaging & v1.0.0
+- **Spec Section:** §5 Security Model, §9 Out of Scope `[MUST]`
+- **Size:** M (2 sessions)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - Red-team pass over relay, parsing and rendering; findings fixed or logged.
+  - Permissions minimized and justified; store listing, icons and privacy text prepared.
+  - Tagged v1.0.0 with release notes.
+- **Required Tests:** Regression tests for each fixed finding; `pnpm run check` green on the tagged commit.
+
 ---
 
 ## 5. Decisions Table
@@ -237,7 +310,7 @@
 | **ADR-0001** | Monorepo Structure & Tooling | Accepted | pnpm workspaces + Turborepo + Biome | npm workspaces, Nx, ESLint/Prettier |
 | **ADR-0002** | Shared Request/Response Schema | Accepted | Zod schemas, inferred types, result-union validators | JSON Schema + Ajv, ad-hoc `parse()` |
 | ADR-0003 (planned, EXT-01) | Extension Framework | Proposed | WXT (Vite + MV3) | Plasmo, Custom Webpack MV3 |
-| ADR-0004 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
+| ADR-0004 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (SPEC §10 DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
 | ADR-0005 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
 
 ---
@@ -263,7 +336,8 @@
 
 - **2026-10-29:** `BP-002` done: README, CONTRIBUTING, SECURITY, Claude Code harness (`scripts/claude-guard.mjs`, `.claude/`).
 
-- **2026-10-29:** `CORE-01` in review: bounded, strict request schema; tolerant response schema; shared validators with one-shot retry prompt.
+- **2026-10-29:** `BP-005`: documentation accuracy pass from an independent audit; added roadmap items `CORE-03`, `PROV-01` (Claude), `SET-01`, `QA-01`, `REL-01` and split the old `PROV-01` into `PROV-02`/`PROV-03`.
+- **2026-10-29:** `CORE-01` merged: bounded, strict request schema; tolerant response schema; shared validators with one-shot retry prompt.
 
 - **2026-10-29:** `BP-001` fixed: lint/format scripts no longer swallow Biome failures; doctor enforces real pins; handoff guard also requires HANDBOOK updates for new modules; git hooks install via `prepare`; CI uses a frozen lockfile.
 

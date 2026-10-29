@@ -39,8 +39,8 @@ We need a monorepo setup that provides ultra-fast package management, strict sha
 Chosen Option: **Option 1 (pnpm workspaces + Turborepo + Biome)**.
 
 ### Positive Consequences
-- **Instant symlinking:** `pnpm` workspace protocol (`workspace:*`) enables immediate sharing of `packages/core` without intermediate compilation steps during development.
-- **Turborepo caching:** `turbo` caches build, lint, and test tasks across workspaces.
+- **Instant symlinking:** `pnpm` workspace protocol (`workspace:*`) links internal packages without publishing. *Amended by ADR-0002: `@slayply/core` ships compiled `dist/`, which Turbo builds before dependents run.*
+- **Turborepo caching:** `turbo` orchestrates and caches the `build`, `typecheck` and `test` tasks across workspaces. Format, lint, doctor and handoff run once from the repo root, not through Turbo.
 - **Biome performance:** Single Rust binary replaces both ESLint and Prettier, formatting and linting files in milliseconds with zero configuration friction.
 - **Strict isolation:** pnpm's content-addressable storage prevents ghost dependencies.
 
@@ -52,5 +52,5 @@ Chosen Option: **Option 1 (pnpm workspaces + Turborepo + Biome)**.
 
 ## Validation & Verification
 - `pnpm install` links internal packages cleanly.
-- `pnpm run check` runs Turborepo pipeline and completes with 0 exit code across empty skeleton.
+- `pnpm run check` runs doctor, handoff, format, lint and test from the root, then Turbo's `typecheck`, and exits 0 on the skeleton.
 - Verified on Windows Node v24.21.0 and pnpm 12.6.0.

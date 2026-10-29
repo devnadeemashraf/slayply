@@ -12,16 +12,17 @@
 ## 2. Language & Framework Standards (TypeScript & Node/Browser)
 
 ### Formatting & Linting
-- **Tool:** Biome (`@biomejs/biome`) version 2.6.3.
+- **Tool:** Biome (`@biomejs/biome`); the pinned version is in `package.json` and `docs/VERSIONS.md`. Biome formats and lints code and JSON only (Markdown and YAML are excluded).
 - **Indentation:** 2 spaces, no tabs.
 - **Line Endings:** LF everywhere (`.gitattributes` enforces this).
 - **Quotes & Semicolons:** Double quotes, semicolons required.
 
 ### Naming Conventions
+*Review-enforced: Biome's naming rules are not enabled, so reviewers check these.*
 - **Files & Directories:** `kebab-case` (e.g. `claim-checker.ts`, `prompt-builder.test.ts`).
 - **Classes, Types & Interfaces:** `PascalCase` (e.g. `GenerateRequest`, `ClaudeProvider`).
 - **Variables, Functions & Properties:** `camelCase` (e.g. `validateResponse`, `factId`).
-- **Constants & Enums:** `UPPER_SNAKE_CASE` (e.g. `MAX_PAYLOAD_BYTES`, `DEFAULT_TIMEOUT_MS`).
+- **Module-level constants:** `UPPER_SNAKE_CASE` for primitive and lookup-table constants (e.g. `MAX_PAYLOAD_BYTES`, `LIMITS`). Zod schemas and inferred types follow the camelCase/PascalCase rules above (`generateRequestSchema`, `GenerateRequest`).
 
 ### Error Handling
 - Use typed error classes or structured result objects for domain errors.
@@ -38,7 +39,7 @@
   ```
 
 ### Logging Rules
-- **Relay logs:** Strictly metadata only: `[timestamp] [status] [latency_ms] [provider] [model]`.
+- **Relay logs:** Strictly metadata only: `[timestamp] [status] [latency_ms] [provider] [model]`. Provider and model names are configuration, not user content.
 - **Forbidden in logs:** Request bodies, response texts, user profile facts, prompts, or API key headers.
 
 ### Hot-Path Performance Rules
@@ -68,7 +69,7 @@ Every new feature or provider adapter must include test coverage for:
 
 ### Determinism
 - Tests must never depend on live external networks or real API keys.
-- Mock all network calls via recorded fixtures or in-memory handlers (`msw` or `vitest.fn()`).
+- Mock all network calls via recorded fixtures or in-memory handlers (`vi.fn()`, or `msw` if it is added with a `docs/VERSIONS.md` entry).
 
 ---
 
@@ -80,7 +81,7 @@ Every new feature or provider adapter must include test coverage for:
   - `feat/CORE-01-zod-schemas`
   - `fix/BP-001-relay-cors-header`
   - `chore/BOOT-01-scaffold-workspaces`
-  - `docs/ROADMAP-update`
+  - `docs/BP-002-readme` (`<type>` may be `docs`; the identifier is the roadmap or bug ID)
 
 ### Commit Messages (Conventional Commits)
 Format: `<type>(<scope>): <short description>`
@@ -91,6 +92,6 @@ Format: `<type>(<scope>): <short description>`
 - `docs(handbook): update runtime flow diagram`
 
 ### Pull Requests & Merging
-- All PRs require green status on CI (`lint`, `test`, `doctor`, `handoff:check`).
+- All PRs require a green `check` job (it runs doctor, handoff, format, lint, test and typecheck).
 - PRs must update `docs/POINTER.md`.
 - Squash merge only to keep `main` history linear and clean.
