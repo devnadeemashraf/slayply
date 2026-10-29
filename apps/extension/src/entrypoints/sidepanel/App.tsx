@@ -6,6 +6,7 @@ import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
 import { PRIVACY_STATEMENT, RELAY_URL } from "../../lib/config.js";
+import { createFitStore } from "../../lib/fit-store.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createResumeStore } from "../../lib/resume-store.js";
@@ -118,6 +119,7 @@ export function App() {
   const profileStore = useMemo(() => createProfileStore(db), [db]);
   const answersStore = useMemo(() => createAnswersStore(db), [db]);
   const resumeStore = useMemo(() => createResumeStore(db), [db]);
+  const fitStore = useMemo(() => createFitStore(db), [db]);
   const [resumes, setResumes] = useState<StoredResume[]>([]);
   const [resumesError, setResumesError] = useState<string | null>(null);
   const [profile, setProfile] = useState<StoredProfile | null>(null);
@@ -242,7 +244,12 @@ export function App() {
       {settings?.privacyAcknowledged &&
         profileStatus === "ready" &&
         settings.anthropicKey !== "" && (
-          <GeneratePanel apiKey={settings.anthropicKey} profile={profile} resumes={resumes} />
+          <GeneratePanel
+            apiKey={settings.anthropicKey}
+            profile={profile}
+            resumes={resumes}
+            fitStore={fitStore}
+          />
         )}
       {settings?.privacyAcknowledged && resumesError && (
         <p className="error" role="alert">

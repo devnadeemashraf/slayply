@@ -22,6 +22,8 @@ export type GenerationState =
   | { phase: "raw"; rawText: string; issues: { path: string; message: string }[] }
   | { phase: "error"; message: string; code: string };
 
+type Issue = { path: string; message: string };
+
 export type RunGenerationOptions = {
   baseUrl: string;
   apiKey: string;
@@ -34,6 +36,17 @@ export type RunGenerationOptions = {
 /** Stops a runaway stream: far above a valid reply (outputs are capped at 50,000 characters each). */
 export const MAX_REPLY_CHARS = 200_000;
 
+/** A fit check is only useful with a `fit` object, so a reply without one counts as invalid. */
+function checkReply(
+  request: GenerateRequest,
+  result: ReturnType<typeof validateGenerateResponse>,
+): { success: true; data: GenerateResponse } | { success: false; issues: Issue[] } {
+  if (result.success && request.task === "fit_check" && result.data.fit === undefined) {
+    return { success: false, issues: [{ path: "fit", message: "The fit result is missing" }] };
+  }
+  return result;
+}
+
 /**
  * Generates through the relay. The relay streams raw text and cannot take a repair prompt
  * (ADR-0004), so the client validates the reply itself and, on failure, asks once more with the
@@ -41,7 +54,7 @@ export const MAX_REPLY_CHARS = 200_000;
  */
 export async function runGeneration(options: RunGenerationOptions): Promise<void> {
   const { onState } = options;
-  let lastIssues: { path: string; message: string }[] = [];
+  let lastIssues: Issue[] = [];
   let lastText = "";
 
   for (const attempt of [1, 2] as const) {
@@ -70,7 +83,7 @@ export async function runGeneration(options: RunGenerationOptions): Promise<void
       return;
     }
 
-    const result = validateGenerateResponse(stripCodeFence(buffer));
+    const result = checkReply(options.request, validateGenerateResponse(stripCodeFence(buffer)));
     if (result.success) {
       onState({
         phase: "done",

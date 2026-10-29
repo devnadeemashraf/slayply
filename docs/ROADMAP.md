@@ -194,7 +194,7 @@
 #### `FIT-01`: Fit Check Analysis
 - **Spec Section:** §4 Feature 4 `[MUST]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - Generate match table (they want → you have), gaps, chance rating (low/medium/high), deal-breakers.
   - Suggests recommended resume track and region; the user can override it.

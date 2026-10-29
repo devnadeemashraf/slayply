@@ -42,3 +42,19 @@ export function validReply(text: string): string {
     warnings: ["No resume or profile was provided, so this answer is generic."],
   });
 }
+
+/** A model reply to a `fit_check` request that satisfies `validateGenerateResponse`. */
+export function validFitReply(): string {
+  return JSON.stringify({
+    fit: {
+      matches: [{ want: "Billing systems", have: "Built the billing system", factIds: ["F01"] }],
+      gaps: ["No Rust experience"],
+      chance: "medium",
+      reason: "Strong backend match, one gap.",
+      resume: { track: "sde", region: "us" },
+      dealBreakers: [],
+    },
+    outputs: [],
+    warnings: [],
+  });
+}
