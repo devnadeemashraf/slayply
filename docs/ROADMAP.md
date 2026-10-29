@@ -219,7 +219,7 @@
 #### `PROV-02`: OpenAI Adapter
 - **Spec Section:** §4 Feature 8 `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - OpenAI adapter behind the `PROV-01` interface; record the Chat Completions vs Responses choice in an ADR.
   - Models fetched from `GET /v1/models`; reasoning effort (low, medium, high) mapped to the provider parameter and hidden when the model does not support it.
@@ -336,7 +336,9 @@
 | **ADR-0006** | Relay-Mode Validation, Retry & Streaming Preview | Accepted | Draft preview from partial JSON; re-request once, then raw text; no-resume marker request | Raw JSON stream, relay `repair` field, resume textarea |
 | **ADR-0007** | Context Pack Profile, Stable IDs & Local Storage | Accepted | Heading-driven markdown parsed in core; persisted ID ledger; one `idb` record; rules stored but not applied | YAML/LLM import, hash or positional IDs, rules in prefs, per-item stores |
 | **ADR-0008** | Guided Context Questionnaire & Standardized Answers | Accepted | Answers record is the truth; compiled, origin-tagged profile (v2); typed-out `private` section; entry-keyed stable IDs; one context | Derive-only, compile-to-markdown, text-only IDs, named contexts |
+| **ADR-0009** | PDF Resume Parsing | Accepted | `pdf.js` in the side panel; reading order for one gutter; text only is stored | See `docs/adr/0009-pdf-resume-parsing.md` |
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
+| **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
 
 ---
 
@@ -355,6 +357,7 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `PROV-02` in review: OpenAI adapter behind the provider interface (Chat Completions, streamed), chat-model list from `GET /v1/models`, reasoning effort mapped to `reasoning_effort` and flagged per model so the UI can hide it; the relay now serves OpenAI too (ADR-0011). The side panel still sends only the Anthropic key.
 - **2026-10-29:** `RES-01` in review: upload a PDF resume, read it in the browser (nothing uploaded), preview the extracted text, tag it with a track and region, store the text locally (IndexedDB v3) and pick a resume per answer. Extension is 2.10 MB of 3.5 MB (ADR-0009).
 - **2026-10-29:** `PROF-02b` in review: the questionnaire in the side panel, one section per step with progress, autosave on a short delay, on blur and on step change, inline errors, add/remove/move for roles and other entries, "Use these answers" to build the profile, answers JSON export/import (preview first) and context-pack markdown export. Facts built from answers are marked and edited through the answers (ADR-0008).
 - **2026-10-29:** `SET-01` in review: export/import everything as one versioned JSON file (validated in full, replaced in one transaction), a confirmed one-tap wipe of every store and the stored key, the privacy statement and a training-tier warning in settings. The API key and privacy acknowledgement are not exported.
