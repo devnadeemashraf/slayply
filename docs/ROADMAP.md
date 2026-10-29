@@ -96,7 +96,7 @@
 #### `CORE-03`: Prompt Builder
 - **Spec Section:** §7 System Prompt, §3 Core `[MUST]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** Done
 - **Acceptance Criteria:**
   - `packages/core` turns a validated `GenerateRequest` into provider-neutral messages that encode the seven §7 rules, including the track-specific structure and the honest answer to AI-detection questions.
   - Every profile fact and story is included with its ID so the model can cite it.
@@ -329,6 +329,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-29:** `CORE-03` done: `buildPrompt` in `packages/core` turns a `GenerateRequest` into a provider-neutral `{ system, messages }`; user data sits in `<slayply-*>` blocks with forged tags neutralised.
 
 - **2026-10-29:** `BP-004` fixed: `claude-guard` blocked reads of `docs/SPEC.md` and `node_modules/*/dist`; found by an independent audit when the reviewer could not read the spec.
 

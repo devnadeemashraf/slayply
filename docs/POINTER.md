@@ -10,11 +10,11 @@
 - None currently open.
 
 ## NEXT UP
-- **Item:** `CORE-03` — Prompt builder in `packages/core`. Fix-first items above go before it.
-- **Why now:** `CORE-02` landed the relay and its `ProviderAdapter` seam; `CORE-03` produces the provider-neutral messages that `PROV-01` (Claude adapter) will send.
-- **Where to start:** read SPEC §7 and the `CORE-03` roadmap entry. Test-first, including the prompt-injection probe.
+- **Item:** `PROV-01` — Provider interface and Claude adapter in `packages/providers`. Fix-first items above go before it.
+- **Why now:** `CORE-03` landed `buildPrompt`; `PROV-01` is the first consumer, sending `prompt.system` and `prompt.messages` to Claude.
+- **Where to start:** read SPEC §4 Feature 8 and the `PROV-01` roadmap entry. Verify the Anthropic Messages API and browser-access header against docs and record them in `docs/VERSIONS.md`. This is M-sized: use the `architect` subagent and write an ADR.
 - **Carry into `PROV-01`:** wire real adapters into `apps/relay/src/server.ts` (it passes `providers: {}`, so `/v1/generate` returns 501); add a stream deadline, a per-IP open-stream cap and a body-read timeout (ADR-0003); decide whether `ProviderAdapter` moves to a shared package; build `GET /v1/models`.
-- **Done-when:** see `CORE-03` in `docs/ROADMAP.md`.
+- **Done-when:** see `PROV-01` in `docs/ROADMAP.md`.
 
 ## Open questions for the human
 - None blocking. Confirmed defaults: BUILD mode active, Render free tier for relay, WXT for Chrome Side Panel.
@@ -40,6 +40,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #15 | `CORE-03` | Prompt builder: `buildPrompt` returns provider-neutral `{ system, messages }` with the SPEC §7 rules, ID-tagged facts, per-question `maxChars`, and forged-tag neutralisation | Manual test: No
 - PR #14 | `CORE-02` | Stateless Hono relay: /health, /v1/generate SSE seam (501 until PROV-01), CORS allowlist, 500 KB cap, 60/min limiter, metadata-only logs, ADR-0003 | Manual test: Yes
 - PR #13 | `BP-006` | Handoff cleanup: no-stacking rule, session gotchas, merged branches deleted | Manual test: No
 - PR #12 | `BP-005` | Docs accuracy pass from independent audit; roadmap gaps filled (CORE-03, PROV split, SET-01, QA-01, REL-01) | Manual test: No
