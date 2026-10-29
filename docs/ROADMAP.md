@@ -183,7 +183,7 @@
 #### `VERIF-01`: Claim Checker & Grounding Engine
 - **Spec Section:** §4 Feature 6 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - System prompt enforces fact citing (`F01`, `S02`).
   - Questions that try to detect AI-written answers get an honest reply that discloses AI-assisted drafting.
@@ -336,7 +336,7 @@
 | **ADR-0006** | Relay-Mode Validation, Retry & Streaming Preview | Accepted | Draft preview from partial JSON; re-request once, then raw text; no-resume marker request | Raw JSON stream, relay `repair` field, resume textarea |
 | **ADR-0007** | Context Pack Profile, Stable IDs & Local Storage | Accepted | Heading-driven markdown parsed in core; persisted ID ledger; one `idb` record; rules stored but not applied | YAML/LLM import, hash or positional IDs, rules in prefs, per-item stores |
 | **ADR-0008** | Guided Context Questionnaire & Standardized Answers | Accepted | Answers record is the truth; compiled, origin-tagged profile (v2); typed-out `private` section; entry-keyed stable IDs; one context | Derive-only, compile-to-markdown, text-only IDs, named contexts |
-| ADR-0010 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
+| **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 
 ---
 

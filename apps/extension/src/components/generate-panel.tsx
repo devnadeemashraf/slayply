@@ -47,6 +47,7 @@ export function GeneratePanel({
   const [formError, setFormError] = useState<string | null>(null);
   const [state, setState] = useState<GenerationState>({ phase: "idle" });
   const [copyState, setCopyState] = useState<CopyState>("idle");
+  const [edits, setEdits] = useState<Record<string, string>>({});
   const runner = useMemo(() => createGenerationRunner(setState), []);
 
   const feedback = useMemo(() => createCopyFeedback(navigator.clipboard, setCopyState), []);
@@ -72,6 +73,7 @@ export function GeneratePanel({
     }
     setFormError(null);
     setCopyState("idle");
+    setEdits({});
     await runner.start({
       baseUrl: RELAY_URL,
       apiKey,
@@ -141,8 +143,13 @@ export function GeneratePanel({
       <GenerationView
         state={state}
         copyState={copyState}
+        edits={edits}
+        onEdit={(outputId, text) => {
+          setEdits((current) => ({ ...current, [outputId]: text }));
+          setCopyState("idle");
+        }}
         onCopy={() => {
-          const text = copyTextOf(state);
+          const text = copyTextOf(state, edits);
           if (text !== null) void feedback.copy(text);
         }}
       />
