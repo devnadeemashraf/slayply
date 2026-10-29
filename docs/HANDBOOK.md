@@ -85,6 +85,13 @@ flowchart LR
 - `validate.ts`: `validateGenerateRequest` (relay) and `validateGenerateResponse` (providers). Both take an object or JSON string and return `{ success, data }` or `{ success: false, issues, rawInput }`; the response variant adds `retryPrompt` for the single repair attempt.
 - Built to `dist/` by `tsc`; Turbo builds it before dependents typecheck or test.
 
+### 5b. `@slayply/relay` (`apps/relay`, ADR-0003)
+- `app.ts`: `createApp(options)` builds the Hono app from injected providers, clock, logger and config, so tests need no network. Middleware order: access log, CORS, rate limiter, routes. Routes: `GET /health`, `POST /v1/generate` (SSE `delta` / `done` / `error` events). `GET /v1/models` (SPEC §8) is not built yet.
+- `server.ts`: entry point; reads env via `config.ts` and passes **no provider adapters** until `PROV-01`, so `/v1/generate` answers `501 PROVIDER_NOT_IMPLEMENTED` after validating the request.
+- `provider.ts`: the `ProviderAdapter` seam and the key header per provider. The provider is whichever `X-User-<Provider>-Key` header is present (exactly one).
+- `cors.ts`, `client-ip.ts`, `rate-limit.ts`, `body.ts`: exact-origin check, proxy-aware client IP, in-memory fixed-window limiter (60/min, resets on restart), counting body reader (500 KB, UTF-8 only).
+- Build: `tsc` to `dist/`, run with `node dist/server.js`. Env: `PORT`, `NODE_ENV`, `EXTENSION_IDS`, `TRUST_PROXY_HOPS` (see `apps/relay/.env.example`).
+
 ## 6. Data & Content Pipeline
 - **Profile Markdown Ingestion (planned, `PROF-01`):** Parses markdown bullet points into structured facts with IDs (`F01`, `F02`).
 - **Resume PDF Extraction (planned, `RES-01`):** Runs `pdf.js` inside client sandbox to produce plain text partitioned by track (FDE/SDE) and region.
@@ -111,10 +118,10 @@ flowchart LR
 ---
 
 ## 9. Security Model
-- **Zero Server-Side Storage (planned, `CORE-02`):** Relay holds no database, writes no files, and never logs request or response bodies.
-- **Ephemeral Authentication (planned, `CORE-02`):** BYOK API keys travel exclusively in HTTPS request headers and are immediately discarded.
+- **Zero Server-Side Storage (`CORE-02`):** Relay holds no database, writes no files, and logs only `[timestamp] [status] [latency_ms] [provider] [model]`. The only state is the rate-limit counter map.
+- **Ephemeral Authentication (`CORE-02`):** BYOK API keys travel exclusively in HTTPS request headers, are passed to the adapter for one call and are never logged or echoed.
 - **Content Security Policy (planned, `EXT-01`):** Extension enforces strict Manifest V3 CSP with zero `eval()`.
-- **CORS Lockdown (planned, `CORE-02`):** Relay restricts incoming origins to the extension ID and local development server.
+- **CORS Lockdown (`CORE-02`):** Relay accepts only `chrome-extension://<id>` for IDs in `EXTENSION_IDS` and `http://localhost:*`; any other `Origin` gets `403`. No wildcard.
 
 ---
 

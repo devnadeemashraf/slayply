@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'skip: relay dev server planned in CORE-02'",
-    "build": "echo 'skip: relay build planned in CORE-02'",
-    "start": "echo 'skip: relay start planned in CORE-02'",
-    "test": "echo 'skip: relay tests planned in CORE-02'"
+    "dev": "pnpm --filter @slayply/relay... run build && node dist/server.js",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@slayply/core": "workspace:*"
+    "@hono/node-server": "2.1.5",
+    "@slayply/core": "workspace:*",
+    "hono": "4.13.14"
   }
 }

@@ -10,10 +10,11 @@
 - None currently open.
 
 ## NEXT UP
-- **Item:** `CORE-02` — Stateless relay (`apps/relay`). Fix-first items above go before it.
-- **Why now:** `@slayply/core` now exports the validated contract (CORE-01); the relay is its first consumer. `CORE-03` (prompt builder) and `PROV-01` (Claude adapter) follow it.
-- **Where to start:** Hono app with `GET /health`; `POST /v1/generate` using `validateGenerateRequest` and `MAX_PAYLOAD_BYTES`. Decide the Node TS runner/bundler in an ADR first.
-- **Done-when:** see `CORE-02` in `docs/ROADMAP.md`.
+- **Item:** `CORE-03` — Prompt builder in `packages/core`. Fix-first items above go before it.
+- **Why now:** `CORE-02` landed the relay and its `ProviderAdapter` seam; `CORE-03` produces the provider-neutral messages that `PROV-01` (Claude adapter) will send.
+- **Where to start:** read SPEC §7 and the `CORE-03` roadmap entry. Test-first, including the prompt-injection probe.
+- **Carry into `PROV-01`:** wire real adapters into `apps/relay/src/server.ts` (it passes `providers: {}`, so `/v1/generate` returns 501); add a stream deadline, a per-IP open-stream cap and a body-read timeout (ADR-0003); decide whether `ProviderAdapter` moves to a shared package; build `GET /v1/models`.
+- **Done-when:** see `CORE-03` in `docs/ROADMAP.md`.
 
 ## Open questions for the human
 - None blocking. Confirmed defaults: BUILD mode active, Render free tier for relay, WXT for Chrome Side Panel.
@@ -32,10 +33,14 @@
 - Optional cleanup: `stash@{0}` holds a superseded draft of CORE-01; run `git stash drop` when convenient.
 - Git push guards enforce no direct pushes to `main`.
 
+- Relay deploy (`SITE-01`) must set `TRUST_PROXY_HOPS` to the verified Render hop count and `EXTENSION_IDS`; the default of 0 puts all clients behind a proxy in one rate-limit bucket.
+- Localhost origins are allowed in production too (SPEC §5 and the roadmap say so literally). Tighten only through a Spec change.
+
 ## Learning
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #14 | `CORE-02` | Stateless Hono relay: /health, /v1/generate SSE seam (501 until PROV-01), CORS allowlist, 500 KB cap, 60/min limiter, metadata-only logs, ADR-0003 | Manual test: Yes
 - PR #13 | `BP-006` | Handoff cleanup: no-stacking rule, session gotchas, merged branches deleted | Manual test: No
 - PR #12 | `BP-005` | Docs accuracy pass from independent audit; roadmap gaps filled (CORE-03, PROV split, SET-01, QA-01, REL-01) | Manual test: No
 - PR #11 | `BP-004` | Guard no longer blocks reads of SPEC/lockfile/node_modules; edits still blocked | Manual test: No

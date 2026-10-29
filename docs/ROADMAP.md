@@ -79,7 +79,7 @@
 #### `CORE-02`: Stateless Relay Service (`apps/relay`)
 - **Spec Section:** §8 Hosting (Relay) `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** Done
 - **Acceptance Criteria:**
   - Decide how Node runs and bundles the TypeScript (ADR first).
   - Hono HTTP server running on Node with `@hono/node-server`.
