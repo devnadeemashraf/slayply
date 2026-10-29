@@ -7,8 +7,8 @@ import { ResumesPanel } from "../../components/resumes-panel.js";
 import { SettingsPanel } from "../../components/settings-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
 import { RELAY_URL } from "../../lib/config.js";
-import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../../lib/privacy.js";
 import { createFitStore } from "../../lib/fit-store.js";
+import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../../lib/privacy.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createResumeStore } from "../../lib/resume-store.js";
@@ -249,6 +249,7 @@ export function App() {
         settings.anthropicKey !== "" && (
           <GeneratePanel
             apiKey={settings.anthropicKey}
+            direct={settings.directMode}
             profile={profile}
             resumes={resumes}
             fitStore={fitStore}
@@ -285,7 +286,14 @@ export function App() {
           }}
         />
       )}
-      {settings?.privacyAcknowledged && <SettingsPanel db={db} settings={store} />}
+      {settings?.privacyAcknowledged && (
+        <SettingsPanel
+          db={db}
+          settings={store}
+          directMode={settings.directMode}
+          onDirectModeChange={() => void refresh()}
+        />
+      )}
     </main>
   );
 }

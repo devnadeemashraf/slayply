@@ -1,6 +1,5 @@
 import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
-import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
 import { buildAnswerRequest, buildFitRequest, describeProfileUse } from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
@@ -11,6 +10,7 @@ import {
   createGenerationRunner,
   type GenerationState,
 } from "../lib/generate-controller.js";
+import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
 import { type FitResult, FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
 
@@ -36,11 +36,13 @@ function rememberResume(id: string): void {
 
 export function GeneratePanel({
   apiKey,
+  direct,
   profile,
   resumes,
   fitStore,
 }: {
   apiKey: string;
+  direct: boolean;
   profile: StoredProfile | null;
   resumes: readonly StoredResume[];
   fitStore: FitStore;
@@ -90,6 +92,7 @@ export function GeneratePanel({
     await runner.start({
       baseUrl: RELAY_URL,
       apiKey,
+      direct,
       request: built.request,
       fetchFn: (url, init) => fetch(url, init),
     });
@@ -108,6 +111,7 @@ export function GeneratePanel({
       force,
       baseUrl: RELAY_URL,
       apiKey,
+      direct,
       request: built.request,
       fetchFn: (url, init) => fetch(url, init),
     });

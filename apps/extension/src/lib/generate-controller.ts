@@ -4,6 +4,7 @@ import {
   validateGenerateResponse,
 } from "@slayply/core";
 import { stripCodeFence } from "@slayply/providers";
+import { streamDirect } from "./direct-client.js";
 import { extractAnswerPreview } from "./partial-text.js";
 import { isAbortError, RelayError, streamGenerate } from "./relay-client.js";
 
@@ -30,6 +31,8 @@ export type RunGenerationOptions = {
   request: GenerateRequest;
   fetchFn: (url: string, init?: RequestInit) => Promise<Response>;
   signal: AbortSignal;
+  /** Direct Mode: call the provider from the panel instead of the relay. */
+  direct?: boolean;
   onState: (state: GenerationState) => void;
 };
 
@@ -61,7 +64,7 @@ export async function runGeneration(options: RunGenerationOptions): Promise<void
     onState({ phase: "streaming", attempt, preview: "" });
     let buffer = "";
     try {
-      for await (const delta of streamGenerate(options)) {
+      for await (const delta of (options.direct ? streamDirect : streamGenerate)(options)) {
         buffer += delta;
         if (buffer.length > MAX_REPLY_CHARS) {
           throw new RelayError("TOO_LARGE", "The reply was larger than expected. Try again.");

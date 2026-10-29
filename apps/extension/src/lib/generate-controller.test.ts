@@ -341,3 +341,38 @@ describe("runGeneration for a fit check", () => {
     if (last?.phase === "raw") expect(last.issues[0]?.path).toBe("fit");
   });
 });
+
+describe("runGeneration in Direct Mode", () => {
+  it("calls the provider, never the relay, and still validates the reply", async () => {
+    const reply = validReply("Straight from the provider.");
+    const body = [
+      ...pieces(reply).map(
+        (text) =>
+          `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text } })}\n\n`,
+      ),
+      'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+    ].join("");
+    const urls: string[] = [];
+    const fetchFn = vi.fn(async (url: string) => {
+      urls.push(url);
+      if (url.includes("/v1/models")) return Response.json({ data: [{ id: "claude-test" }] });
+      return new Response(body, { status: 200 });
+    });
+    const states: GenerationState[] = [];
+    await runGeneration({
+      baseUrl: "http://relay.test",
+      apiKey: "sk-ant-secret",
+      request: REQUEST,
+      fetchFn,
+      direct: true,
+      signal: new AbortController().signal,
+      onState: (state) => states.push(state),
+    });
+
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.every((u) => u.startsWith("https://api.anthropic.com/"))).toBe(true);
+    expect(urls.some((u) => u.includes("relay.test"))).toBe(false);
+    const last = states.at(-1);
+    expect(last?.phase).toBe("done");
+  });
+});

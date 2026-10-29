@@ -8,6 +8,8 @@ const base: SettingsViewProps = {
   confirmingWipe: false,
   busy: false,
   message: null,
+  directMode: false,
+  onToggleDirect: noop,
   onExport: noop,
   onChooseFile: noop,
   onAskWipe: noop,
@@ -32,6 +34,13 @@ describe("SettingsView", () => {
     expect(html).toMatch(/never contains your API key/);
     expect(html).toMatch(/Delete all local data/);
     expect(html).not.toMatch(/Yes, delete everything/);
+  });
+
+  it("shows the Direct Mode switch, checked only when it is on", () => {
+    expect(text()).toMatch(/Skip the relay/);
+    expect(text()).not.toMatch(/checked=""/);
+    expect(text({ directMode: true })).toMatch(/checked=""/);
+    expect(text()).toMatch(/straight to api\.anthropic\.com/);
   });
 
   it("asks for confirmation before a wipe", () => {

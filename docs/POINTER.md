@@ -5,6 +5,7 @@
 - Git repository active with branch PR workflow.
 - Monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- `DIRECT-01`: a "Direct Mode" switch in Settings calls Anthropic straight from the side panel (same Claude adapter, key never sent to the relay); turning it on asks the browser for `https://api.anthropic.com/*` (optional host permission). Claude only (ADR-0013).
 - `PROV-03`: `createGeminiAdapter` in `packages/providers` (streamed, key in a header, anything but a `STOP` finish is an error); the relay registers it, so all three providers are served. Effort becomes `thinkingBudget` (2.5) or `thinkingLevel` (3+) only for thinking models (ADR-0012).
 - `PROV-02`: `createOpenAiAdapter` in `packages/providers` (Chat Completions, streamed) and the relay registers it, so `/v1/generate` and `/v1/models` serve OpenAI keys; Effort is an adapter option sent as `reasoning_effort` only for models where `supportsReasoningEffort` is true, and `ModelInfo.supportsEffort` lets a UI hide it (ADR-0011).
 - `FIT-01`: "Check fit" in the generate panel returns a match table (rows without a valid fact ID are marked), gaps, chance, deal-breakers, recommended resume (one click selects the matching saved resume) and a salary answer when the JD asks; the result is saved per job in IndexedDB v4 (`fits`) and "Run again" replaces it.
@@ -18,8 +19,9 @@
 - None currently open.
 
 ## NEXT UP
-- **Item:** `DIRECT-01`: Direct Mode Client Toggle. Read its roadmap entry and SPEC Feature 8 first.
-- **Why now:** all three adapters exist behind one interface; Direct Mode reuses them in the browser, and it also settles the Anthropic browser-header question (`docs/VERSIONS.md`).
+- **Item:** a provider and effort picker is not on the roadmap yet (see Open from `PROV-03`); add it as an item before Phase 4, or take `CAP-01` (Selection & Job Capture). Ask the human which.
+- **Why now:** Phase 3 is complete once `DIRECT-01` merges; Phase 4 starts with `CAP-01`.
+- **Open from `DIRECT-01`:** needs a manual test in a real unpacked extension: stop the relay, open Settings, turn on Direct Mode, accept the browser prompt, generate an answer (also try declining the prompt: the switch must stay off). It settles whether `anthropic-dangerous-direct-browser-access` is needed (record the result in `docs/VERSIONS.md`). Claude only; OpenAI and Gemini direct calls need the provider picker. The relay health banner still shows the relay's state in Direct Mode. The permission stays granted after switching off; if the user revokes it in the browser, Direct Mode stays on and the error names the permission. `settings-panel.tsx` has no automated tests. A key with Direct Mode on is stored in `chrome.storage.local` exactly as before.
 - **Open from `PROV-03`:** live-untested (no key). Model family, version order and thinking support come from id patterns; the thinking budgets, the medium-to-high mapping for Gemini 3 and the 400 `API_KEY_INVALID` marker are unverified. The side panel still has no provider or effort picker and the request has no model or effort field, so none of the three providers' effort controls are reachable yet; a contract change plus a UI item is needed (suggest adding it to the roadmap before `DIRECT-01` ships).
 - **Open from `PROV-02`:** live-untested: the owner has no paid OpenAI key, so only recorded-fixture tests exist; anyone with a key can try the relay path ( `curl` `/v1/models?provider=openai` with `X-User-OpenAI-Key`, then a generate)). Chat-model filtering and reasoning-effort support are read from the model id pattern and are unverified against live responses (`openai.ts` `CHAT_MODEL`, `REASONING_MODEL`). The side panel only has an Anthropic key and has no provider or effort picker; `GenerateRequest` has no model or effort field, so a contract change plus UI is needed before a user can use OpenAI or effort. The Claude adapter does not set `supportsEffort` (effort for Claude is not built).
 - **Open from `SET-01`:** needs a manual test in the side panel (`settings-panel.tsx` has no automated tests; the backup logic and `settings-view.tsx` do). "Jobs" and "history" in the roadmap text are only the `fits` store today: when `HIST-01` adds a store it must be added to `STORE_NAMES` in `profile-store.ts` (a test fails if it is not) and to the backup schema (bump `BACKUP_VERSION` if the file shape changes). Import replaces rather than merges, and does not check ID counters against what is stored. The privacy acknowledgement is per device, so a wipe or a new browser shows the first-run screen again.
@@ -58,6 +60,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR (pending) | `DIRECT-01` | Direct Mode: `streamDirect`, `createDirectModeController`, `directMode` setting, `direct` flag in `runGeneration`, switch in Settings, optional host permission for api.anthropic.com; ADR-0013 | Manual test: Yes
 - PR (pending) | `PROV-03` | Gemini adapter (SSE stream, header key, STOP-only completion, text-model list, thinking effort by family), relay registers it; ADR-0012 | Manual test: Not possible for now (no key)
 - PR (pending) | `PROV-02` | OpenAI adapter (Chat Completions stream, chat-model list, `reasoning_effort` gated by model), shared `util.ts`, relay registers OpenAI, `ModelInfo.supportsEffort`; ADR-0011; README phase table brought up to date | Manual test: Yes
 - PR (pending) | `FIT-01` | Fit check: `checkFitMatches` / `suggestResume` in core, `buildFitRequest`, a `fit_check` reply without `fit` counts as invalid, per-job result cache (`fits` store, IndexedDB v4, 100 results), Check fit button, match table, gaps, chance, deal-breakers, recommended resume with one-click select, salary answer | Manual test: Yes
@@ -73,8 +76,4 @@
 - PR #16 | `PROV-01` | `packages/providers`: shared adapter interface, Claude streaming adapter, cached model list, `generateValidated` (one repair retry, then raw text); relay serves Claude, `GET /v1/models`, stream deadline, per-IP open-stream cap, body timeout, API key charset check; ADR-0004 | Manual test: Yes
 - PR #15 | `CORE-03` | Prompt builder: `buildPrompt` returns provider-neutral `{ system, messages }` with the SPEC §7 rules, ID-tagged facts, per-question `maxChars`, and forged-tag neutralisation | Manual test: No
 - PR #14 | `CORE-02` | Stateless Hono relay: /health, /v1/generate SSE seam (501 until PROV-01), CORS allowlist, 500 KB cap, 60/min limiter, metadata-only logs, ADR-0003 | Manual test: Yes
-- PR #13 | `BP-006` | Handoff cleanup: no-stacking rule, session gotchas, merged branches deleted | Manual test: No
-- PR #12 | `BP-005` | Docs accuracy pass from independent audit; roadmap gaps filled (CORE-03, PROV split, SET-01, QA-01, REL-01) | Manual test: No
-- PR #11 | `BP-004` | Guard no longer blocks reads of SPEC/lockfile/node_modules; edits still blocked | Manual test: No
-- PR #10 | `BP-003` | Guard treats backslashes as path separators on every OS (CI caught it on Linux) | Manual test: No
 - PR #9 | `BP-002` | Re-landed CORE-01, README and agent harness that stacked PRs never delivered to main | Manual test: Yes

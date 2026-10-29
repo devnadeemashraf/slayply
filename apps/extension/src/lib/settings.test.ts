@@ -22,7 +22,22 @@ function memoryArea(initial: Record<string, unknown> = {}): StorageAreaLike & {
 describe("settings store", () => {
   it("starts empty: no key, privacy not acknowledged", async () => {
     const store = createSettingsStore(memoryArea());
-    expect(await store.load()).toEqual({ anthropicKey: "", privacyAcknowledged: false });
+    expect(await store.load()).toEqual({
+      anthropicKey: "",
+      privacyAcknowledged: false,
+      directMode: false,
+    });
+  });
+
+  it("stores Direct Mode and reads only a real true back", async () => {
+    const area = memoryArea();
+    const store = createSettingsStore(area);
+    await store.setDirectMode(true);
+    expect((await store.load()).directMode).toBe(true);
+    await store.setDirectMode(false);
+    expect((await store.load()).directMode).toBe(false);
+    area.data["slayply:settings"] = { directMode: "yes" };
+    expect((await store.load()).directMode).toBe(false);
   });
 
   it("saves a trimmed key and reads it back", async () => {
@@ -38,7 +53,11 @@ describe("settings store", () => {
     await store.saveKey("sk-ant-abc123");
     await store.wipe();
     expect(area.data).toEqual({});
-    expect(await store.load()).toEqual({ anthropicKey: "", privacyAcknowledged: false });
+    expect(await store.load()).toEqual({
+      anthropicKey: "",
+      privacyAcknowledged: false,
+      directMode: false,
+    });
   });
 
   it("clears the key without touching the acknowledgement", async () => {
@@ -46,7 +65,11 @@ describe("settings store", () => {
     await store.acknowledgePrivacy();
     await store.saveKey("sk-ant-abc123");
     await store.clearKey();
-    expect(await store.load()).toEqual({ anthropicKey: "", privacyAcknowledged: true });
+    expect(await store.load()).toEqual({
+      anthropicKey: "",
+      privacyAcknowledged: true,
+      directMode: false,
+    });
   });
 
   it("records the privacy acknowledgement", async () => {
@@ -79,12 +102,20 @@ describe("settings store", () => {
     const store = createSettingsStore(
       memoryArea({ "slayply:settings": { anthropicKey: 42, privacyAcknowledged: "yes" } }),
     );
-    expect(await store.load()).toEqual({ anthropicKey: "", privacyAcknowledged: false });
+    expect(await store.load()).toEqual({
+      anthropicKey: "",
+      privacyAcknowledged: false,
+      directMode: false,
+    });
   });
 
   it("falls back to defaults when stored data is not an object", async () => {
     const store = createSettingsStore(memoryArea({ "slayply:settings": "garbage" }));
-    expect(await store.load()).toEqual({ anthropicKey: "", privacyAcknowledged: false });
+    expect(await store.load()).toEqual({
+      anthropicKey: "",
+      privacyAcknowledged: false,
+      directMode: false,
+    });
   });
 
   it("keeps both fields when two updates overlap", async () => {
@@ -100,6 +131,7 @@ describe("settings store", () => {
     expect(await store.load()).toEqual({
       anthropicKey: "sk-ant-abc123",
       privacyAcknowledged: true,
+      directMode: false,
     });
   });
 

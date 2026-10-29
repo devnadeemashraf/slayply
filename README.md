@@ -89,7 +89,7 @@ flowchart LR
 | 0 | Bootstrap: monorepo, checks, hooks, CI | Done |
 | 1 | Shared contract, relay, side panel shell, first generation loop | Done |
 | 2 | Profile, resume parsing, fit check, claim checker, settings and backup | Done |
-| 3 | OpenAI and Gemini, effort controls, direct mode | In progress (OpenAI done, Gemini in review) |
+| 3 | OpenAI and Gemini, effort controls, direct mode | In progress (adapters done, Direct Mode in review) |
 | 4 | Capture, job history, cover letters and messages | Planned |
 | 5 | Themes, site, security review, v1.0 | Planned |
 
