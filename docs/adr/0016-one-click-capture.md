@@ -35,3 +35,6 @@ SPEC §2 and Feature 3 name a "Capture" press. They should say that one capture 
 - The icon no longer just opens the panel: a click on a page with nothing to capture still opens it and shows the reason.
 - Selection-wins means a stray selection hides the rest of the page; the text is editable, and a click with nothing selected reads the page.
 - Question detection, the review screen and staleness are `CAP-03` to `CAP-08`.
+
+## Amendment: the panel's Capture button needs a per-site grant
+`activeTab` covers only the tab and page where the icon was last clicked, so the panel button failed on any other job or tab until the icon was clicked again. The panel button now asks once per site, from the click, for that origin (`ensureSiteAccess`, declared as the optional host permission `https://*/*`); after that, capturing on the same site is instant. LinkedIn, browser pages and non-https URLs are never asked for (LinkedIn stays selection-only via the icon or right-click). A refusal tells the user to allow the site or click the icon. Grants can be removed at `chrome://extensions`. This is a new permission prompt, so it also belongs in the SPEC wording change above.

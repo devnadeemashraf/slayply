@@ -32,8 +32,9 @@ export default defineConfig({
     // activeTab is granted by the user clicking the icon or a context menu item and lets Slayply read
     // that one tab then; there is no broad host access.
     permissions: ["sidePanel", "storage", "contextMenus", "activeTab", "scripting"],
-    // Asked for at Direct Mode toggle time (chrome.permissions.request), not at install.
-    optional_host_permissions: ["https://api.anthropic.com/*"],
+    // api.anthropic.com is asked for at Direct Mode time. Any https site is asked for one origin at a time,
+    // when the panel's Capture button is first used there (never LinkedIn; see capture-access.ts).
+    optional_host_permissions: ["https://api.anthropic.com/*", "https://*/*"],
     host_permissions: [`${new URL(relayUrl).origin}/*`],
     action: { default_title: "Capture this job with Slayply" },
     // Alt+Shift+S does what clicking the icon does. Users can rebind it at chrome://extensions/shortcuts.
