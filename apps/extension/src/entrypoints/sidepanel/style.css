@@ -154,3 +154,35 @@ button:disabled {
   font-weight: 600;
   opacity: 0.7;
 }
+
+.badge {
+  display: inline-block;
+  padding: 0 0.5em;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-weight: 600;
+}
+
+.chance-high {
+  color: #2e9e5b;
+}
+
+.chance-medium {
+  color: #c79100;
+}
+
+.chance-low {
+  color: #d64545;
+}
+
+.result table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.result th,
+.result td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.25em 0.5em 0.25em 0;
+}

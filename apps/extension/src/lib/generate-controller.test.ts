@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildAnswerRequest } from "./build-request.js";
+import { buildAnswerRequest, buildFitRequest } from "./build-request.js";
 import {
   copyTextOf,
   createGenerationRunner,
@@ -7,7 +7,14 @@ import {
   MAX_REPLY_CHARS,
   runGeneration,
 } from "./generate-controller.js";
-import { relayErrorResponse, relayStream, sseEvent, sseResponse, validReply } from "./testing.js";
+import {
+  relayErrorResponse,
+  relayStream,
+  sseEvent,
+  sseResponse,
+  validFitReply,
+  validReply,
+} from "./testing.js";
 
 const built = buildAnswerRequest({ jd: "Build things", question: "Why you?" });
 if (!built.ok) throw new Error("fixture request must be valid");
@@ -279,5 +286,58 @@ describe("runGeneration (against a stubbed relay)", () => {
     expect(copyTextOf({ phase: "idle" })).toBeNull();
     expect(copyTextOf({ phase: "streaming", attempt: 1, preview: "partial" })).toBeNull();
     expect(copyTextOf({ phase: "error", message: "x", code: "NETWORK" })).toBeNull();
+  });
+});
+
+describe("runGeneration for a fit check", () => {
+  const fitBuilt = buildFitRequest({ jd: "Build billing systems" });
+  if (!fitBuilt.ok) throw new Error("fixture request must be valid");
+  const fitRequest = fitBuilt.request;
+
+  function run(replies: Array<() => Response>) {
+    const states: GenerationState[] = [];
+    const fetchFn = vi.fn(async () => {
+      const next = replies.shift();
+      if (!next) throw new Error("unexpected extra request");
+      return next();
+    });
+    const done = runGeneration({
+      baseUrl: "http://relay.test",
+      apiKey: "sk-ant-secret",
+      request: fitRequest,
+      fetchFn,
+      signal: new AbortController().signal,
+      onState: (state) => states.push(state),
+    });
+    return { states, fetchFn, done };
+  }
+
+  it("ends with the validated fit result", async () => {
+    const { states, done } = run([() => sseResponse(relayStream([validFitReply()]))]);
+    await done;
+    const last = states.at(-1);
+    expect(last?.phase).toBe("done");
+    if (last?.phase === "done") expect(last.response.fit?.chance).toBe("medium");
+  });
+
+  it("treats a reply without a fit object as invalid and asks once more", async () => {
+    const { states, done, fetchFn } = run([
+      () => sseResponse(relayStream([validReply("Just text.")])),
+      () => sseResponse(relayStream([validFitReply()])),
+    ]);
+    await done;
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(states.at(-1)?.phase).toBe("done");
+  });
+
+  it("ends as raw text when both replies lack a fit object", async () => {
+    const { states, done } = run([
+      () => sseResponse(relayStream([validReply("No fit.")])),
+      () => sseResponse(relayStream([validReply("Still none.")])),
+    ]);
+    await done;
+    const last = states.at(-1);
+    expect(last?.phase).toBe("raw");
+    if (last?.phase === "raw") expect(last.issues[0]?.path).toBe("fit");
   });
 });

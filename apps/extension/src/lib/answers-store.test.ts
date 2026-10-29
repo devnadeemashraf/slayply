@@ -55,7 +55,12 @@ describe("database upgrade from version 1", () => {
     v1.close();
 
     const db = openProfileDb(name);
-    expect([...(await db).objectStoreNames].sort()).toEqual(["answers", "profile", "resumes"]);
+    expect([...(await db).objectStoreNames].sort()).toEqual([
+      "answers",
+      "fits",
+      "profile",
+      "resumes",
+    ]);
     const loaded = await createProfileStore(db).load();
     expect(loaded).toMatchObject({
       schemaVersion: 2,

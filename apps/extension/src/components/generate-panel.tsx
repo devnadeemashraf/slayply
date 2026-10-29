@@ -1,13 +1,16 @@
-import type { StoredProfile, StoredResume } from "@slayply/core";
+import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
-import { buildAnswerRequest, describeProfileUse } from "../lib/build-request.js";
+import { buildAnswerRequest, buildFitRequest, describeProfileUse } from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
+import { createFitRunner } from "../lib/fit-flow.js";
+import type { FitStore } from "../lib/fit-store.js";
 import {
   copyTextOf,
   createGenerationRunner,
   type GenerationState,
 } from "../lib/generate-controller.js";
+import { type FitResult, FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
 
 const JD_MAX_CHARS = 60_000;
@@ -36,10 +39,12 @@ export function GeneratePanel({
   apiKey,
   profile,
   resumes,
+  fitStore,
 }: {
   apiKey: string;
   profile: StoredProfile | null;
   resumes: readonly StoredResume[];
+  fitStore: FitStore;
 }) {
   const [jd, setJd] = useState("");
   const [question, setQuestion] = useState("");
@@ -49,6 +54,12 @@ export function GeneratePanel({
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [edits, setEdits] = useState<Record<string, string>>({});
   const runner = useMemo(() => createGenerationRunner(setState), []);
+  const [fitState, setFitState] = useState<GenerationState>({ phase: "idle" });
+  const [fitResult, setFitResult] = useState<FitResult | null>(null);
+  const fitRunner = useMemo(
+    () => createFitRunner({ store: fitStore, onState: setFitState, onResult: setFitResult }),
+    [fitStore],
+  );
 
   const feedback = useMemo(() => createCopyFeedback(navigator.clipboard, setCopyState), []);
 
@@ -56,14 +67,17 @@ export function GeneratePanel({
   useEffect(
     () => () => {
       runner.stop();
+      fitRunner.stop();
       feedback.cancel();
     },
-    [runner, feedback],
+    [runner, fitRunner, feedback],
   );
 
   // A removed resume falls back to "No resume" instead of silently sending nothing for a dead ID.
   const resume = resumes.find((entry) => entry.id === resumeId) ?? null;
   const running = state.phase === "streaming";
+  const fitRunning = fitState.phase === "streaming";
+  const suggested = fitResult ? suggestResume(fitResult.fit.resume, resumes) : null;
 
   async function slay() {
     const built = buildAnswerRequest({ jd, question, profile, resume });
@@ -75,6 +89,24 @@ export function GeneratePanel({
     setCopyState("idle");
     setEdits({});
     await runner.start({
+      baseUrl: RELAY_URL,
+      apiKey,
+      request: built.request,
+      fetchFn: (url, init) => fetch(url, init),
+    });
+  }
+
+  async function checkFit(force: boolean) {
+    const built = buildFitRequest({ jd, profile, resume });
+    if (!built.ok) {
+      setFormError(built.message);
+      return;
+    }
+    setFormError(null);
+    setFitResult(null);
+    await fitRunner.start({
+      jd,
+      force,
       baseUrl: RELAY_URL,
       apiKey,
       request: built.request,
@@ -114,7 +146,12 @@ export function GeneratePanel({
           rows={6}
           maxLength={JD_MAX_CHARS}
           value={jd}
-          onChange={(event) => setJd(event.target.value)}
+          onChange={(event) => {
+            setJd(event.target.value);
+            fitRunner.stop();
+            setFitResult(null);
+            setFitState({ phase: "idle" });
+          }}
         />
         <label htmlFor="question">Question</label>
         <textarea
@@ -128,6 +165,19 @@ export function GeneratePanel({
           <button type="submit" disabled={running || jd.trim() === "" || question.trim() === ""}>
             Slay
           </button>
+          <button
+            type="button"
+            className="secondary"
+            disabled={fitRunning || jd.trim() === ""}
+            onClick={() => void checkFit(false)}
+          >
+            Check fit
+          </button>
+          {fitRunning && (
+            <button type="button" className="secondary" onClick={() => fitRunner.stop()}>
+              Stop
+            </button>
+          )}
           {running && (
             <button type="button" className="secondary" onClick={() => runner.stop()}>
               Stop
@@ -140,6 +190,17 @@ export function GeneratePanel({
           </p>
         )}
       </form>
+      <FitView
+        state={fitState}
+        result={fitResult}
+        suggestion={suggested ? { resume: suggested, active: suggested.id === resume?.id } : null}
+        onUseResume={() => {
+          if (!suggested) return;
+          setResumeId(suggested.id);
+          rememberResume(suggested.id);
+        }}
+        onRerun={() => void checkFit(true)}
+      />
       <GenerationView
         state={state}
         copyState={copyState}

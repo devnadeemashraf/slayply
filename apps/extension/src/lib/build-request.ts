@@ -41,25 +41,31 @@ export function describeProfileUse(
 
 export type BuildResult = { ok: true; request: GenerateRequest } | { ok: false; message: string };
 
-export function buildAnswerRequest(input: {
+type BuildInput = {
   jd: string;
-  question: string;
   profile?: StoredProfile | null;
   resume?: StoredResume | null;
-}): BuildResult {
+};
+
+function buildRequest(
+  input: BuildInput,
+  task: "answers" | "fit_check",
+  questions?: { id: string; text: string }[],
+): GenerateRequest | { issues: { path: string }[] } {
   const result = validateGenerateRequest({
-    task: "answers",
+    task,
     job: { jd: input.jd },
-    questions: [{ id: "q1", text: input.question }],
+    ...(questions ? { questions } : {}),
     resume: input.resume
       ? { track: input.resume.track, region: input.resume.region, text: input.resume.text }
       : { track: "general", region: "any", text: NO_RESUME_TEXT },
     profile: input.profile ? toProfile(input.profile) : EMPTY_PROFILE,
     style: { tone: "crisp", length: "medium" },
   });
-  if (result.success) return { ok: true, request: result.data };
+  return result.success ? result.data : { issues: result.issues };
+}
 
-  const paths = result.issues.map((issue) => issue.path);
+function explain(paths: string[], fallback: string): BuildResult {
   if (paths.some((path) => path.startsWith("job"))) {
     return {
       ok: false,
@@ -75,8 +81,28 @@ export function buildAnswerRequest(input: {
       message: "Your saved profile is not valid. Re-import your context pack.",
     };
   }
-  return {
-    ok: false,
-    message: `Paste a question (up to ${LIMITS.questionChars.toLocaleString("en-US")} characters).`,
-  };
+  return { ok: false, message: fallback };
+}
+
+export function buildAnswerRequest(input: BuildInput & { question: string }): BuildResult {
+  const built = buildRequest(input, "answers", [{ id: "q1", text: input.question }]);
+  if ("issues" in built) {
+    return explain(
+      built.issues.map((issue) => issue.path),
+      `Paste a question (up to ${LIMITS.questionChars.toLocaleString("en-US")} characters).`,
+    );
+  }
+  return { ok: true, request: built };
+}
+
+/** A fit check needs only the job description; the resume and profile ground the match table. */
+export function buildFitRequest(input: BuildInput): BuildResult {
+  const built = buildRequest(input, "fit_check");
+  if ("issues" in built) {
+    return explain(
+      built.issues.map((issue) => issue.path),
+      "The fit check request is not valid.",
+    );
+  }
+  return { ok: true, request: built };
 }

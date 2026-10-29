@@ -5,7 +5,12 @@ import {
   type StoredResume,
 } from "@slayply/core";
 import { describe, expect, it } from "vitest";
-import { buildAnswerRequest, describeProfileUse, NO_PROFILE_NOTICE } from "./build-request.js";
+import {
+  buildAnswerRequest,
+  buildFitRequest,
+  describeProfileUse,
+  NO_PROFILE_NOTICE,
+} from "./build-request.js";
 
 describe("buildAnswerRequest", () => {
   it("builds a valid answers request from a job description and one question", () => {
@@ -166,5 +171,28 @@ describe("with a chosen resume", () => {
 
   it("warns when the resume was cut to fit", () => {
     expect(describeProfileUse(null, { ...resume, truncated: true })).toMatch(/cut/i);
+  });
+});
+
+describe("buildFitRequest", () => {
+  it("builds a fit_check request from the job description alone, with no questions", () => {
+    const result = buildFitRequest({ jd: "  Backend role.  " });
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.request.task).toBe("fit_check");
+    expect(result.request.job.jd).toBe("Backend role.");
+    expect(result.request.questions).toBeUndefined();
+  });
+
+  it("sends the chosen resume's tags and text, or the no-resume marker", () => {
+    const none = buildFitRequest({ jd: "JD" });
+    if (!none.ok) throw new Error("expected ok");
+    expect(none.request.resume.text).toMatch(/do not invent/i);
+  });
+
+  it("rejects an empty or oversized job description", () => {
+    expect(buildFitRequest({ jd: "  " })).toMatchObject({ ok: false });
+    const long = buildFitRequest({ jd: "x".repeat(60_001) });
+    expect(long).toMatchObject({ ok: false });
+    if (!long.ok) expect(long.message).toMatch(/job description/i);
   });
 });
