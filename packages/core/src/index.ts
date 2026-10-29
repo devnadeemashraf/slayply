@@ -4,5 +4,6 @@ export * from "./context-pack.js";
 export * from "./limits.js";
 export * from "./prompt.js";
 export * from "./questionnaire.js";
+export * from "./resume.js";
 export * from "./schema.js";
 export * from "./validate.js";

@@ -1,9 +1,10 @@
 import { parseStoredProfile, type StoredProfile } from "@slayply/core";
 import { type IDBPDatabase, openDB } from "idb";
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE = "profile";
 export const ANSWERS_STORE = "answers";
+export const RESUMES_STORE = "resumes";
 const KEY = "current";
 
 /** The stored record exists but does not match the schema. Loading stops so nothing overwrites it. */
@@ -26,13 +27,14 @@ export class StaleProfileError extends Error {
 
 /**
  * Opens the extension database. Each version adds stores and never touches existing records:
- * version 1 has `profile`, version 2 adds `answers`. Later items (resumes, history) add more.
+ * version 1 has `profile`, version 2 adds `answers`, version 3 adds `resumes`. Later items add more.
  */
 export function openProfileDb(name = "slayply"): Promise<IDBPDatabase> {
   return openDB(name, DB_VERSION, {
     upgrade(db, oldVersion) {
       if (oldVersion < 1) db.createObjectStore(STORE);
       if (oldVersion < 2) db.createObjectStore(ANSWERS_STORE);
+      if (oldVersion < 3) db.createObjectStore(RESUMES_STORE, { keyPath: "id" });
     },
   });
 }

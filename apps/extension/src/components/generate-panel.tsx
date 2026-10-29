@@ -1,4 +1,4 @@
-import type { StoredProfile } from "@slayply/core";
+import type { StoredProfile, StoredResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
 import { buildAnswerRequest, describeProfileUse } from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
@@ -13,15 +13,37 @@ import { GenerationView } from "./generation-view.js";
 const JD_MAX_CHARS = 60_000;
 const QUESTION_MAX_CHARS = 5_000;
 
+const REMEMBER_KEY = "slayply.resumeId";
+
+// A per-viewer convenience only; storage can be blocked, so a failure just forgets the choice.
+function readRememberedResume(): string {
+  try {
+    return localStorage.getItem(REMEMBER_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function rememberResume(id: string): void {
+  try {
+    localStorage.setItem(REMEMBER_KEY, id);
+  } catch {
+    // Not remembered; the select still works for this session.
+  }
+}
+
 export function GeneratePanel({
   apiKey,
   profile,
+  resumes,
 }: {
   apiKey: string;
   profile: StoredProfile | null;
+  resumes: readonly StoredResume[];
 }) {
   const [jd, setJd] = useState("");
   const [question, setQuestion] = useState("");
+  const [resumeId, setResumeId] = useState(readRememberedResume);
   const [formError, setFormError] = useState<string | null>(null);
   const [state, setState] = useState<GenerationState>({ phase: "idle" });
   const [copyState, setCopyState] = useState<CopyState>("idle");
@@ -38,10 +60,12 @@ export function GeneratePanel({
     [runner, feedback],
   );
 
+  // A removed resume falls back to "No resume" instead of silently sending nothing for a dead ID.
+  const resume = resumes.find((entry) => entry.id === resumeId) ?? null;
   const running = state.phase === "streaming";
 
   async function slay() {
-    const built = buildAnswerRequest({ jd, question, profile });
+    const built = buildAnswerRequest({ jd, question, profile, resume });
     if (!built.ok) {
       setFormError(built.message);
       return;
@@ -59,13 +83,29 @@ export function GeneratePanel({
   return (
     <section>
       <h2>Draft an answer</h2>
-      <p className="muted">{describeProfileUse(profile)}</p>
+      <p className="muted">{describeProfileUse(profile, resume)}</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
           void slay();
         }}
       >
+        <label htmlFor="resume">Resume</label>
+        <select
+          id="resume"
+          value={resume?.id ?? ""}
+          onChange={(event) => {
+            setResumeId(event.target.value);
+            rememberResume(event.target.value);
+          }}
+        >
+          <option value="">No resume</option>
+          {resumes.map((entry) => (
+            <option key={entry.id} value={entry.id}>
+              {entry.name} ({entry.track}, {entry.region})
+            </option>
+          ))}
+        </select>
         <label htmlFor="jd">Job description</label>
         <textarea
           id="jd"

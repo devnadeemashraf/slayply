@@ -162,7 +162,7 @@
 #### `PROF-02b`: Guided Context Questionnaire (wizard UI)
 - **Spec Section:** §4 Feature 1 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** In review
+- **Status:** Done
 - **Acceptance Criteria:**
   - Step-by-step wizard with progress, autosave, inline validation, add/remove/move for repeatable entries.
   - Shows per section what is sent and what stays on the device.
@@ -172,7 +172,7 @@
 #### `RES-01`: PDF Resume Upload & Parsing
 - **Spec Section:** §4 Feature 2 `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - Upload PDF resume; client parses text via `pdf.js`.
   - Tag resume with track (FDE, SDE, custom) and region (master, gulf, india, remote).
@@ -355,6 +355,7 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `RES-01` in review: upload a PDF resume, read it in the browser (nothing uploaded), preview the extracted text, tag it with a track and region, store the text locally (IndexedDB v3) and pick a resume per answer. Extension is 2.10 MB of 3.5 MB (ADR-0009).
 - **2026-10-29:** `PROF-02b` in review: the questionnaire in the side panel, one section per step with progress, autosave on a short delay, on blur and on step change, inline errors, add/remove/move for roles and other entries, "Use these answers" to build the profile, answers JSON export/import (preview first) and context-pack markdown export. Facts built from answers are marked and edited through the answers (ADR-0008).
 - **2026-10-29:** `PROF-02a` done (PR #20).
 - **2026-10-29:** `PROF-02a` in review: standardized, versioned answers structure and the question list, a compiler that turns answers into cited facts without inventing anything, private details typed out of it, origin-tagged profile (v2) with entry-keyed stable IDs, and IndexedDB v2 with a migration (ADR-0008). The wizard UI is `PROF-02b`.
