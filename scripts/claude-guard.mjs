@@ -7,28 +7,37 @@ import process from "node:process";
 // Policy hooks for Claude Code (.claude/settings.json). AGENTS.md is the source of truth for the
 // rules; this file only enforces the ones a tool can check mechanically.
 
+// `access: "write"` rules guard against edits only; agents must still be able to read these files
+// (the spec is required reading, and installed packages' type definitions are the API reference).
+// `access: "any"` rules also block reads because the content itself is off limits.
 const PROTECTED_PATHS = [
   {
+    access: "write",
     test: (p) => p === "docs/SPEC.md",
     reason: "docs/SPEC.md changes only via an approved Spec change proposal (docs/ROADMAP.md §6).",
   },
   {
+    access: "write",
     test: (p) => p === "pnpm-lock.yaml",
     reason: "Lockfiles are generated. Change dependencies with pnpm instead of editing the file.",
   },
   {
-    test: (p) => /(^|\/)(dist|\.output|\.wxt|\.turbo|coverage)\//.test(p),
-    reason: "Generated build output must not be edited by hand.",
+    access: "write",
+    test: (p) => /(^|\/)(dist|\.output|\.wxt|\.turbo|coverage|node_modules)\//.test(p),
+    reason: "Generated or installed files must not be edited by hand.",
   },
   {
+    access: "any",
     test: (p) => p === "temp" || p.startsWith("temp/"),
     reason: "temp/ is off limits (AGENTS.md Never list).",
   },
   {
+    access: "any",
     test: (p) => /(^|\/)\.env(\..*)?$/.test(p) && !p.endsWith(".env.example"),
     reason: "Environment files hold secrets and must not be read or edited by agents.",
   },
   {
+    access: "any",
     test: (p) => p.endsWith(".pem"),
     reason: "Key material must not be read or edited by agents.",
   },
@@ -44,10 +53,13 @@ export function normalizePath(filePath, cwd = process.cwd()) {
   return path.relative(cwd, absolute).split(path.sep).join("/");
 }
 
-export function checkFilePath(filePath, cwd = process.cwd()) {
+/** `access` is "read" for read-only tools and "write" for anything that can modify the file. */
+export function checkFilePath(filePath, cwd = process.cwd(), access = "write") {
   const relative = normalizePath(filePath, cwd);
   if (relative.startsWith("../")) return null; // outside the repo: not ours to police
-  const rule = PROTECTED_PATHS.find((candidate) => candidate.test(relative));
+  const rule = PROTECTED_PATHS.find(
+    (candidate) => candidate.test(relative) && (access === "write" || candidate.access === "any"),
+  );
   return rule ? `Blocked: ${relative}. ${rule.reason}` : null;
 }
 
@@ -110,7 +122,8 @@ export function evaluateToolCall(input, context = {}) {
   }
 
   const filePath = toolInput.file_path ?? toolInput.path ?? toolInput.notebook_path;
-  if (typeof filePath === "string" && filePath) return checkFilePath(filePath, cwd);
+  const access = input?.tool_name === "Read" ? "read" : "write";
+  if (typeof filePath === "string" && filePath) return checkFilePath(filePath, cwd, access);
   return null;
 }
 

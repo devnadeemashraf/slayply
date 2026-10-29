@@ -35,6 +35,34 @@ test("allows ordinary source, docs and .env.example", () => {
   }
 });
 
+test("allows reading the spec, lockfile, generated output and installed packages", () => {
+  for (const file of [
+    "docs/SPEC.md",
+    "pnpm-lock.yaml",
+    "packages/core/dist/index.d.ts",
+    "node_modules/zod/dist/index.d.ts",
+  ]) {
+    assert.equal(checkFilePath(file, ROOT, "read"), null, file);
+  }
+});
+
+test("still blocks reading secrets, key material and temp/", () => {
+  for (const file of ["temp/context.md", ".env", "apps/relay/.env.local", "keys/server.pem"]) {
+    assert.match(checkFilePath(file, ROOT, "read") ?? "", /Blocked/, file);
+  }
+});
+
+test("blocks editing installed packages", () => {
+  assert.match(checkFilePath("node_modules/zod/dist/index.js", ROOT) ?? "", /Blocked/);
+});
+
+test("evaluateToolCall treats Read as read access and Edit/Write as write access", () => {
+  const call = (tool_name) => ({ tool_name, cwd: ROOT, tool_input: { file_path: "docs/SPEC.md" } });
+  assert.equal(evaluateToolCall(call("Read")), null);
+  assert.match(evaluateToolCall(call("Edit")) ?? "", /Blocked/);
+  assert.match(evaluateToolCall(call("Write")) ?? "", /Blocked/);
+});
+
 test("normalizes absolute, backslash and dot-segment paths", () => {
   assert.match(checkFilePath(path.join(ROOT, "docs", "SPEC.md"), ROOT) ?? "", /Blocked/);
   assert.match(checkFilePath("docs\\SPEC.md", ROOT) ?? "", /Blocked/);

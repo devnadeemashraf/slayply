@@ -257,6 +257,8 @@
 
 ## 8. Status Log
 
+- **2026-10-29:** `BP-004` fixed: `claude-guard` blocked reads of `docs/SPEC.md` and `node_modules/*/dist`; found by an independent audit when the reviewer could not read the spec.
+
 - **2026-10-29:** `BP-003` fixed: `claude-guard` read a backslash path as a literal filename on POSIX, bypassing the protected-path check. Found by CI on Linux.
 
 - **2026-10-29:** `BP-002` done: README, CONTRIBUTING, SECURITY, Claude Code harness (`scripts/claude-guard.mjs`, `.claude/`).
