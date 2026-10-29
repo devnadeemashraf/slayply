@@ -141,7 +141,7 @@ describe("export and import", () => {
     const source = freshDb();
     await fill(source);
     const text = serializeBackup(await exportBackup(source, NOW));
-    expect(text).not.toMatch(/anthropicKey|privacyAcknowledged|sk-ant/);
+    expect(text).not.toMatch(/anthropicKey|privacyAcknowledged|directMode|sk-ant/);
   });
 
   it("refuses to export a profile that no longer matches the schema", async () => {
@@ -276,7 +276,11 @@ describe("wipeLocalData", () => {
 
     for (const records of Object.values(await snapshot(db))) expect(records).toEqual([]);
     expect(area.data).toEqual({});
-    expect(await settings.load()).toEqual({ anthropicKey: "", privacyAcknowledged: false });
+    expect(await settings.load()).toEqual({
+      anthropicKey: "",
+      privacyAcknowledged: false,
+      directMode: false,
+    });
   });
 
   it("removes the remembered resume choice from browser storage", async () => {

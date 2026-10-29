@@ -30,10 +30,12 @@ export default defineConfig({
     name: "Slayply",
     description: "Turn a job description and its questions into honest, grounded answers.",
     permissions: ["sidePanel", "storage"],
+    // Asked for at Direct Mode toggle time (chrome.permissions.request), not at install.
+    optional_host_permissions: ["https://api.anthropic.com/*"],
     host_permissions: [`${new URL(relayUrl).origin}/*`],
     action: { default_title: "Open Slayply" },
     // Blocks remote script and eval. Network access is limited only by host_permissions, which
-    // grants (not restricts) cross-origin fetches; DIRECT-01 adds provider hosts.
+    // grants (not restricts) cross-origin fetches; Direct Mode adds the provider host as an optional one.
     content_security_policy: {
       extension_pages: "script-src 'self'; object-src 'self'",
     },

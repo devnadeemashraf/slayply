@@ -237,7 +237,7 @@
 #### `DIRECT-01`: Direct Mode Client Toggle
 - **Spec Section:** §4 Feature 8 `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - Toggle switch in settings for "Direct Mode" (bypasses relay entirely).
   - Direct calls use identical `packages/providers` adapters in browser context.
@@ -340,6 +340,7 @@
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 | **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
 | **ADR-0012** | Gemini Adapter | Accepted | Key in header; ends only on `STOP`; thinking budget (2.5) or level (3+) by model id; models ordered by version | Key in URL, trusting a partial stream, relying on the models `thinking` field |
+| **ADR-0013** | Direct Mode | Accepted | Optional host permission requested at toggle time; `direct` flag picks `streamDirect` in the existing controller; Claude only | Static host permission, a second controller |
 
 ---
 
@@ -358,6 +359,7 @@
 
 ## 8. Status Log
 
+- **2026-10-30:** `DIRECT-01` in review: a Direct Mode switch in settings that calls Anthropic straight from the side panel with the user's key, skipping the relay; the browser asks for permission to reach api.anthropic.com only when it is turned on (ADR-0013). Claude only for now.
 - **2026-10-30:** `PROV-03` in review: Gemini adapter (streamed, key in a header, incomplete replies are errors), text-model list, thinking effort mapped per model family and flagged for the UI; the relay serves all three providers and `GET /v1/models?provider=` already covered unknown-provider and missing-key cases (ADR-0012). Live-untested.
 - **2026-10-29:** `PROV-02` in review: OpenAI adapter behind the provider interface (Chat Completions, streamed), chat-model list from `GET /v1/models`, reasoning effort mapped to `reasoning_effort` and flagged per model so the UI can hide it; the relay now serves OpenAI too (ADR-0011). The side panel still sends only the Anthropic key.
 - **2026-10-29:** `RES-01` in review: upload a PDF resume, read it in the browser (nothing uploaded), preview the extracted text, tag it with a track and region, store the text locally (IndexedDB v3) and pick a resume per answer. Extension is 2.10 MB of 3.5 MB (ADR-0009).

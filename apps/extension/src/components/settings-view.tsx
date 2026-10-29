@@ -4,6 +4,8 @@ export type SettingsViewProps = {
   confirmingWipe: boolean;
   busy: boolean;
   message: string | null;
+  directMode: boolean;
+  onToggleDirect: (on: boolean) => void;
   onExport: () => void;
   onChooseFile: (file: File | undefined) => void;
   onAskWipe: () => void;
@@ -21,6 +23,22 @@ export function SettingsView(props: SettingsViewProps) {
         <p>{PRIVACY_STATEMENT}</p>
       </details>
       <p className="notice">{TRAINING_WARNING}</p>
+
+      <h3>Direct Mode</h3>
+      <label>
+        <input
+          type="checkbox"
+          checked={props.directMode}
+          disabled={busy}
+          onChange={(event) => props.onToggleDirect(event.target.checked)}
+        />{" "}
+        Skip the relay and call Anthropic from this browser
+      </label>
+      <p className="muted">
+        Your key and your text go straight to api.anthropic.com and through no Slayply server. The
+        browser asks your permission to reach that address when you turn this on. Claude only for
+        now.
+      </p>
 
       <h3>Backup</h3>
       <div className="row">

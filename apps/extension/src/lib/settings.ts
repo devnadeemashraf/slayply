@@ -6,6 +6,8 @@ const API_KEY_PATTERN = /^[!-~]{1,512}$/;
 export type Settings = {
   anthropicKey: string;
   privacyAcknowledged: boolean;
+  /** Direct Mode: call the provider from the panel and skip the relay (SPEC Feature 8). */
+  directMode: boolean;
 };
 
 export type SaveKeyResult = { ok: true } | { ok: false; reason: "empty" | "invalid" };
@@ -17,7 +19,7 @@ export type StorageAreaLike = {
   remove(key: string): Promise<void>;
 };
 
-const DEFAULTS: Settings = { anthropicKey: "", privacyAcknowledged: false };
+const DEFAULTS: Settings = { anthropicKey: "", privacyAcknowledged: false, directMode: false };
 
 function parseSettings(raw: unknown): Settings {
   if (typeof raw !== "object" || raw === null) return { ...DEFAULTS };
@@ -25,6 +27,7 @@ function parseSettings(raw: unknown): Settings {
   return {
     anthropicKey: typeof record.anthropicKey === "string" ? record.anthropicKey : "",
     privacyAcknowledged: record.privacyAcknowledged === true,
+    directMode: record.directMode === true,
   };
 }
 
@@ -65,6 +68,8 @@ export function createSettingsStore(area: StorageAreaLike) {
     clearKey: () => update({ anthropicKey: "" }),
 
     acknowledgePrivacy: () => update({ privacyAcknowledged: true }),
+
+    setDirectMode: (on: boolean) => update({ directMode: on }),
 
     /** Removes the whole record (key and acknowledgement), queued behind any update in flight. */
     wipe(): Promise<void> {
