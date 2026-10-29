@@ -26,7 +26,7 @@ slayply/
 │   ├── relay/           # Stateless Hono proxy server on Render (Node.js)
 │   └── site/            # Static landing page & privacy documentation (planned, SITE-01)
 ├── packages/
-│   ├── core/            # Zod schemas, prompt builder, claim verification (planned, CORE-01)
+│   ├── core/            # Zod schemas and validators (CORE-01); prompt builder, claim checker (planned)
 │   ├── providers/       # LLM provider adapters (Claude, OpenAI, Gemini) (planned, PROV-01)
 │   └── ui/              # Shared UI components & Gen-Z theme tokens (planned, THEME-01)
 ├── docs/                # Architecture, roadmap, standards, handoff pointers
@@ -77,6 +77,12 @@ flowchart LR
 - **Direct Mode Execution:** (planned, `DIRECT-01`)
 
 ---
+
+### `@slayply/core` contract
+- `schema.ts`: Zod schemas and inferred types for `GenerateRequest` / `GenerateResponse`. Requests are strict and bounded; responses tolerate extra keys.
+- `limits.ts`: size ceilings (`LIMITS`, `MAX_PAYLOAD_BYTES`) and the `F01` / `S03` citation ID patterns.
+- `validate.ts`: `validateGenerateRequest` (relay) and `validateGenerateResponse` (providers). Both take an object or JSON string and return `{ success, data }` or `{ success: false, issues, rawInput }`; the response variant adds `retryPrompt` for the single repair attempt.
+- Built to `dist/` by `tsc`; Turbo builds it before dependents typecheck or test.
 
 ## 6. Data & Content Pipeline
 - **Profile Markdown Ingestion:** Parses markdown bullet points into structured facts with IDs (`F01`, `F02`).
@@ -139,4 +145,5 @@ flowchart LR
 
 ## 12. Decision Log
 - `ADR-0001`: Monorepo Structure & Tooling (Turborepo + pnpm + Biome).
-- (planned, `ADR-0002` to `ADR-0004` during Phase 1 & 2).
+- `ADR-0002`: Shared Request/Response Schema (Zod, strict requests, tolerant responses).
+- (planned, `ADR-0003` to `ADR-0005` during Phase 1 & 2).

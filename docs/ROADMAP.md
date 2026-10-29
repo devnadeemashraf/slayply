@@ -69,7 +69,7 @@
 #### `CORE-01`: Shared Schema & Core Types
 - **Spec Section:** §6 Request/Response Contract `[MUST]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - `GenerateRequest` and `GenerateResponse` Zod schemas exported from `packages/core`.
   - Full TypeScript types inferred and exported.
@@ -235,9 +235,10 @@
 | ID | Title | Status | Chosen Option | Replaced / Alternatives |
 | :--- | :--- | :--- | :--- | :--- |
 | **ADR-0001** | Monorepo Structure & Tooling | Accepted | pnpm workspaces + Turborepo + Biome | npm workspaces, Nx, ESLint/Prettier |
-| **ADR-0002** | Extension Framework | Accepted | WXT (Vite + MV3) | Plasmo, Custom Webpack MV3 |
-| **ADR-0003** | Local Client Database | Accepted | IndexedDB with `idb` | `chrome.storage.local` exclusively, SQLite WASM |
-| **ADR-0004** | Grounding & Claim Integrity | Accepted | Fact ID tagging (`F01`) + deterministic regex claim validator | Vector semantic search, Freeform LLM self-reflection |
+| **ADR-0002** | Shared Request/Response Schema | Accepted | Zod schemas, inferred types, result-union validators | JSON Schema + Ajv, ad-hoc `parse()` |
+| ADR-0003 (planned, EXT-01) | Extension Framework | Proposed | WXT (Vite + MV3) | Plasmo, Custom Webpack MV3 |
+| ADR-0004 (planned, PROF-01) | Local Client Database | Proposed | IndexedDB with `idb` (DEC-003) | `chrome.storage.local` exclusively, SQLite WASM |
+| ADR-0005 (planned, VERIF-01) | Grounding & Claim Integrity | Proposed | Fact ID tagging (`F01`) + deterministic claim validator | Vector semantic search, Freeform LLM self-reflection |
 
 ---
 
@@ -255,6 +256,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-29:** `CORE-01` in review: bounded, strict request schema; tolerant response schema; shared validators with one-shot retry prompt.
 
 - **2026-10-29:** `BP-001` fixed: lint/format scripts no longer swallow Biome failures; doctor enforces real pins; handoff guard also requires HANDBOOK updates for new modules; git hooks install via `prepare`; CI uses a frozen lockfile.
 

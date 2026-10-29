@@ -7,13 +7,13 @@
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
 
 ## FIX-FIRST QUEUE
-- **BP-002** (docs/harness): add `README.md`, `CONTRIBUTING.md`, `SECURITY.md`; add the Claude Code harness the scaffold promised (`.claude/` hooks, `/next-pr` `/handoff` `/review` commands, reviewer and red-team subagents); renumber ADRs in `docs/ROADMAP.md` §5 (ADR-0002 is the shared schema, not WXT).
+- **BP-002** (docs/harness): add `README.md`, `CONTRIBUTING.md`, `SECURITY.md`; add the Claude Code harness the scaffold promised (`.claude/` hooks, `/next-pr` `/handoff` `/review` commands, reviewer and red-team subagents).
 
 ## NEXT UP
-- **Item:** `CORE-01` — Shared Schema & Core Types (`packages/core`). Fix-first items above go before it.
-- **Why now:** Relay (`apps/relay`) and Extension (`apps/extension`) depend on the shared request/response contract.
-- **Where to start:** Create `packages/core/src/schema.ts` defining `GenerateRequest` and `GenerateResponse` schemas with Zod.
-- **Done-when:** Zod schemas, TypeScript types, and validation helpers pass all unit tests and export cleanly from `packages/core`.
+- **Item:** `CORE-02` — Stateless relay (`apps/relay`). Fix-first items above go before it.
+- **Why now:** `@slayply/core` now exports the validated contract (CORE-01); the relay is its first consumer.
+- **Where to start:** Hono app with `GET /health`; `POST /v1/generate` using `validateGenerateRequest` and `MAX_PAYLOAD_BYTES`. Decide the Node TS runner/bundler in an ADR first.
+- **Done-when:** see `CORE-02` in `docs/ROADMAP.md`.
 
 ## Open questions for the human
 - None blocking. Confirmed defaults: BUILD mode active, Render free tier for relay, WXT for Chrome Side Panel.
@@ -29,6 +29,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #3 | `CORE-01` | Bounded strict request schema, tolerant response schema, shared validators, ADR-0002 | Manual test: No
 - PR #2 | `BP-001` | Make check/lint/format truthful, wire hooks, harden doctor + handoff guard, CI frozen lockfile, LICENSE | Manual test: No
 - PR #1 | `BOOT-01` | Finalize package skeleton, doctor checks, and Turborepo orchestration | Manual test: No
 - PR #0 | `BOOT-00` | Initial repository scaffolding and docs | Manual test: No
