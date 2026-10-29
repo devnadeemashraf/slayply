@@ -336,6 +336,7 @@
 
 - **2026-10-29:** `BP-002` done: README, CONTRIBUTING, SECURITY, Claude Code harness (`scripts/claude-guard.mjs`, `.claude/`).
 
+- **2026-10-29:** `BP-006`: handoff cleanup. `CORE-01` was delivered to `main` by PR #9 after the stacked PR #3 merged into a parent branch; merged branches deleted.
 - **2026-10-29:** `BP-005`: documentation accuracy pass from an independent audit; added roadmap items `CORE-03`, `PROV-01` (Claude), `SET-01`, `QA-01`, `REL-01` and split the old `PROV-01` into `PROV-02`/`PROV-03`.
 - **2026-10-29:** `CORE-01` merged: bounded, strict request schema; tolerant response schema; shared validators with one-shot retry prompt.
 
