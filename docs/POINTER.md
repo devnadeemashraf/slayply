@@ -25,17 +25,22 @@
 - Biome also formats Markdown/YAML if included; `biome.json` deliberately excludes them (it would rewrite SPEC.md and the lockfile).
 - Git autocrlf / eol configured to LF for code and CRLF for Windows scripts in `.gitattributes`.
 - Always ignore `temp/` directory completely.
+- **Never stack PRs.** Branch every PR from up-to-date `main`. Stacked PRs merge into their parent branch and never reach `main` (this happened with #3, #7, #8).
+- The agent guard checks the committed state: create the branch, commit and push first, then run `gh pr create`, each as a separate command.
+- Large inline `node -` or heredoc scripts can fail to parse in this shell; write the script to a file and run it. Backslashes in inline strings get mangled, so use the Edit tool.
+- After opening a PR, watch it with `gh pr checks --watch` before reporting success; CI runs on Linux and has caught bugs local Windows runs cannot.
+- Optional cleanup: `stash@{0}` holds a superseded draft of CORE-01; run `git stash drop` when convenient.
 - Git push guards enforce no direct pushes to `main`.
 
 ## Learning
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR #13 | `BP-006` | Handoff cleanup: no-stacking rule, session gotchas, merged branches deleted | Manual test: No
 - PR #12 | `BP-005` | Docs accuracy pass from independent audit; roadmap gaps filled (CORE-03, PROV split, SET-01, QA-01, REL-01) | Manual test: No
 - PR #11 | `BP-004` | Guard no longer blocks reads of SPEC/lockfile/node_modules; edits still blocked | Manual test: No
 - PR #10 | `BP-003` | Guard treats backslashes as path separators on every OS (CI caught it on Linux) | Manual test: No
 - PR #9 | `BP-002` | Re-landed CORE-01, README and agent harness that stacked PRs never delivered to main | Manual test: Yes
 - PR #8 | `BP-002` (rest) | CONTRIBUTING, SECURITY, Claude Code hooks/skills/subagents (merged into stacked branch) | Manual test: Yes
-- PR #3 | `CORE-01` | Bounded strict request schema, tolerant response schema, shared validators, ADR-0002 | Manual test: No
+- PR #3 / #9 | `CORE-01` | Bounded strict request schema, tolerant response schema, shared validators, ADR-0002 (reviewed in #3, delivered to main by #9) | Manual test: No
 - PR #2 | `BP-001` | Make check/lint/format truthful, wire hooks, harden doctor + handoff guard, CI frozen lockfile, LICENSE | Manual test: No
-- PR #1 | `BOOT-01` | Finalize package skeleton, doctor checks, and Turborepo orchestration | Manual test: No

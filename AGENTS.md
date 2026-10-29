@@ -49,7 +49,7 @@ When requirements appear ambiguous or conflict, resolve using this strict preced
 
 1. **Orient:** Read `docs/POINTER.md`. If a bug is in `FIX-FIRST QUEUE`, address it immediately. Otherwise take `NEXT UP`. Read the roadmap entry and referenced spec sections.
 2. **Check Versions:** Verify dependencies against `docs/VERSIONS.md`.
-3. **Branch:** Create a branch from latest `main`: `<type>/<ID>-<slug>` (e.g. `feat/CORE-01-zod-schemas`).
+3. **Branch:** Create a branch from latest `main` (never from another unmerged branch; do not stack PRs): `<type>/<ID>-<slug>` (e.g. `feat/CORE-01-zod-schemas`).
 4. **Design:** For M-sized items or changes to data schemas/security/hot paths, contrast 2–3 options and document in an ADR.
 5. **Tests First:** Write happy, sad, edge, and malicious input test cases. Verify they fail.
 6. **Implement:** Write minimal, idiomatic code satisfying `docs/CODING_STANDARDS.md`.
