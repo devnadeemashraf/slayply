@@ -1,5 +1,6 @@
 import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
+import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
 import { buildAnswerRequest, buildFitRequest, describeProfileUse } from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
@@ -16,12 +17,10 @@ import { GenerationView } from "./generation-view.js";
 const JD_MAX_CHARS = 60_000;
 const QUESTION_MAX_CHARS = 5_000;
 
-const REMEMBER_KEY = "slayply.resumeId";
-
 // A per-viewer convenience only; storage can be blocked, so a failure just forgets the choice.
 function readRememberedResume(): string {
   try {
-    return localStorage.getItem(REMEMBER_KEY) ?? "";
+    return localStorage.getItem(REMEMBERED_RESUME_KEY) ?? "";
   } catch {
     return "";
   }
@@ -29,7 +28,7 @@ function readRememberedResume(): string {
 
 function rememberResume(id: string): void {
   try {
-    localStorage.setItem(REMEMBER_KEY, id);
+    localStorage.setItem(REMEMBERED_RESUME_KEY, id);
   } catch {
     // Not remembered; the select still works for this session.
   }

@@ -206,7 +206,7 @@
 #### `SET-01`: Settings, Export/Import & Data Wipe
 - **Spec Section:** §4 Feature 9 `[MUST]` / `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review
 - **Acceptance Criteria:**
   - Export and import everything (settings, profile, resumes, jobs, history) as JSON, validated on import.
   - One-tap wipe of all local data, with confirmation. `[MUST]`
@@ -357,6 +357,7 @@
 
 - **2026-10-29:** `RES-01` in review: upload a PDF resume, read it in the browser (nothing uploaded), preview the extracted text, tag it with a track and region, store the text locally (IndexedDB v3) and pick a resume per answer. Extension is 2.10 MB of 3.5 MB (ADR-0009).
 - **2026-10-29:** `PROF-02b` in review: the questionnaire in the side panel, one section per step with progress, autosave on a short delay, on blur and on step change, inline errors, add/remove/move for roles and other entries, "Use these answers" to build the profile, answers JSON export/import (preview first) and context-pack markdown export. Facts built from answers are marked and edited through the answers (ADR-0008).
+- **2026-10-29:** `SET-01` in review: export/import everything as one versioned JSON file (validated in full, replaced in one transaction), a confirmed one-tap wipe of every store and the stored key, the privacy statement and a training-tier warning in settings. The API key and privacy acknowledgement are not exported.
 - **2026-10-29:** `PROF-02a` done (PR #20).
 - **2026-10-29:** `PROF-02a` in review: standardized, versioned answers structure and the question list, a compiler that turns answers into cited facts without inventing anything, private details typed out of it, origin-tagged profile (v2) with entry-keyed stable IDs, and IndexedDB v2 with a migration (ADR-0008). The wizard UI is `PROF-02b`.
 - **2026-10-29:** `PROF-01` done: import a markdown context pack (preview first), stable `F01` / `S01` IDs that survive re-import and are never reused, in-app view, edit, add and remove, stored in IndexedDB, and sent with generation requests. Rules are stored but not yet applied (ADR-0007, `docs/CONTEXT_PACK.md`).
