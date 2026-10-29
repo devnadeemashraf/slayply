@@ -31,6 +31,16 @@ describe("settings store", () => {
     expect((await store.load()).anthropicKey).toBe("sk-ant-abc123");
   });
 
+  it("wipes the key and the acknowledgement, removing the stored record", async () => {
+    const area = memoryArea();
+    const store = createSettingsStore(area);
+    await store.acknowledgePrivacy();
+    await store.saveKey("sk-ant-abc123");
+    await store.wipe();
+    expect(area.data).toEqual({});
+    expect(await store.load()).toEqual({ anthropicKey: "", privacyAcknowledged: false });
+  });
+
   it("clears the key without touching the acknowledgement", async () => {
     const store = createSettingsStore(memoryArea());
     await store.acknowledgePrivacy();

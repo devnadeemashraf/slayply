@@ -65,6 +65,13 @@ export function createSettingsStore(area: StorageAreaLike) {
     clearKey: () => update({ anthropicKey: "" }),
 
     acknowledgePrivacy: () => update({ privacyAcknowledged: true }),
+
+    /** Removes the whole record (key and acknowledgement), queued behind any update in flight. */
+    wipe(): Promise<void> {
+      const run = queue.then(() => area.remove(STORAGE_KEY));
+      queue = run.catch(() => undefined);
+      return run;
+    },
   };
 }
 

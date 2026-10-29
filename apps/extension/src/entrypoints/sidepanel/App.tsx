@@ -4,8 +4,10 @@ import { GeneratePanel } from "../../components/generate-panel.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
+import { SettingsPanel } from "../../components/settings-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
-import { PRIVACY_STATEMENT, RELAY_URL } from "../../lib/config.js";
+import { RELAY_URL } from "../../lib/config.js";
+import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../../lib/privacy.js";
 import { createFitStore } from "../../lib/fit-store.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
@@ -46,6 +48,7 @@ function Onboarding({ onAccept }: { onAccept: () => void }) {
     <section>
       <h2>Before you start</h2>
       <p>{PRIVACY_STATEMENT}</p>
+      <p className="notice">{TRAINING_WARNING}</p>
       <button type="button" onClick={onAccept}>
         I understand
       </button>
@@ -282,6 +285,7 @@ export function App() {
           }}
         />
       )}
+      {settings?.privacyAcknowledged && <SettingsPanel db={db} settings={store} />}
     </main>
   );
 }

@@ -56,6 +56,9 @@ export function assertProfileWritable(existing: unknown, incoming: StoredProfile
 
 export { KEY as RECORD_KEY, STORE as PROFILE_STORE };
 
+/** Every object store in the database. Export, import and wipe all walk this list. */
+export const STORE_NAMES = [STORE, ANSWERS_STORE, RESUMES_STORE, FITS_STORE] as const;
+
 /** The whole profile is one record, so a save is atomic: it is either fully replaced or not at all. */
 export function createProfileStore(dbPromise: Promise<IDBPDatabase>) {
   return {
