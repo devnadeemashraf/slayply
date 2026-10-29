@@ -5,6 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@12.6.0",
   "scripts": {
+    "build": "turbo run build",
     "doctor": "node scripts/doctor.mjs",
     "check": "node scripts/check.mjs",
     "fmt": "node scripts/fmt.mjs",

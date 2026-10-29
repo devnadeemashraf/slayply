@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 import { execSync } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
 import process from "node:process";
 
 console.log("=== Running Workspace Tests ===");
@@ -18,26 +16,17 @@ try {
   process.exit(1);
 }
 
-// 2. Run workspace package tests (skeleton packages print skip and succeed)
-console.log("> Checking workspace package tests...");
-const packages = [
-  "apps/extension",
-  "apps/relay",
-  "apps/site",
-  "packages/core",
-  "packages/providers",
-  "packages/ui",
-];
-
-for (const pkg of packages) {
-  const pkgJsonPath = path.resolve(process.cwd(), pkg, "package.json");
-  if (fs.existsSync(pkgJsonPath)) {
-    const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
-    if (pkgJson.scripts?.test) {
-      console.log(`- ${pkg}: ${pkgJson.scripts.test.replace(/^echo\s+/, "")}`);
-    }
-  }
+// 2. Run workspace package tests via Turborepo
+console.log("\n> Running workspace package tests via Turborepo (turbo run test)...");
+try {
+  execSync("pnpm exec turbo run test", {
+    stdio: "inherit",
+  });
+  console.log("✓ Workspace package tests passed via Turborepo.");
+} catch (_err) {
+  console.error("✗ Workspace package tests failed via Turborepo.");
+  process.exit(1);
 }
 
-console.log("\n✓ All tests passed or cleanly skipped on empty skeleton.");
+console.log("\n✓ All tests passed or cleanly skipped on skeleton.");
 process.exit(0);

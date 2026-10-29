@@ -41,6 +41,40 @@ test("flags POINTER.md exceeding 80 lines", () => {
   assert.ok(result.errors.some((e) => e.includes("at most 80 lines")));
 });
 
+test("handles non-string input safely (malicious/edge input)", () => {
+  assert.equal(validatePointerDoc(null).valid, false);
+  assert.equal(validatePointerDoc(undefined).valid, false);
+  assert.equal(validatePointerDoc(12345).valid, false);
+  assert.equal(validatePointerDoc({}).valid, false);
+});
+
+test("enforces POINTER.md update when code files are modified in CI context", () => {
+  const result = checkHandoffCompliance({
+    isCI: true,
+    execSync: (cmd) => {
+      if (cmd.includes("git diff")) {
+        return "apps/relay/src/index.ts\npackages/core/src/index.ts";
+      }
+      return "";
+    },
+  });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((e) => e.includes("docs/POINTER.md was not updated")));
+});
+
+test("allows code changes when POINTER.md is also updated in CI context", () => {
+  const result = checkHandoffCompliance({
+    isCI: true,
+    execSync: (cmd) => {
+      if (cmd.includes("git diff")) {
+        return "apps/relay/src/index.ts\ndocs/POINTER.md";
+      }
+      return "";
+    },
+  });
+  assert.equal(result.valid, true);
+});
+
 test("checkHandoffCompliance passes on actual repository docs/POINTER.md", () => {
   const result = checkHandoffCompliance();
   assert.equal(result.valid, true);

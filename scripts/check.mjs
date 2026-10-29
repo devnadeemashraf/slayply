@@ -12,6 +12,7 @@ const tasks = [
   { name: "Format Check", cmd: "node scripts/fmt-check.mjs" },
   { name: "Lint Check", cmd: "node scripts/lint.mjs" },
   { name: "Workspace & Tooling Tests", cmd: "node scripts/test.mjs" },
+  { name: "Turborepo Workspace Pipeline Check", cmd: "pnpm exec turbo run check" },
 ];
 
 let failed = false;
