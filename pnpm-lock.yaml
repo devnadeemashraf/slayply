@@ -196,6 +196,9 @@ importers:
       '@slayply/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@slayply/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       hono:
         specifier: 4.13.14
         version: 4.13.14

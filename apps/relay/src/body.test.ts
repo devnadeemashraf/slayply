@@ -72,4 +72,23 @@ describe("readBodyText", () => {
     const request = new Request("http://relay.test/", { method: "POST" });
     expect(await readBodyText(request, 100)).toEqual({ ok: true, text: "" });
   });
+
+  it("gives up on a body that stalls past the timeout", async () => {
+    const stalled = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("{"));
+      },
+    });
+    const request = new Request("http://relay.test/", {
+      method: "POST",
+      body: stalled,
+      duplex: "half",
+    } as RequestInit);
+    expect(await readBodyText(request, 100, 20)).toEqual({ ok: false, reason: "timeout" });
+  });
+
+  it("does not time out a body that arrives promptly", async () => {
+    const request = new Request("http://relay.test/", { method: "POST", body: "{}" });
+    expect(await readBodyText(request, 100, 20)).toEqual({ ok: true, text: "{}" });
+  });
 });

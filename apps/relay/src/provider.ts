@@ -1,7 +1,12 @@
-import type { GenerateRequest } from "@slayply/core";
+import {
+  PROVIDER_IDS,
+  type ProviderAdapter,
+  ProviderError,
+  type ProviderId,
+} from "@slayply/providers";
 
-export const PROVIDER_IDS = ["anthropic", "openai", "gemini"] as const;
-export type ProviderId = (typeof PROVIDER_IDS)[number];
+export { PROVIDER_IDS, ProviderError };
+export type { GenerateChunk, ModelInfo, ProviderAdapter, ProviderId } from "@slayply/providers";
 
 /** Lower-case header that carries the user's key for each provider (SPEC §5). */
 export const KEY_HEADERS = {
@@ -9,18 +14,5 @@ export const KEY_HEADERS = {
   openai: "x-user-openai-key",
   gemini: "x-user-gemini-key",
 } as const satisfies Record<ProviderId, string>;
-
-/** Provider-neutral stream unit; adapters translate their vendor format into these. */
-export type GenerateChunk = { type: "delta"; text: string } | { type: "done" };
-
-export type ProviderAdapter = {
-  readonly id: ProviderId;
-  /** Streams model output for a validated request. The key must not be stored or logged. */
-  stream(
-    request: GenerateRequest,
-    apiKey: string,
-    signal: AbortSignal,
-  ): AsyncIterable<GenerateChunk>;
-};
 
 export type ProviderRegistry = Partial<Record<ProviderId, ProviderAdapter>>;

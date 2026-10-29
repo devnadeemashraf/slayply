@@ -1,7 +1,7 @@
 import { MAX_PAYLOAD_BYTES } from "@slayply/core";
 import { describe, expect, it, vi } from "vitest";
 import { type AppOptions, createApp } from "./app.js";
-import type { GenerateChunk, ProviderAdapter } from "./provider.js";
+import type { GenerateChunk, ModelInfo, ProviderAdapter } from "./provider.js";
 
 const EXT = "abcdefghijklmnopabcdefghijklmnop";
 const SECRET_KEY = "sk-ant-SECRET-KEY-123";
@@ -26,7 +26,8 @@ function fakeAdapter(
           for (const chunk of chunks) yield chunk;
         })(),
   );
-  return { id, stream };
+  const listModels = vi.fn(async (_key: string, _signal: AbortSignal): Promise<ModelInfo[]> => []);
+  return { id, stream, streamCompletion: stream, listModels };
 }
 
 function build(overrides: Partial<AppOptions> = {}) {
@@ -434,6 +435,8 @@ describe("logging", () => {
       stream: () => {
         throw new Error(`boom ${SECRET_KEY}`);
       },
+      streamCompletion: vi.fn(),
+      listModels: vi.fn(),
     };
     const { app, logs } = build({ providers: { anthropic: adapter } });
     const res = await post(app, JSON.stringify(validRequest), anthropicKey);
