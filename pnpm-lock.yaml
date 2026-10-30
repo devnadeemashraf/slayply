@@ -190,6 +190,9 @@ importers:
       '@slayply/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@slayply/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       idb:
         specifier: 8.0.4
         version: 8.0.4

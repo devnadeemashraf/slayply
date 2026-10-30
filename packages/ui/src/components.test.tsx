@@ -7,7 +7,7 @@ import { EmptyState } from "./empty-state.js";
 import { Field } from "./field.js";
 import { StickerBadge } from "./sticker-badge.js";
 import { Switch } from "./switch.js";
-import { nextIndex, Tabs } from "./tabs.js";
+import { nextIndex, TabPanel, Tabs } from "./tabs.js";
 
 const noop = () => {};
 const HOSTILE = "<img src=x onerror=1>";
@@ -165,6 +165,29 @@ describe("Tabs", () => {
     expect(nextIndex(3, 1, "End")).toBe(2);
     expect(nextIndex(3, 1, "Enter")).toBeNull();
     expect(nextIndex(0, 0, "ArrowRight")).toBeNull();
+  });
+});
+
+describe("TabPanel", () => {
+  it("keeps an inactive panel's content mounted but hidden", () => {
+    const html = renderToString(
+      <TabPanel id="a" active={false}>
+        <p>draft in progress</p>
+      </TabPanel>,
+    );
+    expect(html).toContain("draft in progress");
+    expect(html).toContain("hidden");
+  });
+
+  it("shows the active panel and links it back to its tab", () => {
+    const html = renderToString(
+      <TabPanel id="a" active={true} idPrefix="demo">
+        <p>visible</p>
+      </TabPanel>,
+    );
+    expect(html).not.toContain("hidden");
+    expect(html).toContain('id="demo-panel-a"');
+    expect(html).toContain('aria-labelledby="demo-tab-a"');
   });
 });
 

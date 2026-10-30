@@ -274,6 +274,7 @@ const EMPTY_SETTINGS = {
   effort: "",
   privacyAcknowledged: false,
   directMode: false,
+  preset: "neon",
 } as const;
 
 describe("wipeLocalData", () => {
