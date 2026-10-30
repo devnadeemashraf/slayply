@@ -4,6 +4,7 @@
 - Phase 0: Bootstrap completed.
 - Git repository active with branch PR workflow; monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- `REL-01`: icons, version 1.0.0, `docs/DEPLOYMENT.md` (the go-live handbook), `docs/STORE_LISTING.md`, `docs/RELEASE_NOTES_v1.0.0.md`, a permissions test, release-build guard (`relay-url.ts`), relay needs `TRUST_PROXY_HOPS` in production. Open `BP-007` relay: a client that stops reading can hold a socket past the stream deadline; `BP-008` rate-limit key should be the IPv6 /64; `BP-009` prompt-tag sanitizer misses invisible format characters (strip `p{Cf}`). Nothing deployed or tagged yet.
 - `SITE-01`: `apps/site` static landing and privacy pages (`build.mjs` copies `src` to `dist`), root `render.yaml` for the relay and site, `pnpm run smoke:site` in the CI `extension-smoke` job. Never deployed: Render hop count, build command and free-tier behaviour are unverified; `WXT_RELAY_URL` for a release build still needs the deployed relay address.
 - `QA-01`: `pnpm run budget` fails over 3.5 MB (tested with an over-budget fixture), `pnpm run smoke` loads the built extension in Chromium via `playwright-core`, checks the privacy gate and records the panel JS heap (a lower bound of the 60 MB budget, not whole-process memory); a relay test measures first delta against a stub. Both run in a new CI job `extension-smoke`, not in `pnpm run check`; the Linux job is unverified until it runs.
 - `HIST-02`: under a question, "Earlier answer (n)" shows up to three answers to similar questions from saved jobs (local word overlap, no network) with a Copy button; it does not insert into the answer. Wiring manual-test only.
@@ -31,8 +32,8 @@
 - None.
 
 ## NEXT UP
-- **Item:** only `REL-01` remains, blocked on the human SPEC edit (see `CAP-08`, text in ADR-0016/0018). `SITE-01` in review.
-- **Why now:** it is the last roadmap item; it needs the human SPEC edit first.
+- **Item:** none left in the roadmap. `REL-01` in review; then the maintainer follows `docs/DEPLOYMENT.md` (deploy, verify, publish, tag v1.0.0).
+- **Why now:** the project is feature complete; only deployment remains.
 - **Open from `CAP-01`:** needs a manual test in a real unpacked extension (steps in the roadmap entry; plus the toolbar-icon path for the panel buttons, and LinkedIn: "Capture visible JD" must refuse, selection must work). `capture-panel.tsx`, `background.ts` and `capture-browser.ts` have no automated tests. Job fields and notes live in panel memory only (`JOBS-01` / `HIST-01` should persist them). The panel's page button needs `activeTab`, so after a tab switch the user may need to click the toolbar icon first. `innerText` behaviour is untested (tests use linkedom `textContent`). Workday and other script-rendered boards may give little text. Only the top frame is read by the panel buttons (a job post inside an iframe needs the right-click path); `info.selectionText` length limits are unchecked; "Use as…" before a key and profile exist shows nothing until the generate panel appears. The context-menu "page" item shows on LinkedIn too and answers with a refusal message.
 - **Open from `PROV-04`:** needs a manual test in a real extension (see the roadmap entry; `provider-panel.tsx`, `generate-panel.tsx` and `App.tsx` have no automated tests). OpenAI and Gemini remain live-untested (no keys), so model filtering and effort support are still guessed from ids. Claude has no effort control (the Claude adapter never sets `supportsEffort`). Direct Mode is Claude only and picks the newest Claude model (no list in Direct Mode); OpenAI/Gemini direct calls need host permissions and a CORS check (own PR, own ADR). The saved fit result is keyed by job description only, so changing provider or model does not refresh it (use Run again). The model list is fetched through the relay whenever the panel opens or the key or provider changes (the relay caches it for 10 minutes). The relay now checks the key format before taking the stream slot (a bad key used to leak one slot until restart).
 - **Open from `DIRECT-01`:** needs a manual test in a real unpacked extension: stop the relay, open Settings, turn on Direct Mode, accept the browser prompt, generate an answer (also try declining the prompt: the switch must stay off). It settles whether `anthropic-dangerous-direct-browser-access` is needed (record the result in `docs/VERSIONS.md`). Claude only; OpenAI and Gemini direct calls need the provider picker. The relay health banner still shows the relay's state in Direct Mode. The permission stays granted after switching off; if the user revokes it in the browser, Direct Mode stays on and the error names the permission. `settings-panel.tsx` has no automated tests. A key with Direct Mode on is stored in `chrome.storage.local` exactly as before.
@@ -70,11 +71,10 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
-- PR (pending) | `SITE-01` | `apps/site` pages and build, `render.yaml`, blueprint and site tests, `smoke:site` | Manual test: Yes
+- PR (pending) | `REL-01` | Release prep: icons, 1.0.0, deployment handbook, store listing, release notes, red-team fixes | Manual test: Yes
+- PR #50 | `SITE-01` | Landing and privacy pages, Render blueprint | Manual test: Yes
 - PR (pending) | `QA-01` | `bundle-budget.mjs`, `smoke-extension.mjs`, relay first-token test, `extension-smoke` CI job | Manual test: Yes
 - PR #48 | `HIST-02` | `findPastAnswers`, "Earlier answer" block in the question list, saved jobs loaded in the generate panel | Manual test: Yes
 - PR (pending) | `GEN-02` | Draft kinds, tone/length, Shorter/Longer, draft limit in prompt, `fitToLimit` + Fit button | Manual test: Yes
 - PR (pending) | `HIST-01` | Job log: `jobRecordSchema`, `job-store.ts`, `job-draft.ts`, Jobs tab + Save job, IndexedDB v5, backup v2 | Manual test: Yes
 - PR (pending) | `BP-flaky-pdf` | 30 s timeout on the first pdfjs test in `pdf-extract.test.ts` (cold import is slow under load); assertions unchanged | Manual test: No
-- PR (pending) | `CAP-08` | Capture docs and hardening: README, HANDBOOK, ADR-0018, frame cap | Manual test: Yes
-- PR #37 | `CAP-07` | Stale-tab banner: `stale-tab.ts`, `stale-banner.tsx`, tab listeners in `capture-panel.tsx` | Manual test: Yes

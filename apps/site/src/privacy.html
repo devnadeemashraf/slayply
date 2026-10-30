@@ -22,7 +22,7 @@
         The text needed for the draft (job description, questions, relevant profile facts and the
         resume you chose) goes through the Slayply relay to the provider you picked: Anthropic,
         OpenAI or Google. The relay uses your API key for that one request and does not log or
-        store the key or the content. It reads your IP address in memory only, to rate-limit requests. In Direct Mode (Claude only) the request goes straight from
+        store the key or the content. It keeps only short-lived, in-memory data: your IP address for rate limiting and a fingerprint of your key to cache the provider's model list for ten minutes. In Direct Mode (Claude only) the request goes straight from
         your browser to Anthropic and skips the relay.
       </p>
       <h2>Your provider's policy applies</h2>
