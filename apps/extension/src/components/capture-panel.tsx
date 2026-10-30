@@ -3,21 +3,27 @@ import type { Capture, CaptureKind, CaptureOutcome } from "../lib/capture.js";
 import { captureOneClickFromActiveTab } from "../lib/capture-browser.js";
 import type { JobFields } from "../lib/capture-fields.js";
 import { createCaptureInbox, PENDING_CAPTURE_KEY } from "../lib/capture-inbox.js";
+import type { Incoming } from "../lib/incoming.js";
 import type { DetectedQuestion } from "../lib/page-snapshot.js";
 import { CaptureView, type Draft } from "./capture-view.js";
 
-/** A captured piece of text for the generate panel; `seq` makes a repeat of the same text count as new. */
-export type Incoming = { seq: number; field: "jd" | "question"; text: string };
+type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
 
 const EMPTY_JOB: JobFields = { title: "", company: "", location: "", salary: "" };
 
-export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) => void }) {
+export function CapturePanel({
+  onIncoming,
+  job,
+  onJobChange,
+}: {
+  onIncoming: (incoming: Incoming) => void;
+  job: JobFields;
+  onJobChange: (update: (current: JobFields) => JobFields) => void;
+}) {
   const inbox = useMemo(() => createCaptureInbox(chrome.storage.session), []);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [job, setJob] = useState<JobFields>(EMPTY_JOB);
-  const [questions, setQuestions] = useState<DetectedQuestion[]>([]);
   const [notes, setNotes] = useState("");
   const [paste, setPaste] = useState("");
   const seq = useRef(0);
@@ -26,24 +32,37 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
 
   /** Puts a capture where it belongs at once; the user reviews it in the boxes it lands in. */
   function apply(
-    capture: Pick<Capture, "kind" | "text"> & { fields: JobFields; questions: DetectedQuestion[] },
+    capture: Pick<Capture, "kind" | "text" | "fromPage"> & {
+      fields: JobFields;
+      questions: DetectedQuestion[];
+    },
   ) {
     setError(null);
     if (capture.kind === "note") {
       setNotes((current) => (current === "" ? capture.text : `${current}\n\n${capture.text}`));
       return;
     }
-    seq.current += 1;
-    onIncomingRef.current({
-      seq: seq.current,
-      field: capture.kind === "jd" ? "jd" : "question",
+    const send = (incoming: DistributiveOmit<Incoming, "seq">) => {
+      seq.current += 1;
+      onIncomingRef.current({ ...incoming, seq: seq.current } as Incoming);
+    };
+    if (capture.kind === "question") {
+      send({ kind: "question", text: capture.text });
+      return;
+    }
+    // One update per capture: React batches state updates, so two would lose the first.
+    send({
+      kind: "jd",
       text: capture.text,
+      replaceAll: capture.fromPage === true,
+      detected: capture.questions,
     });
-    if (capture.kind === "jd") {
-      // A new job description starts a new list; a selection or pasted text has none.
-      setQuestions(capture.questions);
-      // Only fill what was found; a blank never overwrites what the user already typed.
-      setJob((current) => ({
+    if (capture.fromPage === true) {
+      // A whole new page is a new job: its details replace the old ones.
+      onJobChange(() => capture.fields);
+    } else {
+      // A selection fills only what it found; a blank never overwrites what the user typed.
+      onJobChange((current) => ({
         title: capture.fields.title || current.title,
         company: capture.fields.company || current.company,
         location: capture.fields.location || current.location,
@@ -92,14 +111,9 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
       error={error}
       busy={busy}
       job={job}
-      questions={questions}
       notes={notes}
       paste={paste}
       onCapture={() => void capture()}
-      onUseQuestion={(label) => {
-        seq.current += 1;
-        onIncomingRef.current({ seq: seq.current, field: "question", text: label });
-      }}
       onDraftKind={(kind: CaptureKind) => setDraft((d) => d && { ...d, kind })}
       onDraftText={(text) => setDraft((d) => d && { ...d, text })}
       onUse={() => {
@@ -107,7 +121,7 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
         setDraft(null);
       }}
       onDiscard={() => setDraft(null)}
-      onJobChange={(field, value) => setJob((current) => ({ ...current, [field]: value }))}
+      onJobChange={(field, value) => onJobChange((current) => ({ ...current, [field]: value }))}
       onNotesChange={setNotes}
       onPasteChange={setPaste}
       onPasteAdd={() => {

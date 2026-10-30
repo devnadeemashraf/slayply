@@ -4,6 +4,7 @@ import {
   buildAnswerRequest,
   buildFitRequest,
   describeProfileUse,
+  type JobDetails,
   type ProviderChoice,
 } from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
@@ -15,13 +16,21 @@ import {
   createGenerationRunner,
   type GenerationState,
 } from "../lib/generate-controller.js";
+import { applyIncoming, type Incoming } from "../lib/incoming.js";
+import {
+  addRow,
+  highestId,
+  type QuestionRow,
+  removeRow,
+  rowsToQuestions,
+  updateRow,
+} from "../lib/question-rows.js";
 import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
-import type { Incoming } from "./capture-panel.js";
 import { type FitResult, FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
+import { QuestionList } from "./question-list.js";
 
 const JD_MAX_CHARS = 60_000;
-const QUESTION_MAX_CHARS = 5_000;
 const DIRECT_BLOCKED =
   "Direct Mode works with Claude only. Turn it off in Settings, or switch the provider to Claude.";
 
@@ -50,6 +59,7 @@ export function GeneratePanel({
   resumes,
   fitStore,
   incoming,
+  job,
 }: {
   apiKey: string;
   choice: ProviderChoice;
@@ -58,9 +68,11 @@ export function GeneratePanel({
   resumes: readonly StoredResume[];
   fitStore: FitStore;
   incoming: Incoming | null;
+  job: JobDetails;
 }) {
   const [jd, setJd] = useState("");
-  const [question, setQuestion] = useState("");
+  const [rows, setRows] = useState<QuestionRow[]>([]);
+  const [jdOpen, setJdOpen] = useState(true);
   const [resumeId, setResumeId] = useState(readRememberedResume);
   const [formError, setFormError] = useState<string | null>(null);
   const [state, setState] = useState<GenerationState>({ phase: "idle" });
@@ -74,21 +86,38 @@ export function GeneratePanel({
     [fitStore],
   );
 
-  // Text the user captured replaces the matching field; a new job description drops the old fit result.
-  // Each capture applies once: a remount must not overwrite what the user has edited since.
+  // Ids already handed out, so a removed question's id (and its stale edit) is never reused.
+  const idFloor = useRef(0);
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  const changeRows = (change: (rows: QuestionRow[], floor: number) => QuestionRow[]) =>
+    setRows((current) => {
+      const next = change(current, idFloor.current);
+      idFloor.current = Math.max(idFloor.current, highestId(next));
+      return next;
+    });
+
+  // A capture lands once: a remount must not overwrite what the user has edited since. A new job
+  // description also drops the old fit result, answers and edits, which no longer match it.
   const appliedSeq = useRef(0);
   useEffect(() => {
     if (!incoming || incoming.seq <= appliedSeq.current) return;
     appliedSeq.current = incoming.seq;
-    if (incoming.field === "jd") {
-      setJd(incoming.text.slice(0, JD_MAX_CHARS));
+    const applied = applyIncoming(incoming, rowsRef.current, idFloor.current);
+    idFloor.current = Math.max(idFloor.current, highestId(applied.rows));
+    setRows(applied.rows);
+    if (applied.jd !== undefined) setJd(applied.jd);
+    if (applied.resetResult) {
+      setJdOpen(false);
+      runner.stop();
       fitRunner.stop();
       setFitResult(null);
       setFitState({ phase: "idle" });
-    } else {
-      setQuestion(incoming.text.slice(0, QUESTION_MAX_CHARS));
+      setState({ phase: "idle" });
+      setEdits({});
+      setCopyState("idle");
     }
-  }, [incoming, fitRunner]);
+  }, [incoming, runner, fitRunner]);
 
   const feedback = useMemo(() => createCopyFeedback(navigator.clipboard, setCopyState), []);
 
@@ -111,8 +140,15 @@ export function GeneratePanel({
   const fitRunning = fitState.phase === "streaming";
   const suggested = fitResult ? suggestResume(fitResult.fit.resume, resumes) : null;
 
-  async function slay() {
-    const built = buildAnswerRequest({ jd, question, profile, resume, choice: requestChoice });
+  async function slay(onlyId?: string) {
+    const built = buildAnswerRequest({
+      jd,
+      questions: rowsToQuestions(rows, onlyId),
+      job,
+      profile,
+      resume,
+      choice: requestChoice,
+    });
     if (!built.ok || directBlocked) {
       setFormError(built.ok ? DIRECT_BLOCKED : built.message);
       return;
@@ -130,7 +166,7 @@ export function GeneratePanel({
   }
 
   async function checkFit(force: boolean) {
-    const built = buildFitRequest({ jd, profile, resume, choice: requestChoice });
+    const built = buildFitRequest({ jd, job, profile, resume, choice: requestChoice });
     if (!built.ok || directBlocked) {
       setFormError(built.ok ? DIRECT_BLOCKED : built.message);
       return;
@@ -155,7 +191,6 @@ export function GeneratePanel({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          void slay();
         }}
       >
         <label htmlFor="resume">Resume</label>
@@ -174,31 +209,32 @@ export function GeneratePanel({
             </option>
           ))}
         </select>
-        <label htmlFor="jd">Job description</label>
-        <textarea
-          id="jd"
-          rows={6}
-          maxLength={JD_MAX_CHARS}
-          value={jd}
-          onChange={(event) => {
-            setJd(event.target.value);
-            fitRunner.stop();
-            setFitResult(null);
-            setFitState({ phase: "idle" });
-          }}
-        />
-        <label htmlFor="question">Question</label>
-        <textarea
-          id="question"
-          rows={3}
-          maxLength={QUESTION_MAX_CHARS}
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
+        <details open={jdOpen} onToggle={(event) => setJdOpen(event.currentTarget.open)}>
+          <summary>{`Job description (${jd.length.toLocaleString("en-US")} characters)`}</summary>
+          <label htmlFor="jd">Job description</label>
+          <textarea
+            id="jd"
+            rows={6}
+            maxLength={JD_MAX_CHARS}
+            value={jd}
+            onChange={(event) => {
+              setJd(event.target.value);
+              fitRunner.stop();
+              setFitResult(null);
+              setFitState({ phase: "idle" });
+            }}
+          />
+        </details>
+        <QuestionList
+          rows={rows}
+          running={running}
+          onChange={(id, patch) => changeRows((current) => updateRow(current, id, patch))}
+          onRemove={(id) => changeRows((current) => removeRow(current, id))}
+          onAdd={() => changeRows((current, floor) => addRow(current, "", floor))}
+          onGenerateOne={(id) => void slay(id)}
+          onGenerateAll={() => void slay()}
         />
         <div className="row">
-          <button type="submit" disabled={running || jd.trim() === "" || question.trim() === ""}>
-            Slay
-          </button>
           <button
             type="button"
             className="secondary"

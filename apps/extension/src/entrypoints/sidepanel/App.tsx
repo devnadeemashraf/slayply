@@ -1,6 +1,6 @@
 import type { StoredProfile, StoredResume } from "@slayply/core";
 import { useEffect, useMemo, useState } from "react";
-import { CapturePanel, type Incoming } from "../../components/capture-panel.js";
+import { CapturePanel } from "../../components/capture-panel.js";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { ProviderPanel } from "../../components/provider-panel.js";
@@ -8,8 +8,10 @@ import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
 import { SettingsPanel } from "../../components/settings-panel.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
+import type { JobFields } from "../../lib/capture-fields.js";
 import { RELAY_URL } from "../../lib/config.js";
 import { createFitStore } from "../../lib/fit-store.js";
+import type { Incoming } from "../../lib/incoming.js";
 import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../../lib/privacy.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
@@ -105,6 +107,7 @@ export function App() {
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+  const [job, setJob] = useState<JobFields>({ title: "", company: "", location: "", salary: "" });
 
   const refresh = async () => setSettings(await store.load());
 
@@ -195,7 +198,9 @@ export function App() {
           unavailable. Reload the panel to try again.
         </p>
       )}
-      {settings?.privacyAcknowledged && <CapturePanel onIncoming={setIncoming} />}
+      {settings?.privacyAcknowledged && (
+        <CapturePanel onIncoming={setIncoming} job={job} onJobChange={setJob} />
+      )}
       {settings?.privacyAcknowledged &&
         profileStatus === "ready" &&
         keyFor(settings, settings.provider) !== "" && (
@@ -207,6 +212,7 @@ export function App() {
             resumes={resumes}
             fitStore={fitStore}
             incoming={incoming}
+            job={job}
           />
         )}
       {settings?.privacyAcknowledged && resumesError && (

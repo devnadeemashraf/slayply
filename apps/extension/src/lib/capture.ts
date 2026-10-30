@@ -11,6 +11,8 @@ export type Capture = {
   fields: JobFields;
   /** Application questions found on the page; empty for a selection or pasted text. */
   questions: DetectedQuestion[];
+  /** True when the whole visible page was read, so the capture describes a whole job. */
+  fromPage?: boolean;
 };
 export type CaptureOutcome = { ok: true; capture: Capture } | { ok: false; message: string };
 
@@ -82,6 +84,7 @@ export async function captureFromTab(
         url,
         fields: extractJobFields(snapshot),
         questions: parseQuestions(snapshot.questions) ?? [],
+        fromPage: true,
       },
     };
   }
@@ -144,6 +147,7 @@ export function parsePending(value: unknown): CaptureOutcome | null {
     ok: true,
     capture: {
       questions: parsedQuestions,
+      ...(record.fromPage === true ? { fromPage: true } : {}),
       kind: kind as CaptureKind,
       text,
       url,

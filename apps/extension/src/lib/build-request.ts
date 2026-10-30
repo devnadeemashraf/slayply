@@ -49,8 +49,12 @@ export type ProviderChoice = {
   effort: Effort | "";
 };
 
+/** Job details the user captured; blanks and the salary (not part of the contract) are not sent. */
+export type JobDetails = { title: string; company: string; location: string; salary?: string };
+
 type BuildInput = {
   choice?: ProviderChoice;
+  job?: JobDetails;
   jd: string;
   profile?: StoredProfile | null;
   resume?: StoredResume | null;
@@ -59,11 +63,16 @@ type BuildInput = {
 function buildRequest(
   input: BuildInput,
   task: "answers" | "fit_check",
-  questions?: { id: string; text: string }[],
+  questions?: { id: string; text: string; maxChars?: number }[],
 ): GenerateRequest | { issues: { path: string }[] } {
   const result = validateGenerateRequest({
     task,
-    job: { jd: input.jd },
+    job: {
+      jd: input.jd,
+      ...(input.job?.title?.trim() ? { title: input.job.title.trim() } : {}),
+      ...(input.job?.company?.trim() ? { company: input.job.company.trim() } : {}),
+      ...(input.job?.location?.trim() ? { location: input.job.location.trim() } : {}),
+    },
     ...(questions ? { questions } : {}),
     resume: input.resume
       ? { track: input.resume.track, region: input.resume.region, text: input.resume.text }
@@ -103,8 +112,14 @@ function explain(paths: string[], fallback: string): BuildResult {
   return { ok: false, message: fallback };
 }
 
-export function buildAnswerRequest(input: BuildInput & { question: string }): BuildResult {
-  const built = buildRequest(input, "answers", [{ id: "q1", text: input.question }]);
+/** One `question`, or a list of `questions` (the review screen's checked rows). */
+export function buildAnswerRequest(
+  input: BuildInput &
+    ({ question: string } | { questions: { id: string; text: string; maxChars?: number }[] }),
+): BuildResult {
+  const questions = "questions" in input ? input.questions : [{ id: "q1", text: input.question }];
+  if (questions.length === 0) return { ok: false, message: "Pick or add at least one question." };
+  const built = buildRequest(input, "answers", questions);
   if ("issues" in built) {
     return explain(
       built.issues.map((issue) => issue.path),

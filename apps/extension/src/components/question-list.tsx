@@ -1,0 +1,108 @@
+import { LIMITS } from "@slayply/core";
+import type { QuestionRow } from "../lib/question-rows.js";
+
+export type QuestionListProps = {
+  rows: readonly QuestionRow[];
+  running: boolean;
+  onChange: (id: string, patch: Partial<Omit<QuestionRow, "id">>) => void;
+  onRemove: (id: string) => void;
+  onAdd: () => void;
+  onGenerateOne: (id: string) => void;
+  onGenerateAll: () => void;
+};
+
+/** The questions to answer: tick, edit, set a limit, generate one or all of the ticked ones. */
+export function QuestionList(props: QuestionListProps) {
+  const { rows, running } = props;
+  const selected = rows.filter((row) => row.checked && row.text.trim() !== "").length;
+  const label = `Generate ${selected} answer${selected === 1 ? "" : "s"}`;
+
+  return (
+    <div>
+      <h3>Questions</h3>
+      {rows.length === 0 && (
+        <p className="muted">
+          No questions yet. Capture a page with an application form, or add one. Questions that load
+          on a later step can be added when you get there.
+        </p>
+      )}
+      <ul className="questions">
+        {rows.map((row, index) => (
+          <li key={row.id}>
+            <label htmlFor={`${row.id}-on`}>
+              <input
+                id={`${row.id}-on`}
+                type="checkbox"
+                checked={row.checked}
+                onChange={(event) => props.onChange(row.id, { checked: event.target.checked })}
+              />{" "}
+              {`Question ${index + 1}`}
+            </label>
+            <textarea
+              aria-label={`Text of question ${index + 1}`}
+              rows={2}
+              maxLength={LIMITS.questionChars}
+              value={row.text}
+              onChange={(event) => props.onChange(row.id, { text: event.target.value })}
+            />
+            <div className="row">
+              <label htmlFor={`${row.id}-max`}>Max characters</label>
+              <input
+                id={`${row.id}-max`}
+                type="number"
+                min={1}
+                max={LIMITS.questionMaxChars}
+                value={row.maxChars ?? ""}
+                onChange={(event) => {
+                  const value = event.target.valueAsNumber;
+                  // Zero, negative or blank means no limit; a huge value is held at the contract's cap.
+                  props.onChange(row.id, {
+                    maxChars:
+                      Number.isNaN(value) || value < 1
+                        ? null
+                        : Math.min(Math.floor(value), LIMITS.questionMaxChars),
+                  });
+                }}
+              />
+              <button
+                type="button"
+                className="secondary"
+                aria-label={`Generate answer for question ${index + 1}`}
+                disabled={running || row.text.trim() === ""}
+                onClick={() => props.onGenerateOne(row.id)}
+              >
+                Generate
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                aria-label={`Remove question ${index + 1}`}
+                onClick={() => props.onRemove(row.id)}
+              >
+                Remove
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="row">
+        <button
+          type="button"
+          className="secondary"
+          disabled={rows.length >= LIMITS.maxQuestions}
+          onClick={props.onAdd}
+        >
+          Add question
+        </button>
+        <button
+          type="button"
+          disabled={running || selected === 0}
+          aria-live="polite"
+          onClick={props.onGenerateAll}
+        >
+          {label}
+        </button>
+      </div>
+    </div>
+  );
+}

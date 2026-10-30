@@ -53,6 +53,7 @@ describe("captureFromTab", () => {
     expect(result).toMatchObject({ ok: true, capture: { kind: "jd", text: snapshot.text } });
     if (result.ok) expect(result.capture.fields.title).toBe("Senior Engineer");
     expect(result.ok && result.capture.questions).toEqual(snapshot.questions);
+    expect(result.ok && result.capture.fromPage).toBe(true);
   });
 
   it("never reads the page on LinkedIn, and says why", async () => {
@@ -139,6 +140,14 @@ describe("parsePending", () => {
     { ...good, text: 3 },
     { ...good, fields: null },
   ])("rejects %j", (value) => expect(parsePending(value)).toBeNull());
+
+  it("keeps the page flag through the inbox", () => {
+    expect(parsePending({ ...good, fromPage: true })).toMatchObject({
+      ok: true,
+      capture: { fromPage: true },
+    });
+    expect(parsePending({ ...good, fromPage: "yes" })).toEqual({ ok: true, capture: good });
+  });
 
   it("accepts a capture saved without questions", () => {
     const { questions: _omitted, ...older } = good;

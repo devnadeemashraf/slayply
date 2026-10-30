@@ -11,8 +11,6 @@ const base: CaptureViewProps = {
   notes: "",
   paste: "",
   onCapture: noop,
-  onUseQuestion: noop,
-  questions: [],
   onDraftKind: noop,
   onDraftText: noop,
   onUse: noop,
@@ -50,27 +48,6 @@ describe("CaptureView", () => {
       />,
     );
     for (const value of ["Engineer", "Acme", "Berlin", "€90k"]) expect(html).toContain(value);
-  });
-
-  it("lists detected questions with their limits and a Use button", () => {
-    const html = renderToString(
-      <CaptureView
-        {...base}
-        questions={[
-          { label: "Why us?", type: "longtext", required: true, maxChars: 500 },
-          { label: "Authorized to work?", type: "choice", required: false, maxChars: null },
-        ]}
-      />,
-    );
-    expect(html).toContain("Questions found (2)");
-    expect(html).toContain("Why us?");
-    expect(html).toContain("(required, max 500 characters)");
-    expect(html).toContain("(choice)");
-    expect(html.match(/>Use</g)?.length).toBe(2);
-  });
-
-  it("shows no question list when none were found", () => {
-    expect(renderToString(<CaptureView {...base} />)).not.toContain("Questions found");
   });
 
   it("shows an error as an alert", () => {
