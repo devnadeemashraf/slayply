@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`presets > brutal > matches the recorded token values 1`] = `
+{
+  "--accent": "#ffe500",
+  "--accent-ink": "#000000",
+  "--bad": "#ff4d4d",
+  "--bg": "#000000",
+  "--border": "#ffffff",
+  "--border-w": "3px",
+  "--focus": "#ffe500",
+  "--ink": "#ffffff",
+  "--ink-muted": "#bdbdbd",
+  "--ok": "#00e676",
+  "--on-status": "#000000",
+  "--radius-lg": "4px",
+  "--radius-md": "2px",
+  "--radius-sm": "0",
+  "--shadow-color": "#ffe500",
+  "--shadow-offset": "5px",
+  "--surface": "#111111",
+  "--surface-2": "#1c1c1c",
+  "--warn": "#ffe500",
+}
+`;
+
+exports[`presets > bubblegum > matches the recorded token values 1`] = `
+{
+  "--accent": "#ff4fa0",
+  "--accent-ink": "#2a1230",
+  "--bad": "#ff7a8a",
+  "--bg": "#fff4f8",
+  "--border": "#2a1230",
+  "--border-w": "2px",
+  "--focus": "#b0004f",
+  "--ink": "#2a1230",
+  "--ink-muted": "#6b4a73",
+  "--ok": "#5be39a",
+  "--on-status": "#2a1230",
+  "--radius-lg": "20px",
+  "--radius-md": "14px",
+  "--radius-sm": "8px",
+  "--shadow-color": "#2a1230",
+  "--shadow-offset": "4px",
+  "--surface": "#ffffff",
+  "--surface-2": "#ffe3ee",
+  "--warn": "#ffd24a",
+}
+`;
+
+exports[`presets > neon > matches the recorded token values 1`] = `
+{
+  "--accent": "#c6ff3d",
+  "--accent-ink": "#0b0b10",
+  "--bad": "#ff6b86",
+  "--bg": "#0b0b10",
+  "--border": "#8585a3",
+  "--border-w": "2px",
+  "--focus": "#c6ff3d",
+  "--ink": "#f4f4f8",
+  "--ink-muted": "#a8a8c0",
+  "--ok": "#3ddc84",
+  "--on-status": "#0b0b10",
+  "--radius-lg": "14px",
+  "--radius-md": "10px",
+  "--radius-sm": "6px",
+  "--shadow-color": "#c6ff3d",
+  "--shadow-offset": "3px",
+  "--surface": "#14141c",
+  "--surface-2": "#1e1e2a",
+  "--warn": "#ffc83d",
+}
+`;

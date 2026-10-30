@@ -28,7 +28,7 @@ slayply/
 ├── packages/
 │   ├── core/            # Zod schemas and validators (CORE-01), prompt builder (CORE-03); claim checker (planned)
 │   ├── providers/       # LLM provider adapters: Claude (PROV-01), OpenAI (PROV-02) and Gemini (PROV-03) built
-│   └── ui/              # Shared UI components & Gen-Z theme tokens (planned, THEME-01)
+│   └── ui/              # Gen-Z theme tokens, presets and base components (THEME-01a, ADR-0020)
 ├── docs/                # Spec, roadmap, standards, handoff pointer; docs/adr/ holds decisions
 ├── .claude/             # Claude Code hooks config, skills and subagents
 ├── scripts/             # Workspace doctor, validation, and handoff scripts
@@ -131,6 +131,7 @@ flowchart LR
 - Stale-tab banner (`CAP-07`): `lib/stale-tab.ts` (`isStale`, `sameDocument`) compares the captured `{tabId, url}` with the active tab; `capture-panel.tsx` listens to `tabs.onActivated/onUpdated` and `windows.onFocusChanged` (events only, no page reads) and shows `stale-banner.tsx`. Without host access `tab.url` is absent, so only a different tab counts. The listeners are manual-test only.
 - Capture privacy surface (`CAP-08`, ADR-0018): one user gesture per read; page text and question labels only; allowed per site or by the job-site list; LinkedIn selection only and never requested; Greenhouse API lookup sends board and job id only. Caps: 60k text, 40 questions, 10 structured blocks, 12 embedded frames (most questions first). The wording for SPEC §2/§5/Feature 3 awaits a human edit.
 - Not covered by automated tests: the React layer (see the roadmap manual test).
+- UI package (`THEME-01a`, ADR-0020): `packages/ui` is a source package (no build; `exports` point at `src`). `theme.css` holds the tokens and the `neon` (default), `bubblegum` and `brutal` presets, switched by `data-theme`; `components.css` styles the `sl-*` classes from tokens only. `Button`, `Chip`, `StickerBadge`, `Card`, `Field`, `Switch`, `Tabs`/`TabPanel` and `EmptyState` are in `src/*.tsx`. `theme.test.ts` parses `theme.css` and fails if a preset misses a token, any of 13 text/boundary pairs drops below 4.5:1 (text) or 3:1 (focus, borders), a component hard-codes a duration, or a `@keyframes` has no reduced-motion rule. Not used by the extension until `THEME-01b`.
 - Panel shell (`UX-01`, ADR-0019): `App.tsx` renders four `TabPanel`s (Job, Jobs, You, Setup) selected by `tab-bar.tsx`; inactive panels are `hidden`, never unmounted, because `generate-panel.tsx` keeps a running generation and edits in its own state. `lib/panel-nav.ts` holds `nextTab` (arrow/Home/End, wrapping) and `setupChecklist`; `setup-checklist.tsx`, `onboarding-cards.tsx` (two cards from `lib/privacy.ts`) and `jobs-tab.tsx` (empty until `HIST-01`) are small render components. Storage errors are scoped (`onboarding`, `profile`, `setup`). Tab clicks and focus movement are manual-test only.
 
 ## 6. Data & Content Pipeline

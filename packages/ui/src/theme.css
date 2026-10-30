@@ -1,0 +1,102 @@
+/*
+ * Slayply design tokens. Three presets switch by the data-theme attribute on any element; the
+ * default (no attribute) is neon. The contrast test (theme.test.ts) reads this file, so a preset
+ * that fails WCAG AA cannot ship.
+ */
+
+html {
+  --font-ui: system-ui, sans-serif;
+  --font-display: var(--font-ui);
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.75rem;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root,
+[data-theme="neon"] {
+  color-scheme: dark;
+  --bg: #0b0b10;
+  --surface: #14141c;
+  --surface-2: #1e1e2a;
+  --ink: #f4f4f8;
+  --ink-muted: #a8a8c0;
+  --accent: #c6ff3d;
+  --accent-ink: #0b0b10;
+  --focus: #c6ff3d;
+  --border: #8585a3;
+  --ok: #3ddc84;
+  --warn: #ffc83d;
+  --bad: #ff6b86;
+  --on-status: #0b0b10;
+  --shadow-color: #c6ff3d;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --border-w: 2px;
+  --shadow-offset: 3px;
+}
+
+[data-theme="bubblegum"] {
+  color-scheme: light;
+  --bg: #fff4f8;
+  --surface: #ffffff;
+  --surface-2: #ffe3ee;
+  --ink: #2a1230;
+  --ink-muted: #6b4a73;
+  --accent: #ff4fa0;
+  --accent-ink: #2a1230;
+  --focus: #b0004f;
+  --border: #2a1230;
+  --ok: #5be39a;
+  --warn: #ffd24a;
+  --bad: #ff7a8a;
+  --on-status: #2a1230;
+  --shadow-color: #2a1230;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --border-w: 2px;
+  --shadow-offset: 4px;
+}
+
+[data-theme="brutal"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #111111;
+  --surface-2: #1c1c1c;
+  --ink: #ffffff;
+  --ink-muted: #bdbdbd;
+  --accent: #ffe500;
+  --accent-ink: #000000;
+  --focus: #ffe500;
+  --border: #ffffff;
+  --ok: #00e676;
+  --warn: #ffe500;
+  --bad: #ff4d4d;
+  --on-status: #000000;
+  --shadow-color: #ffe500;
+  --radius-sm: 0;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --border-w: 3px;
+  --shadow-offset: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    --dur-fast: 0.01ms;
+    --dur-base: 0.01ms;
+    --dur-slow: 0.01ms;
+  }
+}

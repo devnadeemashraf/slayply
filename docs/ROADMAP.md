@@ -362,7 +362,7 @@
 #### `THEME-01a`: Tokens, Presets and Base Components
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review (PR pending). ADR-0020. Tailwind not used (tokens do not depend on it); Bubblegum is light; the extension does not import the package until `THEME-01b`.
 - **Acceptance Criteria:**
   - `packages/ui` holds CSS custom-property tokens and Neon (default), Bubblegum and Brutal presets switched by `data-theme`; Bubblegum keeps dark ink text.
   - Hand-rolled `Button`, `Chip`, `StickerBadge`, `Card`, `Field`, `Switch`, `Tabs`, `EmptyState`.
@@ -443,6 +443,7 @@
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 | **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
 | **ADR-0012** | Gemini Adapter | Accepted | Key in header; ends only on `STOP`; thinking budget (2.5) or level (3+) by model id; models ordered by version | Key in URL, trusting a partial stream, relying on the models `thinking` field |
+| **ADR-0020** | UI Package, Tokens and Base Components | Accepted | Source package; tokens in plain CSS parsed by the contrast test; hand-written `sl-*` classes | `tsc` build, tokens in TypeScript, Tailwind, CSS-in-JS |
 | **ADR-0019** | Panel Shell and Navigation | Accepted | Bottom tab bar; all panels stay mounted and hidden; pure tab logic in `lib/panel-nav.ts` | Left icon rail, one scroll with anchors |
 | **ADR-0013** | Direct Mode | Accepted | Optional host permission requested at toggle time; `direct` flag picks `streamDirect` in the existing controller; Claude only | Static host permission, a second controller |
 
@@ -464,6 +465,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-30:** `THEME-01a` in review: `packages/ui` now has the design tokens, the Neon, Bubblegum and Brutal presets and eight base components, with an automated WCAG AA contrast test over every preset and reduced-motion rules for the CSS (ADR-0020). No screen uses it yet (`THEME-01b`).
 
 - **2026-10-30:** `UX-01` in review: the side panel is now four tabs (Job, Jobs, You, Setup) with every panel kept mounted so work survives a tab switch, a setup checklist on the Job tab, two-card onboarding from the existing privacy text, errors shown where the action happened, and a relay dot that pulses (ADR-0019). Stepper and sticky action moved to `THEME-01b`. Tab clicks and keyboard movement are manual-test only.
 
