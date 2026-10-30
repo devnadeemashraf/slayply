@@ -28,6 +28,7 @@ import {
 } from "../lib/question-rows.js";
 import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
 import { ActionBar } from "./action-bar.js";
+import { JobEmpty } from "./empty-states.js";
 import { type FitResult, FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
 import { JobStepper } from "./job-stepper.js";
@@ -206,6 +207,7 @@ export function GeneratePanel({
     <section>
       <h2>Draft an answer</h2>
       <JobStepper steps={jobSteps(progress)} />
+      {!progress.hasJd && rows.length === 0 && state.phase === "idle" && <JobEmpty />}
       <p className="muted">{describeProfileUse(profile, resume)}</p>
       <form
         onSubmit={(event) => {

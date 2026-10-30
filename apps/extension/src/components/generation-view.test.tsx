@@ -1,5 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { PLAYFUL } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { GenerationView } from "./generation-view.js";
 
@@ -60,7 +61,7 @@ describe("GenerationView", () => {
   it("shows the live preview as a draft with Copy disabled", () => {
     const html = render({ phase: "streaming", attempt: 1, preview: "Working on it" });
     expect(html).toContain("Working on it");
-    expect(html).toMatch(/Drafting/);
+    expect(html).toContain(PLAYFUL.draftLoading);
     expect(html).toMatch(/<button[^>]*disabled[^>]*>Copy/);
   });
 

@@ -8,6 +8,7 @@ import {
 import { Button, Card, StickerBadge } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import type { CopyState } from "../lib/copy.js";
+import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
 import { createExit, exitDelay, prefersReducedMotion } from "../lib/motion.js";
@@ -185,9 +186,7 @@ export function GenerationView({
       {state.phase === "streaming" && (
         <>
           <p className="muted">
-            {state.attempt === 2
-              ? "Reformatting answer, attempt 2 of 2"
-              : "Drafting… the format is checked when it finishes"}
+            {state.attempt === 2 ? SERIOUS.reformattingAnswer : PLAYFUL.draftLoading}
           </p>
           <p className="answer">{state.preview}</p>
         </>

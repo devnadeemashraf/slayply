@@ -7,6 +7,20 @@ export const TABS = [
 
 export type TabId = (typeof TABS)[number]["id"];
 
+export function showYouEmpty(input: {
+  profileStatus: "loading" | "ready" | "corrupt" | "error";
+  profile: unknown;
+  resumeCount: number;
+  resumesError: string | null;
+}): boolean {
+  return (
+    input.profileStatus === "ready" &&
+    input.profile === null &&
+    input.resumeCount === 0 &&
+    input.resumesError === null
+  );
+}
+
 export type SetupStatus = { hasKey: boolean; hasProfile: boolean; hasResume: boolean };
 
 export type SetupItem = {

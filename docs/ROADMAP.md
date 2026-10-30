@@ -386,7 +386,7 @@
 #### `THEME-01c`: Micro-interactions
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** In review (PR pending). No ADR (small, no schema, security or hot path).
+- **Status:** Done (PR #43). No ADR (small, no schema, security or hot path).
 - **Acceptance Criteria:**
   - Done: copy pop (button pops and shows a check once copied; the existing 2 s revert is unchanged), step stamp (the check on a finished step), sticker drop (fit badge and receipt IDs), field shake plus a dashed border on an invalid field, claim fade-out before a removed sentence goes, and a tab switch inside a same-document view transition. Button press was already in `THEME-01a`.
   - CSS only, `transform` and `opacity` only. Every animated rule has a rule for the same selector inside `prefers-reduced-motion: reduce` (a plain fade or none); the view transition and the claim fade do not run at all under reduced motion, and also when the browser cannot say.
@@ -398,9 +398,15 @@
 #### `THEME-01d`: Voice and Empty States
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** Planned
-- **Acceptance Criteria:** All copy in one `copy.ts`; playful text only on empty states, copy and loading; privacy, errors, keys and wipe stay plain. Empty states for Job, Jobs and You. Human reviews the copy.
-- **Required Tests:** A test asserting no playful string appears in the serious-message list.
+- **Status:** In review (PR pending). No ADR.
+- **Acceptance Criteria:**
+  - Playful wording lives only in `PLAYFUL` in `lib/copy-text.ts` (not `copy.ts`, which is the clipboard logic): the relay warm-up, fit and draft loading lines, and the Job, Jobs and You empty states. Privacy, errors, keys and data deletion stay plain.
+  - `SERIOUS` in the same file holds the messages `App.tsx` and the relay status write themselves; the privacy and training texts stay in `lib/privacy.ts`.
+  - The long static text of the settings, questionnaire, capture and provider panels is **not** moved (hundreds of strings, no wording change); a test scans every source file so an emoji cannot appear outside `copy-text.ts`.
+  - Corrected: the Direct Mode notice still said Direct Mode "will be available in a later release"; it shipped with `DIRECT-01`.
+  - Human reviews the copy (the PR lists every playful line).
+- 🧪 **Manual Test:** Fresh profile: Job tab shows "No job yet" until a capture; Jobs and You tabs show their empty states (You disappears once a profile or resume exists). Run a fit check and a draft and read the loading lines. Stop the relay: the notice points to Direct Mode in Setup.
+- **Required Tests:** Playful and serious copy never overlap, serious copy has no emoji, exclamation marks or cheeky words (proved by injecting "Oops" into a serious message), no emoji elsewhere in the source; empty states render the shared copy; when the You empty state shows.
 
 #### `SITE-01`: Landing Page & Deployment Blueprint
 - **Spec Section:** §8 Hosting `[MUST]`
@@ -472,6 +478,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-30:** `THEME-01d` in review: playful wording is collected in one file and fenced off by tests from the serious messages; the Job, Jobs and You tabs have empty states; the fit and draft loading lines have a voice; a stale Direct Mode notice is corrected. Long static panel text is not moved.
 
 - **2026-10-30:** `THEME-01c` in review: small motions on the panel (copy pop, step stamp, sticker drop, field shake, removed-sentence fade, tab cross-fade), each with a reduced-motion replacement checked by a test over both stylesheets. Whether the tab cross-fade works in a side panel is untested (`docs/VERSIONS.md`).
 

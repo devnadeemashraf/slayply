@@ -6,6 +6,7 @@ import { CapturePanel } from "../../components/capture-panel.js";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { JobsTab } from "../../components/jobs-tab.js";
 import { ONBOARDING_LAST_STEP, OnboardingCards } from "../../components/onboarding-cards.js";
+import { YouEmpty } from "../../components/empty-states.js";
 import { PresetPicker } from "../../components/preset-picker.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { ProviderPanel } from "../../components/provider-panel.js";
@@ -18,7 +19,8 @@ import type { JobFields } from "../../lib/capture-fields.js";
 import { RELAY_URL } from "../../lib/config.js";
 import { createFitStore } from "../../lib/fit-store.js";
 import type { Incoming } from "../../lib/incoming.js";
-import { TABS, type TabId } from "../../lib/panel-nav.js";
+import { SERIOUS } from "../../lib/copy-text.js";
+import { showYouEmpty, TABS, type TabId } from "../../lib/panel-nav.js";
 import { prefersReducedMotion, withViewTransition } from "../../lib/motion.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
@@ -72,7 +74,7 @@ export function App() {
   }, [preset]);
 
   useEffect(() => {
-    store.load().then(setSettings, () => setLoadError("Could not read saved settings."));
+    store.load().then(setSettings, () => setLoadError(SERIOUS.settingsUnreadable));
   }, [store]);
 
   const db = useMemo(() => openProfileDb(), []);
@@ -105,9 +107,7 @@ export function App() {
     resumeStore
       .list()
       .then(setResumes, (error: unknown) =>
-        setResumesError(
-          error instanceof Error ? error.message : "Saved resumes could not be read.",
-        ),
+        setResumesError(error instanceof Error ? error.message : SERIOUS.resumesUnreadable),
       )
       .finally(() => setResumesLoaded(true));
   }, [resumeStore]);
@@ -129,7 +129,7 @@ export function App() {
     } catch (error) {
       setActionError({
         scope,
-        message: error instanceof Error ? error.message : "Something went wrong.",
+        message: error instanceof Error ? error.message : SERIOUS.genericError,
       });
       return false;
     }
@@ -148,10 +148,7 @@ export function App() {
     const saved = await attempt("setup", async () => {
       const result = await store.saveKey(key, provider);
       if (!result.ok) {
-        invalid =
-          result.reason === "empty"
-            ? "Enter your API key."
-            : "That key has characters the relay cannot accept.";
+        invalid = result.reason === "empty" ? SERIOUS.keyEmpty : SERIOUS.keyInvalid;
         return;
       }
       await refresh();
@@ -168,8 +165,7 @@ export function App() {
       {profileStatus === "corrupt" && (
         <section>
           <p className="error" role="alert">
-            Your saved profile could not be read. Discarding it deletes it, and your IDs (F01, S01…)
-            restart. Only do this if you will import your context pack again.
+            {SERIOUS.profileUnreadable}
           </p>
           <button
             type="button"
@@ -181,14 +177,13 @@ export function App() {
               })
             }
           >
-            Discard the unreadable profile
+            {SERIOUS.profileDiscard}
           </button>
         </section>
       )}
       {profileStatus === "error" && (
         <p className="error" role="alert">
-          Could not open the local profile storage, so profile features and generating are
-          unavailable. Reload the panel to try again.
+          {SERIOUS.profileStorageUnavailable}
         </p>
       )}
       {errorFor("profile")}
@@ -201,12 +196,7 @@ export function App() {
         <h1>Slayply</h1>
         <StatusBadge status={status} />
       </header>
-      {status.offerDirectMode && (
-        <p className="notice">
-          The relay is not answering. Direct Mode (calling the provider from this browser) will be
-          available in a later release.
-        </p>
-      )}
+      {status.offerDirectMode && <p className="notice">{SERIOUS.directModeNotice}</p>}
       {loadError && (
         <p className="error" role="alert">
           {loadError}
@@ -263,7 +253,13 @@ export function App() {
           </TabPanel>
           <TabPanel id="you" active={tab === "you"}>
             {profileProblem}
-            {profileStatus === "loading" && <p className="muted">Loading your profile…</p>}
+            {showYouEmpty({
+              profileStatus,
+              profile,
+              resumeCount: resumes.length,
+              resumesError,
+            }) && <YouEmpty />}
+            {profileStatus === "loading" && <p className="muted">{SERIOUS.profileLoading}</p>}
             {resumesError && (
               <p className="error" role="alert">
                 {resumesError}

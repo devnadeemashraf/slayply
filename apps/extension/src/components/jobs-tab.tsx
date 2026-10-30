@@ -1,9 +1,6 @@
 import { EmptyState } from "@slayply/ui";
+import { PLAYFUL } from "../lib/copy-text.js";
 
 export function JobsTab() {
-  return (
-    <EmptyState title="No saved jobs yet">
-      A log of the jobs you capture, with their status, is planned (HIST-01).
-    </EmptyState>
-  );
+  return <EmptyState title={PLAYFUL.jobsEmptyTitle}>{PLAYFUL.jobsEmptyBody}</EmptyState>;
 }

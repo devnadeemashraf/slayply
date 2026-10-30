@@ -6,6 +6,7 @@ import {
 } from "@slayply/core";
 import { Button, Card, StickerBadge, type StickerTone } from "@slayply/ui";
 import { useMemo } from "react";
+import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 
 const CHANCE_TONE: Record<FitCheck["chance"], StickerTone> = {
@@ -165,7 +166,7 @@ export function FitView({
   if (state.phase === "streaming") {
     return (
       <p className="muted" aria-live="polite">
-        {state.attempt === 2 ? "Reformatting the fit check, attempt 2 of 2" : "Checking fit…"}
+        {state.attempt === 2 ? SERIOUS.reformattingFit : PLAYFUL.fitLoading}
       </p>
     );
   }
