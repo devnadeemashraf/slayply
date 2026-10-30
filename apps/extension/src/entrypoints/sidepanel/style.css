@@ -9,7 +9,21 @@ body {
 }
 
 main {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 16px 16px 0;
+}
+
+.panels {
+  flex: 1;
+  padding-bottom: 16px;
+}
+
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 header {
@@ -80,6 +94,23 @@ button {
   height: 8px;
   border-radius: 50%;
   background: #999;
+}
+
+.status-checking .dot,
+.status-warming .dot {
+  animation: relay-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes relay-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status .dot {
+    animation: none;
+  }
 }
 
 .status-awake .dot {
@@ -204,4 +235,29 @@ button:disabled {
 details > summary {
   cursor: pointer;
   margin-bottom: 0.5em;
+}
+
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  margin: 0 -16px;
+  background: Canvas;
+  border-top: 1px solid currentColor;
+}
+
+.tabbar button {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  opacity: 0.65;
+}
+
+.tabbar button[aria-selected="true"] {
+  opacity: 1;
+  box-shadow: inset 0 3px 0 currentColor;
 }
