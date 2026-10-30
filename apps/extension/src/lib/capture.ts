@@ -14,6 +14,8 @@ export type Capture = {
   questions: DetectedQuestion[];
   /** True when the whole visible page was read, so the capture describes a whole job. */
   fromPage?: boolean;
+  /** The tab it was read from, to notice later that the user has moved on. */
+  tabId?: number;
 };
 export type CaptureOutcome = { ok: true; capture: Capture } | { ok: false; message: string };
 
@@ -93,6 +95,7 @@ export async function captureFromTab(
         fields: merged.fields,
         questions: merged.questions,
         fromPage: true,
+        ...(tab.id === undefined ? {} : { tabId: tab.id }),
       },
     };
   }
@@ -126,14 +129,24 @@ export async function captureOneClick(tab: TabInfo, deps: CaptureDeps): Promise<
 /** Builds a capture from selected text. The tab title is what the user already sees in the tab strip. */
 export function captureSelection(
   selected: string,
-  tab: Pick<TabInfo, "url" | "title">,
+  tab: Pick<TabInfo, "url" | "title"> & Partial<Pick<TabInfo, "id">>,
   kind: CaptureKind,
 ): CaptureOutcome {
   const text = selected.trim().slice(0, CAPTURE_TEXT_MAX);
   if (text === "") return { ok: false, message: "Nothing is selected. Select some text first." };
   const fields =
     kind === "jd" ? extractJobFields({ text, title: tab.title }) : extractJobFields({ text: "" });
-  return { ok: true, capture: { kind, text, url: tab.url ?? "", fields, questions: [] } };
+  return {
+    ok: true,
+    capture: {
+      kind,
+      text,
+      url: tab.url ?? "",
+      fields,
+      questions: [],
+      ...(tab.id === undefined ? {} : { tabId: tab.id }),
+    },
+  };
 }
 
 /** Validates what came back from `storage.session`; anything malformed is dropped. */
@@ -156,6 +169,7 @@ export function parsePending(value: unknown): CaptureOutcome | null {
     capture: {
       questions: parsedQuestions,
       ...(record.fromPage === true ? { fromPage: true } : {}),
+      ...(Number.isInteger(record.tabId) ? { tabId: record.tabId as number } : {}),
       kind: kind as CaptureKind,
       text,
       url,

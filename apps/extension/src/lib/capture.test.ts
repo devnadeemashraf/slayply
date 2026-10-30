@@ -257,3 +257,27 @@ describe("captureOneClick", () => {
     expect(result.ok).toBe(false);
   });
 });
+
+describe("capture tab id", () => {
+  it("records the tab a capture was read from, and keeps it through the inbox", async () => {
+    const result = await captureFromTab(
+      "page",
+      { id: 12, url: "https://x.com/jobs/1", title: "t" },
+      {
+        readPage: async () => ({
+          title: "t",
+          ogTitle: "",
+          ogSiteName: "",
+          jsonLd: [],
+          text: "A job description long enough to count as real text for the test.",
+          questions: [],
+        }),
+        readSelection: async () => "",
+      },
+    );
+    expect(result.ok && result.capture.tabId).toBe(12);
+    const stored = result.ok ? parsePending({ ...result.capture }) : null;
+    expect(stored?.ok && stored.capture.tabId).toBe(12);
+    expect(parsePending({ ...(result.ok ? result.capture : {}), tabId: "x" })).not.toBeNull();
+  });
+});
