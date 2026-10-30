@@ -47,6 +47,37 @@ describe("provider choice in requests", () => {
   });
 });
 
+describe("several questions and job details", () => {
+  it("sends every question with its id and limit", () => {
+    const result = buildAnswerRequest({
+      jd: "JD",
+      questions: [
+        { id: "q1", text: "Why us?", maxChars: 500 },
+        { id: "q2", text: "Tell us more" },
+      ],
+    });
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.request.questions).toEqual([
+      { id: "q1", text: "Why us?", maxChars: 500 },
+      { id: "q2", text: "Tell us more" },
+    ]);
+  });
+
+  it("sends the job title, company and location that were captured, but not blanks", () => {
+    const result = buildAnswerRequest({
+      jd: "JD",
+      question: "Q",
+      job: { title: "Engineer", company: "Acme", location: "", salary: "€90k" },
+    });
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.request.job).toEqual({ jd: "JD", title: "Engineer", company: "Acme" });
+  });
+
+  it("asks for a question when there are none", () => {
+    expect(buildAnswerRequest({ jd: "JD", questions: [] })).toMatchObject({ ok: false });
+  });
+});
+
 describe("buildAnswerRequest", () => {
   it("builds a valid answers request from a job description and one question", () => {
     const result = buildAnswerRequest({

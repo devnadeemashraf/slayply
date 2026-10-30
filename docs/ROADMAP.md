@@ -286,6 +286,13 @@
 - **Acceptance Criteria:** `snapshotPage` returns `questions[]` (label, type, required, `maxChars`) from label, legend, aria and placeholder text, including open shadow roots; it never reads field values and skips identity, upload, demographic, hidden and search fields; the panel lists them and "Use" puts one in the generate panel's question box.
 - 🧪 **Manual Test:** Open a Greenhouse application form, click the icon: the free-text questions are listed (not name, email or resume); "Use" fills the Question box.
 
+#### `CAP-04`: Review Screen and Generate Wiring
+- **Spec Section:** §4 Features 3 and 5 `[MUST]`
+- **Size:** M
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** Detected questions become a checklist (free text ticked, choices not); each row is editable with its own max-characters limit, Generate and Remove; "Add question"; "Generate N answers" sends every ticked row with its limit and the captured job title, company and location; the job description is collapsed after a capture.
+- 🧪 **Manual Test:** Capture a Greenhouse application form, untick one question, press "Generate N answers": each answer appears with its label and respects the limit; press a row's Generate to redo just that one.
+
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S (1 session)
