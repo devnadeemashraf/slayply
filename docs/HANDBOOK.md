@@ -175,7 +175,8 @@ flowchart LR
 ---
 
 ## 10. Operations & Deployment
-- **Relay (planned, `SITE-01`):** Automated deployment on Render using a root `render.yaml` blueprint.
+- **Relay (`SITE-01`, `REL-01`):** deployed on Render from the root `render.yaml` blueprint. In production the relay refuses to start without `EXTENSION_IDS` and `TRUST_PROXY_HOPS`. The full go-live order (deploy, verify the hop count, build the release extension, set the extension ID, publish, tag) is `docs/DEPLOYMENT.md`; store text is `docs/STORE_LISTING.md`.
+- **Release build (`REL-01`):** `lib/relay-url.ts` (`resolveRelayUrl`, `isReleaseBuild`) is used by `wxt.config.ts`: `WXT_RELEASE=1` or `wxt zip` requires an https, non-localhost `WXT_RELAY_URL`. `permissions.test.ts` pins the manifest permissions. Icons come from `public/icon/icon.svg` via `scripts/make-icons.mjs`.
 - **Landing Site (`SITE-01`):** `apps/site` is plain HTML and CSS in `src/`, copied to `dist/` by `build.mjs` (no bundler, no scripts, no third-party loads). Root `render.yaml` defines the relay (free web service, `EXTENSION_IDS` and `TRUST_PROXY_HOPS` supplied in the Render dashboard) and the static site. `pnpm run smoke:site` opens the built page in Chromium.
 - **Extension Packaging (`EXT-01`):** `pnpm --filter @slayply/extension build` produces ready-to-load MV3 directory in `apps/extension/.output/chrome-mv3`.
 
