@@ -29,6 +29,7 @@ Each row records how it was checked on the stated date (Rule 1: Verify, don't re
 | Package | Pinned Version | Verification Date | Source Link | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | **wxt** | `0.21.5` | 2026-10-29 | [npm wxt](https://www.npmjs.com/package/wxt) | Next-gen web extension framework (Vite + MV3) |
+| **playwright-core** | `1.64.1` | 2026-10-30 | [npm playwright-core](https://www.npmjs.com/package/playwright-core) | Drives Chromium for `pnpm run smoke` (`QA-01`); browser installed on demand, not by `pnpm install`. Smoke ran locally on Windows; the Linux CI job has not run yet |
 | **react** | `19.3.1` | 2026-10-29 | [npm react](https://www.npmjs.com/package/react) | UI library for extension side panel |
 | **react-dom** | `19.3.1` | 2026-10-29 | [npm react-dom](https://www.npmjs.com/package/react-dom) | React DOM bindings |
 | **@types/react** | `19.3.0` | 2026-10-29 | [npm @types/react](https://www.npmjs.com/package/@types/react) | TypeScript types for React |

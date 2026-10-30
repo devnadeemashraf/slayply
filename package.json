@@ -13,11 +13,14 @@
     "fmt:check": "biome format .",
     "lint": "biome lint --error-on-warnings .",
     "test": "node scripts/test.mjs",
-    "handoff:check": "node scripts/handoff-check.mjs"
+    "handoff:check": "node scripts/handoff-check.mjs",
+    "budget": "node scripts/bundle-budget.mjs",
+    "smoke": "node scripts/smoke-extension.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
     "@types/node": "26.6.6",
+    "playwright-core": "1.64.1",
     "turbo": "2.11.10",
     "typescript": "7.0.2",
     "vitest": "5.0.5"

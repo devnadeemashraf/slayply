@@ -427,12 +427,13 @@
 #### `QA-01`: End-to-End Smoke Test & Budget Gates
 - **Spec Section:** §3 Tests, §5 Performance Budgets `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review (PR pending). `pnpm run budget` (3.5 MB gate, over-budget fixture test), `pnpm run smoke` (Playwright loads the built extension, checks the privacy gate renders, records panel JS heap), relay first-delta test against a stub. Both new checks run in a separate CI job (`extension-smoke`), not in `pnpm run check`. No ADR.
 - **Acceptance Criteria:**
   - Playwright smoke test loads the built extension and opens the panel.
   - CI fails when the extension exceeds 3.5 MB uncompressed; a recorded check of panel memory against the 60 MB budget.
   - Relay first-token latency measured against a stubbed provider.
 - **Required Tests:** The smoke test itself, plus a deliberate over-budget fixture that proves the gate fails.
+- 🧪 **Manual Test:** `pnpm --filter @slayply/extension build`, then `pnpm run budget` and `pnpm run smoke`; confirm the `extension-smoke` CI job is green on Linux.
 
 #### `REL-01`: Security Review, Web Store Packaging & v1.0.0
 - **Spec Section:** §5 Security Model, §9 Out of Scope `[MUST]`
