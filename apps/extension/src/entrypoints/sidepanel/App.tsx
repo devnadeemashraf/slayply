@@ -1,6 +1,7 @@
 import type { StoredProfile, StoredResume } from "@slayply/core";
 import { DEFAULT_PRESET, TabPanel, Tabs } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { CapturePanel } from "../../components/capture-panel.js";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { JobsTab } from "../../components/jobs-tab.js";
@@ -18,6 +19,7 @@ import { RELAY_URL } from "../../lib/config.js";
 import { createFitStore } from "../../lib/fit-store.js";
 import type { Incoming } from "../../lib/incoming.js";
 import { TABS, type TabId } from "../../lib/panel-nav.js";
+import { prefersReducedMotion, withViewTransition } from "../../lib/motion.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createResumeStore } from "../../lib/resume-store.js";
@@ -326,7 +328,12 @@ export function App() {
             active={tab}
             onSelect={(id) => {
               const target = TABS.find((entry) => entry.id === id);
-              if (target) setTab(target.id);
+              if (!target) return;
+              withViewTransition(
+                () => flushSync(() => setTab(target.id)),
+                document,
+                prefersReducedMotion(window.matchMedia?.bind(window)),
+              );
             }}
           />
         </div>

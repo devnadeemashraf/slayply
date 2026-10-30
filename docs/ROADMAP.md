@@ -373,7 +373,7 @@
 #### `THEME-01b`: Apply the Design to Screens
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** M (2 sessions)
-- **Status:** In review (PR pending). ADR-0021.
+- **Status:** Done (PR #42). ADR-0021.
 - **Acceptance Criteria:**
   - Every screen follows the active preset: bare elements are restyled from tokens in one stylesheet; the tab bar, onboarding, checklist, Jobs, fit, answers and copy use the `@slayply/ui` components.
   - Fit chance is a sticker badge (level written in text). Each answer is a card; an answer with a character limit shows a ring plus the count and "over the limit" in text.
@@ -386,10 +386,14 @@
 #### `THEME-01c`: Micro-interactions
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** Planned
-- **Acceptance Criteria:** The catalogue in the plan section 6 (press, copy pop, step stamp, sticker drop, tab view-transition with feature detection, field shake, claim collapse), CSS only, `transform` and `opacity` only, each with a reduced-motion replacement. Confetti on "applied" stays `[LATER]`.
-- 🧪 **Manual Test:** Toggle OS reduced motion and confirm no scaling or movement remains; copy an answer and check the "copied ✓" revert.
-- **Required Tests:** `useCopyFeedback` revert timing; reduced-motion snapshot.
+- **Status:** In review (PR pending). No ADR (small, no schema, security or hot path).
+- **Acceptance Criteria:**
+  - Done: copy pop (button pops and shows a check once copied; the existing 2 s revert is unchanged), step stamp (the check on a finished step), sticker drop (fit badge and receipt IDs), field shake plus a dashed border on an invalid field, claim fade-out before a removed sentence goes, and a tab switch inside a same-document view transition. Button press was already in `THEME-01a`.
+  - CSS only, `transform` and `opacity` only. Every animated rule has a rule for the same selector inside `prefers-reduced-motion: reduce` (a plain fade or none); the view transition and the claim fade do not run at all under reduced motion, and also when the browser cannot say.
+  - The view transition is feature-detected and falls back to an instant switch.
+  - Not done: the sparkle burst on copy, a sliding tab indicator, chip hover scale. Confetti on "applied" stays `[LATER]`.
+- 🧪 **Manual Test:** Copy an answer: the button pops, shows a check and reverts after about 2 s. Switch tabs: a short cross-fade (if nothing fades, the side panel may not support view transitions; see `docs/VERSIONS.md`). Remove a flagged sentence: it fades, then goes. Trigger a field error (empty key in Setup): the field shakes once. Turn on OS reduced motion and repeat: nothing scales, moves or fades; the tab switch is instant.
+- **Required Tests:** The `prefers-reduced-motion` audit (`unguardedAnimations`) over both stylesheets; `prefersReducedMotion`, `withViewTransition` and `createExit`; markup tests for the stamp and the copy pop. The copy revert timing was already tested (`copy.test.ts`), so no new hook was needed.
 
 #### `THEME-01d`: Voice and Empty States
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
@@ -468,6 +472,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-30:** `THEME-01c` in review: small motions on the panel (copy pop, step stamp, sticker drop, field shake, removed-sentence fade, tab cross-fade), each with a reduced-motion replacement checked by a test over both stylesheets. Whether the tab cross-fade works in a side panel is untested (`docs/VERSIONS.md`).
 
 - **2026-10-30:** `THEME-01b` in review: the panel follows the chosen look (Neon, Bubblegum or Brutal, picked in Setup), has a Capture/Fit/Answers stepper and a bottom button for the next step, fit chance as a sticker, answers as cards with a character-limit ring, and citations as expandable receipts (ADR-0021). Look and sticky behaviour are manual-test only.
 
