@@ -348,13 +348,13 @@
 #### `UX-01`: Panel Shell and Navigation
 - **Spec Section:** §4 Feature 10 `[SHOULD]` (layout only)
 - **Size:** M (2 sessions). Runs before `THEME-01a`; needs an ADR (bottom tabs vs left rail vs one scroll with anchors).
-- **Status:** Planned
+- **Status:** In review (PR pending). ADR-0019. Stepper and sticky primary action moved to `THEME-01b`: the buttons live inside `GeneratePanel`, and lifting them changes its logic.
 - **Acceptance Criteria:**
-  - Tab bar: Job, Jobs, You, Setup. Existing panels move into tabs with no change to their props or logic; Jobs shows an empty state until `HIST-01`.
-  - Header with a relay status pulse; the Job tab has a stepper (Capture, Fit, Answers) and a sticky primary action.
-  - Setup checklist (key, profile, resume) in the Job empty state; Generate stays disabled with a reason until key and profile exist.
-  - Onboarding becomes three short cards (stay local, what leaves, training warning) using the `lib/privacy.ts` text; same stored flag.
-  - Errors render beside the action that failed. Tabs follow the ARIA tabs pattern with arrow-key navigation. Fluid from 320 px.
+  - Tab bar: Job, Jobs, You, Setup. Existing panels move into tabs with no change to their props or logic; every panel stays mounted (hidden) so a running generation survives a tab switch; Jobs shows an empty state until `HIST-01`.
+  - Header relay dot pulses while checking or warming (solid under reduced motion).
+  - Setup checklist (key, profile, resume) on the Job tab; only the key is marked as needed, matching today's rule that Generate appears once a key and the profile store exist.
+  - Onboarding becomes two short cards (where data goes, training warning) using the `lib/privacy.ts` text; same stored flag.
+  - Errors render in the scope of the failed action (onboarding, profile, setup). Tabs follow the ARIA tabs pattern with arrow-key navigation. Fluid from 320 px.
 - 🧪 **Manual Test:** Load the unpacked extension, resize the panel narrow to wide, tab through it by keyboard, confirm every earlier panel is reachable and onboarding still blocks first use.
 - **Required Tests:** Each tab renders its panels; onboarding gate; Generate disabled without key or profile; arrow-key tab navigation.
 - **Plan:** `docs/research/panel-ux-and-visual-design.md`. Decisions taken: tabs, hand-rolled components (no Radix), Neon default, system font only, no mascot.
@@ -378,6 +378,7 @@
   - Job, You and Setup restyled with the base components; fit chance as a sticker badge; answers as cards with a character-limit ring.
   - Claim check "receipts": `F03` chips expand to the source fact; uncited claims keep the underline, gain a text label and Remove.
   - Preset picker in Setup, stored in settings (check the backup schema per the `SET-01` note).
+  - Moved from `UX-01`: a stepper (Capture, Fit, Answers) and a sticky primary action on the Job tab; this means lifting the Check fit and Generate buttons out of `GeneratePanel`.
 - **Required Tests:** Existing view tests unchanged and green; preset persistence; receipt expand and collapse.
 
 #### `THEME-01c`: Micro-interactions
@@ -442,6 +443,7 @@
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 | **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
 | **ADR-0012** | Gemini Adapter | Accepted | Key in header; ends only on `STOP`; thinking budget (2.5) or level (3+) by model id; models ordered by version | Key in URL, trusting a partial stream, relying on the models `thinking` field |
+| **ADR-0019** | Panel Shell and Navigation | Accepted | Bottom tab bar; all panels stay mounted and hidden; pure tab logic in `lib/panel-nav.ts` | Left icon rail, one scroll with anchors |
 | **ADR-0013** | Direct Mode | Accepted | Optional host permission requested at toggle time; `direct` flag picks `streamDirect` in the existing controller; Claude only | Static host permission, a second controller |
 
 ---
@@ -462,6 +464,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-30:** `UX-01` in review: the side panel is now four tabs (Job, Jobs, You, Setup) with every panel kept mounted so work survives a tab switch, a setup checklist on the Job tab, two-card onboarding from the existing privacy text, errors shown where the action happened, and a relay dot that pulses (ADR-0019). Stepper and sticky action moved to `THEME-01b`. Tab clicks and keyboard movement are manual-test only.
 
 - **2026-10-30:** Panel UX research and plan (`docs/research/panel-ux-and-visual-design.md`). `THEME-01` split into `UX-01` and `THEME-01a` to `d`; defaults chosen by the maintainer: four tabs, hand-rolled components, Neon default, system font, no mascot.
 
