@@ -26,7 +26,7 @@ describe("extractResumeText", () => {
       truncated: false,
       pageCount: 1,
     });
-  });
+  }, 30_000);
 
   it("joins pages in order", async () => {
     const pdf = buildPdf([lines(LONG), lines("Second page: education and skills in detail")]);

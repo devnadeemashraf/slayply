@@ -23,10 +23,10 @@
 - `apps/extension` builds an MV3 side panel (WXT + React, ADR-0005) with the privacy gate, Anthropic key form and relay health status (`EXT-01`). With `GEN-01` it generates a draft answer from a pasted job description and question, validates it, and copies it (ADR-0006); answers are grounded in the saved profile (`PROF-01`) but have no resume text until `RES-01`.
 
 ## FIX-FIRST QUEUE
-- `BP-flaky-pdf` (low): `pdf-extract.test.ts` "reads text from a one-page PDF" can exceed vitest's 5 s default on a slow machine under full-suite load (fails on clean `main` locally; CI passes). Give it a longer per-test timeout; do not weaken its assertions.
+- None.
 
 ## NEXT UP
-- **Item:** `HIST-01`, `GEN-02` (`THEME-01d` is in review). Design decisions: four tabs, hand-rolled components, Neon default, system font, no mascot (`docs/research/panel-ux-and-visual-design.md`).
+- **Item:** `HIST-01`, `GEN-02` (`THEME-01d` merged). Design decisions: four tabs, hand-rolled components, Neon default, system font, no mascot (`docs/research/panel-ux-and-visual-design.md`).
 - **Why now:** `CAP-01` gives it captured jobs to save.
 - **Open from `CAP-01`:** needs a manual test in a real unpacked extension (steps in the roadmap entry; plus the toolbar-icon path for the panel buttons, and LinkedIn: "Capture visible JD" must refuse, selection must work). `capture-panel.tsx`, `background.ts` and `capture-browser.ts` have no automated tests. Job fields and notes live in panel memory only (`JOBS-01` / `HIST-01` should persist them). The panel's page button needs `activeTab`, so after a tab switch the user may need to click the toolbar icon first. `innerText` behaviour is untested (tests use linkedom `textContent`). Workday and other script-rendered boards may give little text. Only the top frame is read by the panel buttons (a job post inside an iframe needs the right-click path); `info.selectionText` length limits are unchecked; "Use as…" before a key and profile exist shows nothing until the generate panel appears. The context-menu "page" item shows on LinkedIn too and answers with a refusal message.
 - **Open from `PROV-04`:** needs a manual test in a real extension (see the roadmap entry; `provider-panel.tsx`, `generate-panel.tsx` and `App.tsx` have no automated tests). OpenAI and Gemini remain live-untested (no keys), so model filtering and effort support are still guessed from ids. Claude has no effort control (the Claude adapter never sets `supportsEffort`). Direct Mode is Claude only and picks the newest Claude model (no list in Direct Mode); OpenAI/Gemini direct calls need host permissions and a CORS check (own PR, own ADR). The saved fit result is keyed by job description only, so changing provider or model does not refresh it (use Run again). The model list is fetched through the relay whenever the panel opens or the key or provider changes (the relay caches it for 10 minutes). The relay now checks the key format before taking the stream slot (a bad key used to leak one slot until restart).
@@ -65,6 +65,7 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR (pending) | `BP-flaky-pdf` | 30 s timeout on the first pdfjs test in `pdf-extract.test.ts` (cold import is slow under load); assertions unchanged | Manual test: No
 - PR (pending) | `CAP-08` | Capture docs and hardening: README, HANDBOOK, ADR-0018, frame cap | Manual test: Yes
 - PR #37 | `CAP-07` | Stale-tab banner: `stale-tab.ts`, `stale-banner.tsx`, tab listeners in `capture-panel.tsx` | Manual test: Yes
 - PR #36 | `CAP-06` | Greenhouse Job Board API adapter (`greenhouse.ts`), optional `readApi` dep, merged over the page result; LEGAL and Settings disclosure | Manual test: Yes
