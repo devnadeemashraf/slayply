@@ -113,6 +113,40 @@ describe("FitView", () => {
     expect(html).toContain('role="alert"');
   });
 
+  it("explains a timeout and offers to try again", () => {
+    const html = render({
+      phase: "error",
+      message: "The generation took too long",
+      code: "STREAM_TIMEOUT",
+    });
+    expect(html).toMatch(/2 minutes/);
+    expect(html).toContain("Try again");
+  });
+
+  it("tells a Direct Mode user nothing about picking another model", () => {
+    const html = renderToString(
+      <FitView
+        state={{ phase: "error", message: "x", code: "UPSTREAM_OVERLOADED" }}
+        result={null}
+        suggestion={null}
+        onUseResume={() => {}}
+        onRerun={() => {}}
+        direct
+      />,
+    );
+    expect(html).toContain("overloaded");
+    expect(html).not.toMatch(/another model/);
+  });
+
+  it("offers no retry when the key was rejected", () => {
+    const html = render({
+      phase: "error",
+      message: "The provider rejected the API key",
+      code: "UPSTREAM_AUTH",
+    });
+    expect(html).not.toContain("Try again");
+  });
+
   it("shows an unusable reply as unvalidated text", () => {
     const html = render({ phase: "raw", rawText: "not json", issues: [] });
     expect(html).toMatch(/unvalidated/i);
