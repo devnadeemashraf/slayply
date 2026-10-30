@@ -303,9 +303,16 @@
 #### `CAP-06`: Greenhouse Questions API
 - **Spec Section:** §4 Feature 3 `[MUST]` (privacy note in `docs/LEGAL.md`)
 - **Size:** S
-- **Status:** In review (PR pending)
+- **Status:** Done (PR #36)
 - **Acceptance Criteria:** On a Greenhouse job page, with the job-site permission on, capture also reads the board's public questions API and merges the custom questions and job details over the page result; any failure falls back silently; nothing is fetched without the permission, on other sites or on LinkedIn.
 - 🧪 **Manual Test:** With the switch on, capture a Greenhouse application page: the questions match the form, including ones the page had not rendered yet. Turn the switch off: capture still works from the page alone.
+
+#### `CAP-07`: Stale-Tab Banner
+- **Spec Section:** §4 Feature 3 `[MUST]`
+- **Size:** S
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** After a capture, switching tab or changing the page address (including single-page navigation, ignoring the hash) shows a dismissible banner "Capture this page"; nothing is read until that click; without an address the banner appears only for a different tab.
+- 🧪 **Manual Test:** Capture a Greenhouse job, open another job in the same tab or another tab: the banner appears; click it: the panel fills with the new job and the banner goes. Switch back and forth on the same job: no banner. Dismiss hides it until the next capture.
 
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
