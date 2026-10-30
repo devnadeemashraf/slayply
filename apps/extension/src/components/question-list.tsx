@@ -1,4 +1,6 @@
 import { LIMITS } from "@slayply/core";
+import { useState } from "react";
+import type { PastAnswer } from "../lib/past-answers.js";
 import type { QuestionRow } from "../lib/question-rows.js";
 
 export type QuestionListProps = {
@@ -9,11 +11,17 @@ export type QuestionListProps = {
   onAdd: () => void;
   onGenerateOne: (id: string) => void;
   onGenerateAll: () => void;
+  /** Earlier answers to a similar question (from saved jobs); omit to show none. */
+  pastFor?: (rowId: string) => readonly PastAnswer[];
+  /** Copies the text; the button shows "Copied" when this resolves. */
+  onUsePast?: (text: string) => Promise<void> | void;
 };
 
 /** The questions to answer: tick, edit, set a limit, generate one or all of the ticked ones. */
 export function QuestionList(props: QuestionListProps) {
   const { rows, running } = props;
+  const pastFor = props.pastFor ?? (() => []);
+  const [copiedPast, setCopiedPast] = useState<string | null>(null);
   const selected = rows.filter((row) => row.checked && row.text.trim() !== "").length;
   const label = `Generate ${selected} answer${selected === 1 ? "" : "s"}`;
 
@@ -82,6 +90,34 @@ export function QuestionList(props: QuestionListProps) {
                 Remove
               </button>
             </div>
+            {pastFor(row.id).length > 0 && (
+              <details>
+                <summary>{`Earlier answer (${pastFor(row.id).length})`}</summary>
+                {pastFor(row.id).map((past, pastIndex) => (
+                  <div key={`${past.jobId}:${pastIndex}`}>
+                    <p className="muted">
+                      {[past.title, past.company].filter(Boolean).join(" at ")}
+                    </p>
+                    <p>{past.text}</p>
+                    {props.onUsePast && (
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => {
+                          const key = `${row.id}:${pastIndex}`;
+                          Promise.resolve(props.onUsePast?.(past.text)).then(
+                            () => setCopiedPast(key),
+                            () => setCopiedPast(null),
+                          );
+                        }}
+                      >
+                        {copiedPast === `${row.id}:${pastIndex}` ? "Copied" : "Copy this answer"}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </details>
+            )}
           </li>
         ))}
       </ul>

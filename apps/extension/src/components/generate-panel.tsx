@@ -1,4 +1,5 @@
 import {
+  type JobRecord,
   type Length,
   LIMITS,
   type StoredProfile,
@@ -7,7 +8,7 @@ import {
   type Tone,
 } from "@slayply/core";
 import { Button } from "@slayply/ui";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildAnswerRequest,
   buildDraftRequest,
@@ -27,6 +28,7 @@ import {
   type GenerationState,
 } from "../lib/generate-controller.js";
 import { applyIncoming, type Incoming } from "../lib/incoming.js";
+import { findPastAnswers } from "../lib/past-answers.js";
 import { buildJobDraft } from "../lib/job-draft.js";
 import type { JobStore } from "../lib/job-store.js";
 import { DraftControls } from "./draft-controls.js";
@@ -108,6 +110,8 @@ export function GeneratePanel({
   const [draftLimit, setDraftLimit] = useState("");
   // What produced the current result, so Shorter / Longer never rerun a different kind.
   const [resultKind, setResultKind] = useState<DraftKindId>("answers");
+  const [savedJobs, setSavedJobs] = useState<JobRecord[]>([]);
+  const [jobKey, setJobKey] = useState("");
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const fitRunner = useMemo(
     () => createFitRunner({ store: fitStore, onState: setFitState, onResult: setFitResult }),
@@ -229,6 +233,31 @@ export function GeneratePanel({
     setCopyState("idle");
   }
 
+  // Saved jobs feed the "earlier answer" hints; they load once and again after each save.
+  const loadJobs = useCallback(
+    () => jobStore.list().then(setSavedJobs, () => setSavedJobs([])),
+    [jobStore],
+  );
+  useEffect(() => {
+    void loadJobs();
+  }, [loadJobs]);
+  useEffect(() => {
+    let current = true;
+    fitKey(jd).then(
+      (key) => current && setJobKey(key),
+      () => current && setJobKey(""),
+    );
+    return () => {
+      current = false;
+    };
+  }, [jd]);
+
+  const pastByRow = useMemo(
+    () =>
+      new Map(rows.map((row) => [row.id, findPastAnswers(row.text, savedJobs, jobKey)] as const)),
+    [rows, savedJobs, jobKey],
+  );
+
   async function saveJob() {
     try {
       await jobStore.save(
@@ -236,6 +265,7 @@ export function GeneratePanel({
         buildJobDraft({ job, jd, resumeName: resume?.name ?? "", rows, state, edits }),
       );
       onJobSaved();
+      void loadJobs();
       setSaveNote("Saved to Jobs.");
     } catch {
       setSaveNote("The job could not be saved.");
@@ -331,6 +361,8 @@ export function GeneratePanel({
             onAdd={() => changeRows((current, floor) => addRow(current, "", floor))}
             onGenerateOne={(id) => void slay(id)}
             onGenerateAll={() => void slay()}
+            pastFor={(id) => pastByRow.get(id) ?? []}
+            onUsePast={(text) => navigator.clipboard.writeText(text)}
           />
         )}
         {formError && (
