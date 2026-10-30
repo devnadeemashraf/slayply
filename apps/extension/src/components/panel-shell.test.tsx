@@ -60,8 +60,14 @@ describe("OnboardingCards", () => {
 });
 
 describe("JobsTab", () => {
-  it("explains that saved jobs are not available yet", () => {
-    const html = renderToString(<JobsTab />);
+  it("shows the empty state before the saved jobs have loaded", () => {
+    const store = {
+      list: async () => [],
+      setStatus: async () => {},
+      remove: async () => {},
+      save: async () => {},
+    };
+    const html = renderToString(<JobsTab store={store} refresh={0} />);
     expect(html).toContain("No saved jobs");
   });
 });

@@ -324,11 +324,18 @@
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review (PR pending). Done: saved jobs, status pipeline, answers stored per job, backup. Not done: offering a past answer for a similar question (split to `HIST-02`).
 - **Acceptance Criteria:**
   - Saved jobs view with status pipeline (Saved, Applied, Interviewing, Rejected, Offer).
   - Store answers submitted per job in IndexedDB; offer a past answer when a similar question appears.
 - **Required Tests:** IndexedDB repository tests for CRUD operations on job applications.
+
+#### `HIST-02`: Reuse a Past Answer
+- **Spec Section:** §4 Feature 7 `[SHOULD]`
+- **Size:** S
+- **Status:** Planned
+- **Acceptance Criteria:** When a question resembles one answered for an earlier job, offer that answer as editable text beside the question; nothing is sent to the provider for the lookup.
+- 🧪 **Manual Test:** Save a job with an answer, capture another job with a similar question: the earlier answer is offered.
 
 #### `GEN-02`: Cover Letter & Cold Messages
 - **Spec Section:** §4 Feature 5 `[MUST]`

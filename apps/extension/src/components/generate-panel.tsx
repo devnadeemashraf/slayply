@@ -1,4 +1,5 @@
 import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
+import { Button } from "@slayply/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildAnswerRequest,
@@ -10,13 +11,15 @@ import {
 import { RELAY_URL } from "../lib/config.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import { createFitRunner } from "../lib/fit-flow.js";
-import type { FitStore } from "../lib/fit-store.js";
+import { type FitStore, fitKey } from "../lib/fit-store.js";
 import {
   copyTextOf,
   createGenerationRunner,
   type GenerationState,
 } from "../lib/generate-controller.js";
 import { applyIncoming, type Incoming } from "../lib/incoming.js";
+import { buildJobDraft } from "../lib/job-draft.js";
+import type { JobStore } from "../lib/job-store.js";
 import { jobSteps, primaryAction } from "../lib/job-steps.js";
 import {
   addRow,
@@ -62,6 +65,8 @@ export function GeneratePanel({
   profile,
   resumes,
   fitStore,
+  jobStore,
+  onJobSaved,
   incoming,
   job,
 }: {
@@ -71,6 +76,8 @@ export function GeneratePanel({
   profile: StoredProfile | null;
   resumes: readonly StoredResume[];
   fitStore: FitStore;
+  jobStore: JobStore;
+  onJobSaved: () => void;
   incoming: Incoming | null;
   job: JobDetails;
 }) {
@@ -85,6 +92,7 @@ export function GeneratePanel({
   const runner = useMemo(() => createGenerationRunner(setState), []);
   const [fitState, setFitState] = useState<GenerationState>({ phase: "idle" });
   const [fitResult, setFitResult] = useState<FitResult | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(null);
   const fitRunner = useMemo(
     () => createFitRunner({ store: fitStore, onState: setFitState, onResult: setFitResult }),
     [fitStore],
@@ -122,6 +130,9 @@ export function GeneratePanel({
       setCopyState("idle");
     }
   }, [incoming, runner, fitRunner]);
+
+  // A save note describes the text at the time of the click, so any later change clears it.
+  useEffect(() => setSaveNote(null), [jd, edits, state]);
 
   const feedback = useMemo(() => createCopyFeedback(navigator.clipboard, setCopyState), []);
 
@@ -182,6 +193,19 @@ export function GeneratePanel({
       request: built.request,
       fetchFn: (url, init) => fetch(url, init),
     });
+  }
+
+  async function saveJob() {
+    try {
+      await jobStore.save(
+        await fitKey(jd),
+        buildJobDraft({ job, jd, resumeName: resume?.name ?? "", rows, state, edits }),
+      );
+      onJobSaved();
+      setSaveNote("Saved to Jobs.");
+    } catch {
+      setSaveNote("The job could not be saved.");
+    }
   }
 
   async function checkFit(force: boolean) {
@@ -286,6 +310,14 @@ export function GeneratePanel({
           if (text !== null) void feedback.copy(text);
         }}
       />
+      <Button variant="secondary" disabled={!progress.hasJd} onClick={() => void saveJob()}>
+        Save job
+      </Button>
+      {saveNote && (
+        <p className="muted" role="status">
+          {saveNote}
+        </p>
+      )}
       <ActionBar
         action={action}
         onFit={() => void checkFit(false)}
