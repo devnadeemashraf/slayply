@@ -24,6 +24,13 @@ describe("parseConfig", () => {
     expect(config.extensionIds).toHaveLength(2);
   });
 
+  it("requires an explicit hop count in production", () => {
+    const base = { NODE_ENV: "production", EXTENSION_IDS: EXT };
+    expect(() => parseConfig(base)).toThrow(/TRUST_PROXY_HOPS/);
+    expect(() => parseConfig({ ...base, TRUST_PROXY_HOPS: " " })).toThrow(/TRUST_PROXY_HOPS/);
+    expect(parseConfig({ ...base, TRUST_PROXY_HOPS: "0" }).trustedHops).toBe(0);
+  });
+
   it("requires an extension ID in production", () => {
     expect(() => parseConfig({ NODE_ENV: "production" })).toThrow(/EXTENSION_IDS/);
   });

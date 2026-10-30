@@ -32,6 +32,10 @@ export function parseConfig(env: Record<string, string | undefined>): RelayConfi
   if (env.NODE_ENV === "production" && extensionIds.length === 0) {
     throw new Error("EXTENSION_IDS is required when NODE_ENV=production");
   }
+  // Unset means 0, which puts every client behind the proxy in one rate-limit bucket.
+  if (env.NODE_ENV === "production" && (env.TRUST_PROXY_HOPS ?? "").trim() === "") {
+    throw new Error("TRUST_PROXY_HOPS is required when NODE_ENV=production");
+  }
 
   return { port, extensionIds, trustedHops };
 }

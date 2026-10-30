@@ -65,7 +65,7 @@ export async function extractResumeText(
     return { ok: false, reason: "unavailable" };
   }
 
-  const task = pdfjs.getDocument({ data: bytes });
+  const task = pdfjs.getDocument({ data: bytes, enableXfa: false });
   try {
     const doc = await task.promise;
     if (doc.numPages > RESUME_MAX_PAGES) return { ok: false, reason: "too-many-pages" };

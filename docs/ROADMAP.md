@@ -439,12 +439,13 @@
 #### `REL-01`: Security Review, Web Store Packaging & v1.0.0
 - **Spec Section:** §5 Security Model, §9 Out of Scope `[MUST]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review (PR pending); the v1.0.0 tag is the maintainer's step after deploy (`docs/DEPLOYMENT.md`). Red-team found no broken promise. Fixed: release or zip build can no longer ship the localhost relay (M1), the relay refuses to start in production without `TRUST_PROXY_HOPS` (M2), site wording on the model-list cache (L4), `enableXfa: false` (L3; pdf.js 6 has no eval option). Logged: `BP-007` slow-reader sockets (M3), `BP-008` IPv6 /64 keying (L1), `BP-009` prompt-tag invisible characters (L2).
 - **Acceptance Criteria:**
   - Red-team pass over relay, parsing and rendering; findings fixed or logged.
   - Permissions minimized and justified; store listing, icons and privacy text prepared.
   - Tagged v1.0.0 with release notes.
 - **Required Tests:** Regression tests for each fixed finding; `pnpm run check` green on the tagged commit.
+- 🧪 **Manual Test:** Follow `docs/DEPLOYMENT.md` end to end on a real Render account and a real browser.
 
 ---
 
