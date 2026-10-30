@@ -15,7 +15,8 @@
     "test": "node scripts/test.mjs",
     "handoff:check": "node scripts/handoff-check.mjs",
     "budget": "node scripts/bundle-budget.mjs",
-    "smoke": "node scripts/smoke-extension.mjs"
+    "smoke": "node scripts/smoke-extension.mjs",
+    "smoke:site": "node scripts/smoke-site.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

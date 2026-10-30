@@ -418,11 +418,12 @@
 #### `SITE-01`: Landing Page & Deployment Blueprint
 - **Spec Section:** §8 Hosting `[MUST]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review (PR pending). The blueprint is checked by a text test only; it has never been deployed to Render, and Render's proxy hop count for `TRUST_PROXY_HOPS` is unverified. No ADR.
 - **Acceptance Criteria:**
   - `apps/site` static landing page with privacy policy and installation steps.
   - `render.yaml` blueprint tested for one-click self-hosting of relay.
 - **Required Tests:** Playwright smoke test on static site build.
+- 🧪 **Manual Test:** In Render choose New > Blueprint on the repo, set `EXTENSION_IDS` and `TRUST_PROXY_HOPS`, then open the relay `/health` and the site URL.
 
 #### `QA-01`: End-to-End Smoke Test & Budget Gates
 - **Spec Section:** §3 Tests, §5 Performance Budgets `[MUST]`

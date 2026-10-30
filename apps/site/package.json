@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'skip: site dev server planned in SITE-01'",
-    "build": "echo 'skip: site build planned in SITE-01'",
-    "test": "echo 'skip: site tests planned in SITE-01'"
+    "dev": "node build.mjs && echo 'open apps/site/dist/index.html'",
+    "build": "node build.mjs",
+    "test": "node --test build.test.mjs"
   }
 }

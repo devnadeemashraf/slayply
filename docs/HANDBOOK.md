@@ -176,7 +176,7 @@ flowchart LR
 
 ## 10. Operations & Deployment
 - **Relay (planned, `SITE-01`):** Automated deployment on Render using a root `render.yaml` blueprint.
-- **Landing Site (planned, `SITE-01`):** Render Static Site deployed from `apps/site`.
+- **Landing Site (`SITE-01`):** `apps/site` is plain HTML and CSS in `src/`, copied to `dist/` by `build.mjs` (no bundler, no scripts, no third-party loads). Root `render.yaml` defines the relay (free web service, `EXTENSION_IDS` and `TRUST_PROXY_HOPS` supplied in the Render dashboard) and the static site. `pnpm run smoke:site` opens the built page in Chromium.
 - **Extension Packaging (`EXT-01`):** `pnpm --filter @slayply/extension build` produces ready-to-load MV3 directory in `apps/extension/.output/chrome-mv3`.
 
 ---
