@@ -1,4 +1,5 @@
 import { extractJobFields, type JobFields } from "./capture-fields.js";
+import { mergeGreenhouseJob, parseGreenhouseJob, parseGreenhouseJobUrl } from "./greenhouse.js";
 import type { DetectedQuestion, PageSnapshot } from "./page-snapshot.js";
 
 export type CaptureKind = "jd" | "question" | "note";
@@ -26,6 +27,8 @@ export type TabInfo = {
 export type CaptureDeps = {
   readPage: (tabId: number) => Promise<PageSnapshot>;
   readSelection: (tabId: number) => Promise<string>;
+  /** Optional: fetches a structured job (the Greenhouse API) for a page URL; null when unavailable. */
+  readApi?: (url: string) => Promise<unknown>;
 };
 
 /** Matches the generate panel's job description limit. */
@@ -76,14 +79,19 @@ export async function captureFromTab(
     }
     const text = snapshot.text.trim().slice(0, CAPTURE_TEXT_MAX);
     if (text === "") return { ok: false, message: "No readable text was found on this page." };
+    const fromPage = {
+      questions: parseQuestions(snapshot.questions) ?? [],
+      fields: extractJobFields(snapshot),
+    };
+    const merged = mergeGreenhouseJob(fromPage, await readStructuredJob(url, deps));
     return {
       ok: true,
       capture: {
         kind: "jd",
         text,
         url,
-        fields: extractJobFields(snapshot),
-        questions: parseQuestions(snapshot.questions) ?? [],
+        fields: merged.fields,
+        questions: merged.questions,
         fromPage: true,
       },
     };
@@ -185,4 +193,14 @@ function parseQuestions(value: unknown): DetectedQuestion[] | null {
     parsed.push({ label, type: type as DetectedQuestion["type"], required, maxChars });
   }
   return parsed;
+}
+
+/** A Greenhouse job page's structured data, when the user has allowed it; any failure is just no data. */
+async function readStructuredJob(url: string, deps: CaptureDeps) {
+  if (!deps.readApi || !parseGreenhouseJobUrl(url)) return null;
+  try {
+    return parseGreenhouseJob(await deps.readApi(url));
+  } catch {
+    return null;
+  }
 }

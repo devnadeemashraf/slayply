@@ -8,6 +8,7 @@
  * and customer apps) are left out, so those sites ask once instead. LinkedIn is never listed.
  */
 export const JOB_SITE_ORIGINS: readonly string[] = [
+  "https://boards-api.greenhouse.io/*",
   "https://boards.greenhouse.io/*",
   "https://job-boards.greenhouse.io/*",
   "https://boards.eu.greenhouse.io/*",
@@ -55,7 +56,11 @@ export function createSiteAccessController(permissions: SiteAccessApi) {
       // does not make the switch lie; turning it off then removes the rest.
       try {
         const granted = new Set((await permissions.getAll()).origins ?? []);
-        return JOB_SITE_ORIGINS.some((origin) => granted.has(origin));
+        // The job API host must be among them, so a switch turned on before CAP-06 reads off.
+        return (
+          granted.has("https://boards-api.greenhouse.io/*") &&
+          JOB_SITE_ORIGINS.some((origin) => granted.has(origin))
+        );
       } catch {
         return false;
       }

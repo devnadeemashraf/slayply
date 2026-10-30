@@ -63,11 +63,15 @@ describe("createSiteAccessController", () => {
     return { permissions, controller: createSiteAccessController(permissions) };
   };
 
-  it("counts as on when any listed origin is still granted", async () => {
+  it("counts as on when the job API host and any listed origin are granted, and off without the API host", async () => {
     const permissions = {
       contains: vi.fn(async () => false),
       getAll: vi.fn(async () => ({
-        origins: [JOB_SITE_ORIGINS[0] ?? "", "https://other.example/*"],
+        origins: [
+          JOB_SITE_ORIGINS[0] ?? "",
+          "https://boards-api.greenhouse.io/*",
+          "https://other.example/*",
+        ],
       })),
       request: vi.fn(async () => true),
       remove: vi.fn(async () => true),

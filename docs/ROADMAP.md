@@ -300,6 +300,13 @@
 - **Acceptance Criteria:** A Settings switch allows a fixed list of popular job boards (never LinkedIn) in one click; other sites ask once; capture reads embedded frames and merges them; the injected reader refuses LinkedIn hosts in any frame; custom text widgets are detected by label.
 - 🧪 **Manual Test:** Turn on "Capture on popular job sites"; on a Workday and an Oracle application page, and on a company page that embeds a Greenhouse form, click the icon: the questions of the form are listed.
 
+#### `CAP-06`: Greenhouse Questions API
+- **Spec Section:** §4 Feature 3 `[MUST]` (privacy note in `docs/LEGAL.md`)
+- **Size:** S
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** On a Greenhouse job page, with the job-site permission on, capture also reads the board's public questions API and merges the custom questions and job details over the page result; any failure falls back silently; nothing is fetched without the permission, on other sites or on LinkedIn.
+- 🧪 **Manual Test:** With the switch on, capture a Greenhouse application page: the questions match the form, including ones the page had not rendered yet. Turn the switch off: capture still works from the page alone.
+
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S (1 session)

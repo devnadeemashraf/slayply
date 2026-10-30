@@ -40,8 +40,9 @@ export function SettingsView(props: SettingsViewProps) {
         Lets the Capture button read pages, including application forms embedded in them, on
         Greenhouse, Lever, Ashby, Workday, Oracle, iCIMS, SmartRecruiters and similar sites without
         asking each time. It reads only when you capture, never in the background, and never on
-        LinkedIn. Other sites ask once. You can turn this off here or in the browser's extension
-        settings.
+        LinkedIn. On Greenhouse job pages it also asks Greenhouse's public job API for the
+        application questions, sending only the board name and job number from the page address.
+        Other sites ask once. You can turn this off here or in the browser's extension settings.
       </p>
 
       <h3>Direct Mode</h3>
