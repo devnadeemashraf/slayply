@@ -23,6 +23,7 @@ const capture: Capture = {
   text: "The job",
   url: "https://example.com/",
   fields: { title: "T", company: "C", location: "", salary: "" },
+  questions: [],
 };
 
 describe("capture inbox", () => {

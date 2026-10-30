@@ -1,10 +1,17 @@
 import { extractJobFields, type JobFields } from "./capture-fields.js";
-import type { PageSnapshot } from "./page-snapshot.js";
+import type { DetectedQuestion, PageSnapshot } from "./page-snapshot.js";
 
 export type CaptureKind = "jd" | "question" | "note";
 export type CaptureMode = "selection" | "page";
 
-export type Capture = { kind: CaptureKind; text: string; url: string; fields: JobFields };
+export type Capture = {
+  kind: CaptureKind;
+  text: string;
+  url: string;
+  fields: JobFields;
+  /** Application questions found on the page; empty for a selection or pasted text. */
+  questions: DetectedQuestion[];
+};
 export type CaptureOutcome = { ok: true; capture: Capture } | { ok: false; message: string };
 
 export type TabInfo = {
@@ -67,7 +74,16 @@ export async function captureFromTab(
     }
     const text = snapshot.text.trim().slice(0, CAPTURE_TEXT_MAX);
     if (text === "") return { ok: false, message: "No readable text was found on this page." };
-    return { ok: true, capture: { kind: "jd", text, url, fields: extractJobFields(snapshot) } };
+    return {
+      ok: true,
+      capture: {
+        kind: "jd",
+        text,
+        url,
+        fields: extractJobFields(snapshot),
+        questions: parseQuestions(snapshot.questions) ?? [],
+      },
+    };
   }
 
   let selected: string;
@@ -106,7 +122,7 @@ export function captureSelection(
   if (text === "") return { ok: false, message: "Nothing is selected. Select some text first." };
   const fields =
     kind === "jd" ? extractJobFields({ text, title: tab.title }) : extractJobFields({ text: "" });
-  return { ok: true, capture: { kind, text, url: tab.url ?? "", fields } };
+  return { ok: true, capture: { kind, text, url: tab.url ?? "", fields, questions: [] } };
 }
 
 /** Validates what came back from `storage.session`; anything malformed is dropped. */
@@ -115,16 +131,19 @@ export function parsePending(value: unknown): CaptureOutcome | null {
   const record = value as Record<string, unknown>;
   if (typeof record.error === "string") return { ok: false, message: record.error.slice(0, 300) };
 
-  const { kind, text, url, fields } = record;
+  const { kind, text, url, fields, questions } = record;
   if (typeof kind !== "string" || !KINDS.includes(kind)) return null;
   if (typeof text !== "string" || text.length > CAPTURE_TEXT_MAX) return null;
   if (typeof url !== "string" || typeof fields !== "object" || fields === null) return null;
   const f = fields as Record<string, unknown>;
   const keys = ["title", "company", "location", "salary"] as const;
   if (!keys.every((key) => typeof f[key] === "string")) return null;
+  // Bad questions cost only the list, not the job text the user captured.
+  const parsedQuestions = parseQuestions(questions) ?? [];
   return {
     ok: true,
     capture: {
+      questions: parsedQuestions,
       kind: kind as CaptureKind,
       text,
       url,
@@ -136,4 +155,30 @@ export function parsePending(value: unknown): CaptureOutcome | null {
       },
     },
   };
+}
+
+const QUESTION_TYPES: readonly string[] = ["text", "longtext", "choice"];
+
+/** A missing list is empty; null means the list is malformed or oversized. */
+function parseQuestions(value: unknown): DetectedQuestion[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 40) return null;
+  const parsed: DetectedQuestion[] = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) return null;
+    const { label, type, required, maxChars } = item as Record<string, unknown>;
+    if (typeof label !== "string" || label === "" || label.length > 300) return null;
+    if (typeof type !== "string" || !QUESTION_TYPES.includes(type)) return null;
+    if (typeof required !== "boolean") return null;
+    if (
+      maxChars !== null &&
+      (typeof maxChars !== "number" ||
+        !Number.isInteger(maxChars) ||
+        maxChars <= 0 ||
+        maxChars > 100_000)
+    )
+      return null;
+    parsed.push({ label, type: type as DetectedQuestion["type"], required, maxChars });
+  }
+  return parsed;
 }
