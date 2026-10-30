@@ -279,6 +279,13 @@
 - 🧪 **Manual Test:** Greenhouse page, click the icon: panel opens with the job description filled. LinkedIn job, click with nothing selected: a refusal message; select text, click: it is used.
 - **Plan (from `docs/research/one-click-capture-ux.md`):** `CAP-03` detect application questions (M), `CAP-04` single review screen with per-question generate (M), `CAP-05` optional job-site host permissions and iframes (M), `CAP-06` Greenhouse questions API (S), `CAP-07` stale-tab banner (S), `CAP-08` docs and hardening (S).
 
+#### `CAP-03`: Detect Application Questions
+- **Spec Section:** §4 Feature 3 `[MUST]` (label-reading wording: see ADR-0016)
+- **Size:** M
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** `snapshotPage` returns `questions[]` (label, type, required, `maxChars`) from label, legend, aria and placeholder text, including open shadow roots; it never reads field values and skips identity, upload, demographic, hidden and search fields; the panel lists them and "Use" puts one in the generate panel's question box.
+- 🧪 **Manual Test:** Open a Greenhouse application form, click the icon: the free-text questions are listed (not name, email or resume); "Use" fills the Question box.
+
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S (1 session)

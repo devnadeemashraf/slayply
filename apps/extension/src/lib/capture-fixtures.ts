@@ -40,3 +40,38 @@ export const NO_STRUCTURE_HTML = `<!doctype html>
 <body><div>Join us. We raised $5 million last year and love tacos.</div></body></html>`;
 
 export const LINKEDIN_URL = "https://www.linkedin.com/jobs/view/123456789/";
+
+/** Greenhouse-shaped application form: labels wrap or point at their fields; some fields must be skipped. */
+export const GREENHOUSE_FORM_HTML = `<!doctype html>
+<html><head><title>Apply</title></head><body>
+<header><form role="search"><input type="text" name="q" aria-label="Search jobs"></form></header>
+<main>
+<form id="application_form">
+  <div class="field"><label for="first_name">First Name <span>*</span></label><input id="first_name" type="text" value="Jane"></div>
+  <div class="field"><label for="email">Email *</label><input id="email" type="email" value="jane@example.com"></div>
+  <div class="field"><label for="resume">Resume/CV</label><input id="resume" type="file"></div>
+  <div class="field"><label for="q1">Why do you want to work at Acme Robotics? *</label><textarea id="q1" maxlength="1200">My typed answer must never be read</textarea></div>
+  <div class="field"><label for="q2">Describe a system you operated in production (max 500 characters)</label><textarea id="q2"></textarea></div>
+  <div class="field"><label for="q3">LinkedIn Profile</label><input id="q3" type="text"></div>
+  <div class="field"><label for="q4">Are you legally authorized to work in Germany? (required)</label>
+    <select id="q4"><option>Yes</option><option>No</option></select></div>
+  <div class="field" hidden><label for="q5">Hidden honeypot question about your favourite colour</label><input id="q5" type="text"></div>
+  <div class="field"><label for="g">Gender</label><select id="g"><option>Prefer not to say</option></select></div>
+  <input type="hidden" name="token" value="abc">
+  <button type="submit">Submit</button>
+</form>
+</main></body></html>`;
+
+/** Lever/Ashby-shaped: aria-labelledby, fieldset legend with radios, and a free-text input without a label element. */
+export const ARIA_FORM_HTML = `<!doctype html>
+<html><head><title>Apply</title></head><body><main>
+<div id="lbl1">What is the most interesting problem you have solved recently?</div>
+<textarea aria-labelledby="lbl1" required></textarea>
+<fieldset><legend>Will you now or in the future require visa sponsorship?</legend>
+  <label><input type="radio" name="visa" value="y"> Yes</label>
+  <label><input type="radio" name="visa" value="n"> No</label></fieldset>
+<input type="text" aria-label="What salary range are you expecting?">
+<input type="text" placeholder="Anything else we should know?">
+<label for="dupe">Why us?</label><textarea id="dupe"></textarea>
+<label for="dupe2">Why us?</label><textarea id="dupe2"></textarea>
+</main></body></html>`;

@@ -1,5 +1,6 @@
 import { CAPTURE_TEXT_MAX, type CaptureKind } from "../lib/capture.js";
 import type { JobFields } from "../lib/capture-fields.js";
+import type { DetectedQuestion } from "../lib/page-snapshot.js";
 
 export type Draft = { kind: CaptureKind; text: string; url: string };
 
@@ -8,9 +9,11 @@ export type CaptureViewProps = {
   error: string | null;
   busy: boolean;
   job: JobFields;
+  questions: readonly DetectedQuestion[];
   notes: string;
   paste: string;
   onCapture: () => void;
+  onUseQuestion: (label: string) => void;
   onDraftKind: (kind: CaptureKind) => void;
   onDraftText: (text: string) => void;
   onUse: () => void;
@@ -34,6 +37,14 @@ const JOB_FIELDS: ReadonlyArray<[keyof JobFields, string]> = [
   ["salary", "Salary"],
 ];
 
+function describeQuestion(question: DetectedQuestion): string {
+  const parts = [question.type === "choice" ? "choice" : null];
+  if (question.required) parts.push("required");
+  if (question.maxChars !== null) parts.push(`max ${question.maxChars} characters`);
+  const shown = parts.filter(Boolean).join(", ");
+  return shown === "" ? "" : `(${shown})`;
+}
+
 export function CaptureView(props: CaptureViewProps) {
   const { draft, error, busy } = props;
   return (
@@ -53,6 +64,26 @@ export function CaptureView(props: CaptureViewProps) {
         <p className="error" role="alert">
           {error}
         </p>
+      )}
+      {props.questions.length > 0 && (
+        <div>
+          <h3>{`Questions found (${props.questions.length})`}</h3>
+          <ul className="questions">
+            {props.questions.map((question) => (
+              <li key={question.label}>
+                <span>{question.label}</span>{" "}
+                <span className="muted">{describeQuestion(question)}</span>{" "}
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => props.onUseQuestion(question.label)}
+                >
+                  Use
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {draft && (
         <div>

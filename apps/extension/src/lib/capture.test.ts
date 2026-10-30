@@ -16,6 +16,7 @@ const snapshot: PageSnapshot = {
   ogSiteName: "",
   jsonLd: [],
   text: "A real job description that is long enough to be useful.",
+  questions: [{ label: "Why us?", type: "longtext", required: true, maxChars: 500 }],
 };
 
 const tab = (url: string): TabInfo => ({ id: 7, url, title: "Senior Engineer at Acme" });
@@ -51,6 +52,7 @@ describe("captureFromTab", () => {
     });
     expect(result).toMatchObject({ ok: true, capture: { kind: "jd", text: snapshot.text } });
     if (result.ok) expect(result.capture.fields.title).toBe("Senior Engineer");
+    expect(result.ok && result.capture.questions).toEqual(snapshot.questions);
   });
 
   it("never reads the page on LinkedIn, and says why", async () => {
@@ -117,6 +119,7 @@ describe("parsePending", () => {
     text: "Why us?",
     url: "https://example.com/",
     fields: { title: "", company: "", location: "", salary: "" },
+    questions: [],
   };
 
   it("accepts a well-formed capture", () => {
@@ -136,6 +139,56 @@ describe("parsePending", () => {
     { ...good, text: 3 },
     { ...good, fields: null },
   ])("rejects %j", (value) => expect(parsePending(value)).toBeNull());
+
+  it("accepts a capture saved without questions", () => {
+    const { questions: _omitted, ...older } = good;
+    expect(parsePending(older)).toEqual({ ok: true, capture: good });
+  });
+
+  it("keeps well-formed questions", () => {
+    const questions = [{ label: "Why us?", type: "longtext", required: true, maxChars: null }];
+    expect(parsePending({ ...good, questions })).toMatchObject({
+      ok: true,
+      capture: { questions },
+    });
+  });
+
+  it("keeps the capture but drops questions that are malformed", () => {
+    expect(parsePending({ ...good, questions: "nope" })).toEqual({ ok: true, capture: good });
+  });
+
+  it("drops questions with an absurd character limit", () => {
+    const questions = [
+      { label: "Q", type: "text", required: false, maxChars: 9_007_199_254_740_991 },
+    ];
+    expect(parsePending({ ...good, questions })).toEqual({ ok: true, capture: good });
+  });
+
+  it("tolerates a snapshot that has no questions field", async () => {
+    const { questions: _omitted, ...older } = snapshot;
+    const result = await captureFromTab("page", tab("https://example.com/"), {
+      readPage: async () => older as unknown as PageSnapshot,
+      readSelection: vi.fn(),
+    });
+    expect(result.ok && result.capture.questions).toEqual([]);
+  });
+
+  it.each([
+    "nope",
+    [null],
+    [{ label: "", type: "text", required: false, maxChars: null }],
+    [{ label: "Q", type: "script", required: false, maxChars: null }],
+    [{ label: "Q", type: "text", required: "yes", maxChars: null }],
+    [{ label: "Q", type: "text", required: false, maxChars: -5 }],
+    Array.from({ length: 41 }, () => ({
+      label: "Q",
+      type: "text",
+      required: false,
+      maxChars: null,
+    })),
+  ])("drops malformed questions %j and keeps the capture", (questions) => {
+    expect(parsePending({ ...good, questions })).toEqual({ ok: true, capture: good });
+  });
 
   it("drops an oversized text rather than staging it", () => {
     expect(parsePending({ ...good, text: "a".repeat(CAPTURE_TEXT_MAX + 1) })).toBeNull();

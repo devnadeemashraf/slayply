@@ -3,6 +3,7 @@ import type { Capture, CaptureKind, CaptureOutcome } from "../lib/capture.js";
 import { captureOneClickFromActiveTab } from "../lib/capture-browser.js";
 import type { JobFields } from "../lib/capture-fields.js";
 import { createCaptureInbox, PENDING_CAPTURE_KEY } from "../lib/capture-inbox.js";
+import type { DetectedQuestion } from "../lib/page-snapshot.js";
 import { CaptureView, type Draft } from "./capture-view.js";
 
 /** A captured piece of text for the generate panel; `seq` makes a repeat of the same text count as new. */
@@ -16,6 +17,7 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [job, setJob] = useState<JobFields>(EMPTY_JOB);
+  const [questions, setQuestions] = useState<DetectedQuestion[]>([]);
   const [notes, setNotes] = useState("");
   const [paste, setPaste] = useState("");
   const seq = useRef(0);
@@ -23,7 +25,9 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
   onIncomingRef.current = onIncoming;
 
   /** Puts a capture where it belongs at once; the user reviews it in the boxes it lands in. */
-  function apply(capture: Pick<Capture, "kind" | "text"> & { fields: JobFields }) {
+  function apply(
+    capture: Pick<Capture, "kind" | "text"> & { fields: JobFields; questions: DetectedQuestion[] },
+  ) {
     setError(null);
     if (capture.kind === "note") {
       setNotes((current) => (current === "" ? capture.text : `${current}\n\n${capture.text}`));
@@ -36,6 +40,8 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
       text: capture.text,
     });
     if (capture.kind === "jd") {
+      // A new job description starts a new list; a selection or pasted text has none.
+      setQuestions(capture.questions);
       // Only fill what was found; a blank never overwrites what the user already typed.
       setJob((current) => ({
         title: capture.fields.title || current.title,
@@ -86,13 +92,18 @@ export function CapturePanel({ onIncoming }: { onIncoming: (incoming: Incoming) 
       error={error}
       busy={busy}
       job={job}
+      questions={questions}
       notes={notes}
       paste={paste}
       onCapture={() => void capture()}
+      onUseQuestion={(label) => {
+        seq.current += 1;
+        onIncomingRef.current({ seq: seq.current, field: "question", text: label });
+      }}
       onDraftKind={(kind: CaptureKind) => setDraft((d) => d && { ...d, kind })}
       onDraftText={(text) => setDraft((d) => d && { ...d, text })}
       onUse={() => {
-        if (draft) apply({ kind: draft.kind, text: draft.text, fields: EMPTY_JOB });
+        if (draft) apply({ kind: draft.kind, text: draft.text, fields: EMPTY_JOB, questions: [] });
         setDraft(null);
       }}
       onDiscard={() => setDraft(null)}
