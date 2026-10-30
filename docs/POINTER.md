@@ -4,6 +4,7 @@
 - Phase 0: Bootstrap completed.
 - Git repository active with branch PR workflow; monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- `QA-01`: `pnpm run budget` fails over 3.5 MB (tested with an over-budget fixture), `pnpm run smoke` loads the built extension in Chromium via `playwright-core`, checks the privacy gate and records the panel JS heap (a lower bound of the 60 MB budget, not whole-process memory); a relay test measures first delta against a stub. Both run in a new CI job `extension-smoke`, not in `pnpm run check`; the Linux job is unverified until it runs.
 - `HIST-02`: under a question, "Earlier answer (n)" shows up to three answers to similar questions from saved jobs (local word overlap, no network) with a Copy button; it does not insert into the answer. Wiring manual-test only.
 - `GEN-02`: Job tab can write a cover letter, recruiter message, cold email or relocation note (relocation = `answers` task with one fixed question), with tone, length, Shorter/Longer, a draft character limit (sent as a question named after the task; the prompt states it) and "Fit to N characters" (drops whole trailing sentences). Panel wiring manual-test only; reply length is not validated.
 - `HIST-01`: "Save job" in the Job tab stores the job and its shown answers (IndexedDB v5 `jobs`, keyed by the JD hash, status pipeline in the Jobs tab); backup is version 2 (v1 files still import). Past-answer reuse split out as `HIST-02`. Panel buttons manual-test only.
@@ -29,7 +30,7 @@
 - None.
 
 ## NEXT UP
-- **Item:** none planned in the roadmap past `HIST-02`; next open phase is `SITE-01` / `QA-01` / `REL-01` (`REL-01` is blocked on the human SPEC edit, see `CAP-08`). Ask the human which to take (`HIST-02` in review). Design decisions: four tabs, hand-rolled components, Neon default, system font, no mascot (`docs/research/panel-ux-and-visual-design.md`).
+- **Item:** none planned in the roadmap past `QA-01`; open phases are `SITE-01` and `REL-01` (`REL-01` is blocked on the human SPEC edit, see `CAP-08`). Ask the human which to take (`QA-01` in review).
 - **Why now:** `CAP-01` gives it captured jobs to save.
 - **Open from `CAP-01`:** needs a manual test in a real unpacked extension (steps in the roadmap entry; plus the toolbar-icon path for the panel buttons, and LinkedIn: "Capture visible JD" must refuse, selection must work). `capture-panel.tsx`, `background.ts` and `capture-browser.ts` have no automated tests. Job fields and notes live in panel memory only (`JOBS-01` / `HIST-01` should persist them). The panel's page button needs `activeTab`, so after a tab switch the user may need to click the toolbar icon first. `innerText` behaviour is untested (tests use linkedom `textContent`). Workday and other script-rendered boards may give little text. Only the top frame is read by the panel buttons (a job post inside an iframe needs the right-click path); `info.selectionText` length limits are unchecked; "Use as…" before a key and profile exist shows nothing until the generate panel appears. The context-menu "page" item shows on LinkedIn too and answers with a refusal message.
 - **Open from `PROV-04`:** needs a manual test in a real extension (see the roadmap entry; `provider-panel.tsx`, `generate-panel.tsx` and `App.tsx` have no automated tests). OpenAI and Gemini remain live-untested (no keys), so model filtering and effort support are still guessed from ids. Claude has no effort control (the Claude adapter never sets `supportsEffort`). Direct Mode is Claude only and picks the newest Claude model (no list in Direct Mode); OpenAI/Gemini direct calls need host permissions and a CORS check (own PR, own ADR). The saved fit result is keyed by job description only, so changing provider or model does not refresh it (use Run again). The model list is fetched through the relay whenever the panel opens or the key or provider changes (the relay caches it for 10 minutes). The relay now checks the key format before taking the stream slot (a bad key used to leak one slot until restart).
@@ -68,7 +69,8 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
-- PR (pending) | `HIST-02` | `findPastAnswers`, "Earlier answer" block in the question list, saved jobs loaded in the generate panel | Manual test: Yes
+- PR (pending) | `QA-01` | `bundle-budget.mjs`, `smoke-extension.mjs`, relay first-token test, `extension-smoke` CI job | Manual test: Yes
+- PR #48 | `HIST-02` | `findPastAnswers`, "Earlier answer" block in the question list, saved jobs loaded in the generate panel | Manual test: Yes
 - PR (pending) | `GEN-02` | Draft kinds, tone/length, Shorter/Longer, draft limit in prompt, `fitToLimit` + Fit button | Manual test: Yes
 - PR (pending) | `HIST-01` | Job log: `jobRecordSchema`, `job-store.ts`, `job-draft.ts`, Jobs tab + Save job, IndexedDB v5, backup v2 | Manual test: Yes
 - PR (pending) | `BP-flaky-pdf` | 30 s timeout on the first pdfjs test in `pdf-extract.test.ts` (cold import is slow under load); assertions unchanged | Manual test: No
@@ -76,5 +78,3 @@
 - PR #37 | `CAP-07` | Stale-tab banner: `stale-tab.ts`, `stale-banner.tsx`, tab listeners in `capture-panel.tsx` | Manual test: Yes
 - PR #36 | `CAP-06` | Greenhouse Job Board API adapter (`greenhouse.ts`), optional `readApi` dep, merged over the page result; LEGAL and Settings disclosure | Manual test: Yes
 - PR #35 | `CAP-05` | Job-site access switch (`job-sites.ts`), all-frames capture with `mergeSnapshots`, LinkedIn guard inside the injected reader, role=textbox widgets; ADR-0017 | Manual test: Yes
-- PR #34 | `CAP-04` | Review screen: `question-rows.ts`, `QuestionList`, multi-question `buildAnswerRequest` with job details, collapsed JD, `Incoming` kinds | Manual test: Yes
-- PR #33 | `CAP-03` | Question detection in `snapshotPage` (labels only), `DetectedQuestion`, `Capture.questions`, `parsePending` validation, question list with Use in the capture panel | Manual test: Yes

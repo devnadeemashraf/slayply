@@ -34,3 +34,20 @@ jobs:
 
       # doctor, handoff, format, lint, test, typecheck
       - run: pnpm run check
+
+  # Builds the extension, fails over 3.5 MB (SPEC §5) and loads it in Chromium once.
+  extension-smoke:
+    name: extension-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec turbo run build --filter=@slayply/extension
+      - run: pnpm run budget
+      - run: pnpm exec playwright-core install --with-deps chromium
+      - run: pnpm run smoke

@@ -153,7 +153,7 @@ flowchart LR
 - **Tooling Tests:** `scripts/*.test.mjs` run on Node's built-in test runner; every repo script has one.
 - **Unit Testing:** Vitest tests individual Zod schemas, claim parsing algorithms, and prompt formatting in `packages/core`.
 - **Recorded Fixtures (planned, `PROV-01`):** Provider adapters tested using recorded API fixture responses.
-- **End-to-End (planned, `QA-01`):** Playwright tests extension panel mounting and state transitions.
+- **End-to-End (`QA-01`):** `pnpm run smoke` (`scripts/smoke-extension.mjs`) loads the built extension in Chromium via Playwright, checks the privacy gate renders and records the panel JS heap against 60 MB; `pnpm run budget` fails over 3.5 MiB; `apps/relay/src/first-token.test.ts` times the first SSE delta against a stub. Smoke and budget run in the `extension-smoke` CI job after a build, not in `pnpm run check`.
 - **Zero-Failure Day-One Check:** Every script or test in an unbuilt package outputs `"skip: <reason>"` and exits with 0.
 
 ---
