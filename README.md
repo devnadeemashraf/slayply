@@ -30,7 +30,7 @@ Slayply does the opposite. You keep one profile of real facts. Every sentence it
 ## How it works
 
 1. **Browse as usual.** You find the job yourself.
-2. **Capture.** Select the job description or the questions and send them to the side panel (or paste them in).
+2. **Capture.** Click the Slayply icon (or press Alt+Shift+S) on a job page. The job description and the application questions land in the side panel for you to review, edit and generate from. You can also select text and send it, or paste it in.
 3. **Fit check.** Slayply matches the role against your profile and picks the right resume: what they want, what you have, the gaps, your odds, and any deal-breakers like location or visa.
 4. **Generate.** Answers that respect character limits, plus a cover letter, a recruiter message, a cold email or a relocation note. Adjust tone (crisp, warm, bold) and length.
 5. **Check the claims.** Each sentence cites a fact ID such as `F01` or `S03`. Uncited ones are highlighted.
@@ -46,13 +46,14 @@ Slayply does the opposite. You keep one profile of real facts. Every sentence it
 | **Bring your own model** | Claude, ChatGPT and Gemini, with reasoning-effort controls where the model supports them. |
 | **Honest by default** | If a question tries to detect AI-written answers, the reply discloses that a human applied and AI assisted the draft. |
 
-On LinkedIn, Slayply reads only the text you explicitly select, in line with LinkedIn's User Agreement. On other boards it may read the visible job description, and only when you press Capture.
+On LinkedIn, Slayply reads only the text you explicitly select, in line with LinkedIn's User Agreement. On other boards it reads the visible job description and the labels of the questions (never what you have typed into them) only when you click the icon, press the shortcut or use the menu, and only on the tab you invoke it on. Other sites, and frames from other sites, need access you grant once per site or in one go for popular job boards in Settings. Slayply never asks for access to LinkedIn and never writes into a page.
 
 ## Privacy
 
 > Your profile, resumes, saved jobs, history and API keys live only in this browser. When you ask for a draft, the text needed for it (job description, questions, relevant profile facts, chosen resume) is sent through the Slayply relay to the LLM provider you picked. The relay keeps nothing. The provider's own data policy applies to what it receives.
 
 - **No telemetry, no accounts, no cloud sync.**
+- **One public lookup.** On a Greenhouse job page, with job sites allowed, capture also asks Greenhouse's public job API for that job's questions. Only the board name and job number from the page address are sent, with no cookies or keys.
 - **The relay is stateless.** No database, no stored prompts, and no request or response bodies in its logs. Your key travels in a header for a single request and is not retained.
 - **Prefer no relay at all?** Direct mode calls the provider straight from the extension.
 

@@ -310,9 +310,16 @@
 #### `CAP-07`: Stale-Tab Banner
 - **Spec Section:** §4 Feature 3 `[MUST]`
 - **Size:** S
-- **Status:** In review (PR pending)
+- **Status:** Done (PR #37)
 - **Acceptance Criteria:** After a capture, switching tab or changing the page address (including single-page navigation, ignoring the hash) shows a dismissible banner "Capture this page"; nothing is read until that click; without an address the banner appears only for a different tab.
 - 🧪 **Manual Test:** Capture a Greenhouse job, open another job in the same tab or another tab: the banner appears; click it: the panel fills with the new job and the banner goes. Switch back and forth on the same job: no banner. Dismiss hides it until the next capture.
+
+#### `CAP-08`: Capture Docs and Hardening
+- **Spec Section:** §2, §4 Feature 3, §5 (wording change proposed in ADR-0018; human edit)
+- **Size:** S
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** README and HANDBOOK describe the final capture flow and its privacy surface; ADR-0018 holds the exact SPEC text; at most 12 embedded frames are merged (most questions first) and the question, structured-data and text caps are tested. The Playwright smoke test is deferred (an unpacked extension cannot be driven reliably in CI yet).
+- 🧪 **Manual Test:** Read the README capture and privacy lines against what the extension does; capture a page with many iframes and check it stays quick.
 
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
