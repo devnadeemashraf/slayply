@@ -5,10 +5,12 @@ import {
   removeSentence,
   summarizeClaims,
 } from "@slayply/core";
+import { Button, Card, StickerBadge } from "@slayply/ui";
 import { useMemo } from "react";
 import type { CopyState } from "../lib/copy.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
+import { CharRing } from "./char-ring.js";
 
 const COPY_LABEL: Record<CopyState, string> = {
   idle: "Copy to Clipboard",
@@ -26,9 +28,9 @@ function CopyButton({
   onCopy: () => void;
 }) {
   return (
-    <button type="button" disabled={!enabled} onClick={onCopy}>
+    <Button disabled={!enabled} onClick={onCopy}>
       {COPY_LABEL[copyState]}
-    </button>
+    </Button>
   );
 }
 
@@ -57,11 +59,13 @@ function whyUncited(sentence: CheckedSentence): string {
 function CheckedAnswer({
   output,
   text,
+  max,
   state,
   onEdit,
 }: {
   output: OutputAnswer;
   text: string;
+  max?: number;
   state: Extract<GenerationState, { phase: "done" }>;
   onEdit: (outputId: string, text: string) => void;
 }) {
@@ -104,15 +108,19 @@ function CheckedAnswer({
   return (
     <>
       <p className="answer">{parts}</p>
+      <CharRing length={text.length} max={max} />
       {summary && <p className="muted">{summary}</p>}
       {sources.size > 0 && (
-        <ul className="citations">
+        <div className="receipts">
           {[...sources].map(([id, source]) => (
-            <li key={id}>
-              <strong>{id}</strong> {source}
-            </li>
+            <details key={id} className="receipt">
+              <summary>
+                <StickerBadge>{id}</StickerBadge> receipt
+              </summary>
+              <p>{source}</p>
+            </details>
           ))}
-        </ul>
+        </div>
       )}
     </>
   );
@@ -125,10 +133,13 @@ export function GenerationView({
   onCopy,
   edits,
   onEdit,
+  limits,
 }: {
   state: GenerationState;
   copyState: CopyState;
   onCopy: () => void;
+  /** Character limit per output ID, for the ring. */
+  limits?: Readonly<Record<string, number>>;
   /** Answer text after the user removed sentences, by output ID. */
   edits: Readonly<Record<string, string>>;
   onEdit: (outputId: string, text: string) => void;
@@ -160,15 +171,18 @@ export function GenerationView({
       {state.phase === "done" && (
         <>
           {state.response.outputs.map((output) => (
-            <article key={output.id}>
-              {state.response.outputs.length > 1 && <h3>{output.label}</h3>}
+            <Card
+              key={output.id}
+              title={state.response.outputs.length > 1 ? output.label : undefined}
+            >
               <CheckedAnswer
                 output={output}
                 text={edits[output.id] ?? output.text}
+                max={limits?.[output.id]}
                 state={state}
                 onEdit={onEdit}
               />
-            </article>
+            </Card>
           ))}
           {state.response.warnings.length > 0 && (
             <ul className="warnings">

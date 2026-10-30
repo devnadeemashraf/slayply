@@ -1,3 +1,4 @@
+import { Button, Card } from "@slayply/ui";
 import { type SetupStatus, setupChecklist, TABS, type TabId } from "../lib/panel-nav.js";
 
 function tabLabel(id: TabId): string {
@@ -15,8 +16,7 @@ export function SetupChecklist({
   if (items.every((item) => item.done)) return null;
 
   return (
-    <section className="checklist">
-      <h2>Before your first draft</h2>
+    <Card title="Before your first draft">
       <ul className="items">
         {items.map((item) => (
           <li key={item.id} className={item.done ? "done" : "open"}>
@@ -25,13 +25,13 @@ export function SetupChecklist({
             {!item.done && item.required && <span className="muted"> (needed to draft)</span>}
             {!item.done && !item.required && <span className="muted"> (makes answers better)</span>}
             {!item.done && (
-              <button type="button" className="secondary" onClick={() => onGo(item.tab)}>
+              <Button variant="secondary" onClick={() => onGo(item.tab)}>
                 {`Go to ${tabLabel(item.tab)}`}
-              </button>
+              </Button>
             )}
           </li>
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }

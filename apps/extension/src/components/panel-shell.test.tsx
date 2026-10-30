@@ -4,48 +4,8 @@ import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../lib/privacy.js";
 import { JobsTab } from "./jobs-tab.js";
 import { OnboardingCards } from "./onboarding-cards.js";
 import { SetupChecklist } from "./setup-checklist.js";
-import { TabBar, TabPanel } from "./tab-bar.js";
 
 const noop = () => {};
-
-describe("TabBar", () => {
-  it("renders four tabs with only the active one selected and focusable", () => {
-    const html = renderToString(<TabBar active="you" onSelect={noop} />);
-    expect(html.match(/role="tab"/g)).toHaveLength(4);
-    expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
-    expect(html.match(/tabindex="-1"/g)).toHaveLength(3);
-    expect(html).toContain('role="tablist"');
-  });
-
-  it("links each tab to its panel by id", () => {
-    const html = renderToString(<TabBar active="job" onSelect={noop} />);
-    expect(html).toContain('aria-controls="panel-job"');
-    expect(html).toContain('aria-controls="panel-setup"');
-  });
-});
-
-describe("TabPanel", () => {
-  it("keeps an inactive panel's content mounted but hidden", () => {
-    const html = renderToString(
-      <TabPanel id="job" active={false}>
-        <p>draft in progress</p>
-      </TabPanel>,
-    );
-    expect(html).toContain("draft in progress");
-    expect(html).toContain("hidden");
-  });
-
-  it("shows the active panel", () => {
-    const html = renderToString(
-      <TabPanel id="job" active={true}>
-        <p>visible</p>
-      </TabPanel>,
-    );
-    expect(html).not.toContain("hidden");
-    expect(html).toContain('id="panel-job"');
-    expect(html).toContain('aria-labelledby="tab-job"');
-  });
-});
 
 describe("SetupChecklist", () => {
   it("lists open items with a button to the right tab and says the key is needed", () => {

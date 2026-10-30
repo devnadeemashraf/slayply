@@ -4,8 +4,15 @@ import {
   type FitCheck,
   type StoredResume,
 } from "@slayply/core";
+import { Button, Card, StickerBadge, type StickerTone } from "@slayply/ui";
 import { useMemo } from "react";
 import type { GenerationState } from "../lib/generate-controller.js";
+
+const CHANCE_TONE: Record<FitCheck["chance"], StickerTone> = {
+  high: "ok",
+  medium: "warn",
+  low: "bad",
+};
 
 export type FitResult = {
   fit: FitCheck;
@@ -81,9 +88,9 @@ function ResumeLine({
   return (
     <p>
       {label}{" "}
-      <button type="button" className="secondary" onClick={onUseResume}>
-        Use this resume ({suggestion.resume.name})
-      </button>
+      <Button variant="secondary" onClick={onUseResume}>
+        {`Use this resume (${suggestion.resume.name})`}
+      </Button>
     </p>
   );
 }
@@ -104,7 +111,8 @@ function Result({
   return (
     <>
       <p>
-        <span className={`badge chance-${fit.chance}`}>Chance: {fit.chance}</span> {fit.reason}
+        <StickerBadge tone={CHANCE_TONE[fit.chance]}>{`Chance: ${fit.chance}`}</StickerBadge>{" "}
+        {fit.reason}
       </p>
       {rows.length > 0 && (
         <table>
@@ -132,9 +140,9 @@ function Result({
       )}
       <p className="muted">
         {result.cached ? "Saved result for this job. " : ""}
-        <button type="button" className="secondary" onClick={onRerun}>
+        <Button variant="secondary" onClick={onRerun}>
           Run again
-        </button>
+        </Button>
       </p>
     </>
   );
@@ -180,8 +188,15 @@ export function FitView({
   }
   if (!result) return null;
   return (
-    <section className="result" aria-live="polite">
-      <Result result={result} suggestion={suggestion} onUseResume={onUseResume} onRerun={onRerun} />
-    </section>
+    <div className="result" aria-live="polite">
+      <Card title="Fit check">
+        <Result
+          result={result}
+          suggestion={suggestion}
+          onUseResume={onUseResume}
+          onRerun={onRerun}
+        />
+      </Card>
+    </div>
   );
 }

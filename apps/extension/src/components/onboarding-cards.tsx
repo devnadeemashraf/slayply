@@ -1,3 +1,4 @@
+import { Button, Card } from "@slayply/ui";
 import { PRIVACY_STATEMENT, TRAINING_WARNING } from "../lib/privacy.js";
 
 const CARDS = [
@@ -24,9 +25,8 @@ export function OnboardingCards({
   const last = step >= ONBOARDING_LAST_STEP;
 
   return (
-    <section>
+    <Card title={card.title}>
       <p className="muted">{`Before you start (${Math.min(step, ONBOARDING_LAST_STEP) + 1} of ${CARDS.length})`}</p>
-      <h2>{card.title}</h2>
       <p className={card.notice ? "notice" : undefined}>{card.body}</p>
       {error && (
         <p className="error" role="alert">
@@ -35,20 +35,16 @@ export function OnboardingCards({
       )}
       <div className="row">
         {step > 0 && (
-          <button type="button" className="secondary" onClick={onBack}>
+          <Button variant="secondary" onClick={onBack}>
             Back
-          </button>
+          </Button>
         )}
         {last ? (
-          <button type="button" onClick={onAccept}>
-            I understand
-          </button>
+          <Button onClick={onAccept}>I understand</Button>
         ) : (
-          <button type="button" onClick={onNext}>
-            Next
-          </button>
+          <Button onClick={onNext}>Next</Button>
         )}
       </div>
-    </section>
+    </Card>
   );
 }

@@ -1,22 +1,23 @@
 import type { StoredProfile, StoredResume } from "@slayply/core";
+import { DEFAULT_PRESET, TabPanel, Tabs } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import { CapturePanel } from "../../components/capture-panel.js";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { JobsTab } from "../../components/jobs-tab.js";
 import { ONBOARDING_LAST_STEP, OnboardingCards } from "../../components/onboarding-cards.js";
+import { PresetPicker } from "../../components/preset-picker.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { ProviderPanel } from "../../components/provider-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
 import { SettingsPanel } from "../../components/settings-panel.js";
 import { SetupChecklist } from "../../components/setup-checklist.js";
-import { TabBar, TabPanel } from "../../components/tab-bar.js";
 import { createAnswersStore } from "../../lib/answers-store.js";
 import type { JobFields } from "../../lib/capture-fields.js";
 import { RELAY_URL } from "../../lib/config.js";
 import { createFitStore } from "../../lib/fit-store.js";
 import type { Incoming } from "../../lib/incoming.js";
-import type { TabId } from "../../lib/panel-nav.js";
+import { TABS, type TabId } from "../../lib/panel-nav.js";
 import { createProfileStore, openProfileDb, ProfileCorruptError } from "../../lib/profile-store.js";
 import { monitorRelay, type RelayStatus } from "../../lib/relay-status.js";
 import { createResumeStore } from "../../lib/resume-store.js";
@@ -61,6 +62,12 @@ export function App() {
   const status = useRelayStatus();
   const [tab, setTab] = useState<TabId>("job");
   const [onboardingStep, setOnboardingStep] = useState(0);
+
+  // The preset is a data-theme on the page root; before settings load the default (neon) applies.
+  const preset = settings?.preset ?? DEFAULT_PRESET;
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", preset);
+  }, [preset]);
 
   useEffect(() => {
     store.load().then(setSettings, () => setLoadError("Could not read saved settings."));
@@ -277,6 +284,15 @@ export function App() {
           </TabPanel>
           <TabPanel id="setup" active={tab === "setup"}>
             {errorFor("setup")}
+            <PresetPicker
+              value={settings.preset}
+              onChange={(next) =>
+                void attempt("setup", async () => {
+                  await store.setPreset(next);
+                  await refresh();
+                })
+              }
+            />
             <ProviderPanel
               settings={settings}
               onChoice={(choice) =>
@@ -302,7 +318,19 @@ export function App() {
           </TabPanel>
         </div>
       )}
-      {settings?.privacyAcknowledged && <TabBar active={tab} onSelect={setTab} />}
+      {settings?.privacyAcknowledged && (
+        <div className="dock">
+          <Tabs
+            label="Slayply sections"
+            tabs={TABS}
+            active={tab}
+            onSelect={(id) => {
+              const target = TABS.find((entry) => entry.id === id);
+              if (target) setTab(target.id);
+            }}
+          />
+        </div>
+      )}
     </main>
   );
 }

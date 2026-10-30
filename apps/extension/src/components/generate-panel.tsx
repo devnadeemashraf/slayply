@@ -17,6 +17,7 @@ import {
   type GenerationState,
 } from "../lib/generate-controller.js";
 import { applyIncoming, type Incoming } from "../lib/incoming.js";
+import { jobSteps, primaryAction } from "../lib/job-steps.js";
 import {
   addRow,
   highestId,
@@ -26,8 +27,10 @@ import {
   updateRow,
 } from "../lib/question-rows.js";
 import { REMEMBERED_RESUME_KEY } from "../lib/storage-keys.js";
+import { ActionBar } from "./action-bar.js";
 import { type FitResult, FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
+import { JobStepper } from "./job-stepper.js";
 import { QuestionList } from "./question-list.js";
 
 const JD_MAX_CHARS = 60_000;
@@ -139,6 +142,21 @@ export function GeneratePanel({
   const running = state.phase === "streaming";
   const fitRunning = fitState.phase === "streaming";
   const suggested = fitResult ? suggestResume(fitResult.fit.resume, resumes) : null;
+  const progress = {
+    hasJd: jd.trim() !== "",
+    fitDone: fitResult !== null,
+    answered: state.phase === "done" || state.phase === "raw",
+    fitRunning,
+    running,
+  };
+  const action = primaryAction({
+    ...progress,
+    questionCount: rows.filter((row) => row.checked).length,
+  });
+  const limits: Record<string, number> = {};
+  for (const row of rows) {
+    if (typeof row.maxChars === "number" && row.maxChars > 0) limits[row.id] = row.maxChars;
+  }
 
   async function slay(onlyId?: string) {
     const built = buildAnswerRequest({
@@ -187,6 +205,7 @@ export function GeneratePanel({
   return (
     <section>
       <h2>Draft an answer</h2>
+      <JobStepper steps={jobSteps(progress)} />
       <p className="muted">{describeProfileUse(profile, resume)}</p>
       <form
         onSubmit={(event) => {
@@ -234,26 +253,6 @@ export function GeneratePanel({
           onGenerateOne={(id) => void slay(id)}
           onGenerateAll={() => void slay()}
         />
-        <div className="row">
-          <button
-            type="button"
-            className="secondary"
-            disabled={fitRunning || jd.trim() === ""}
-            onClick={() => void checkFit(false)}
-          >
-            Check fit
-          </button>
-          {fitRunning && (
-            <button type="button" className="secondary" onClick={() => fitRunner.stop()}>
-              Stop
-            </button>
-          )}
-          {running && (
-            <button type="button" className="secondary" onClick={() => runner.stop()}>
-              Stop
-            </button>
-          )}
-        </div>
         {formError && (
           <p className="error" role="alert">
             {formError}
@@ -275,6 +274,7 @@ export function GeneratePanel({
         state={state}
         copyState={copyState}
         edits={edits}
+        limits={limits}
         onEdit={(outputId, text) => {
           setEdits((current) => ({ ...current, [outputId]: text }));
           setCopyState("idle");
@@ -282,6 +282,15 @@ export function GeneratePanel({
         onCopy={() => {
           const text = copyTextOf(state, edits);
           if (text !== null) void feedback.copy(text);
+        }}
+      />
+      <ActionBar
+        action={action}
+        onFit={() => void checkFit(false)}
+        onAnswers={() => void slay()}
+        onStop={() => {
+          runner.stop();
+          fitRunner.stop();
         }}
       />
     </section>

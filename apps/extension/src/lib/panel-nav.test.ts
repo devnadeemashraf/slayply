@@ -1,25 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { nextTab, setupChecklist, TABS } from "./panel-nav.js";
+import { setupChecklist, TABS } from "./panel-nav.js";
 
-describe("nextTab", () => {
-  it("moves right and left, wrapping at both ends", () => {
-    expect(nextTab("job", "ArrowRight")).toBe("jobs");
-    expect(nextTab("setup", "ArrowRight")).toBe("job");
-    expect(nextTab("jobs", "ArrowLeft")).toBe("job");
-    expect(nextTab("job", "ArrowLeft")).toBe("setup");
-  });
-
-  it("jumps to the first and last tab", () => {
-    expect(nextTab("you", "Home")).toBe("job");
-    expect(nextTab("you", "End")).toBe("setup");
-  });
-
-  it("ignores every other key", () => {
-    expect(nextTab("job", "Enter")).toBeNull();
-    expect(nextTab("job", "a")).toBeNull();
-    expect(nextTab("job", "ArrowDown")).toBeNull();
-  });
-
+describe("TABS", () => {
   it("lists the four tabs in order", () => {
     expect(TABS.map((tab) => tab.id)).toEqual(["job", "jobs", "you", "setup"]);
   });

@@ -348,7 +348,7 @@
 #### `UX-01`: Panel Shell and Navigation
 - **Spec Section:** §4 Feature 10 `[SHOULD]` (layout only)
 - **Size:** M (2 sessions). Runs before `THEME-01a`; needs an ADR (bottom tabs vs left rail vs one scroll with anchors).
-- **Status:** In review (PR pending). ADR-0019. Stepper and sticky primary action moved to `THEME-01b`: the buttons live inside `GeneratePanel`, and lifting them changes its logic.
+- **Status:** Done (PR #40). ADR-0019. Stepper and sticky primary action moved to `THEME-01b`: the buttons live inside `GeneratePanel`, and lifting them changes its logic.
 - **Acceptance Criteria:**
   - Tab bar: Job, Jobs, You, Setup. Existing panels move into tabs with no change to their props or logic; every panel stays mounted (hidden) so a running generation survives a tab switch; Jobs shows an empty state until `HIST-01`.
   - Header relay dot pulses while checking or warming (solid under reduced motion).
@@ -362,7 +362,7 @@
 #### `THEME-01a`: Tokens, Presets and Base Components
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** M (2 sessions)
-- **Status:** In review (PR pending). ADR-0020. Tailwind not used (tokens do not depend on it); Bubblegum is light; the extension does not import the package until `THEME-01b`.
+- **Status:** Done (PR #41). ADR-0020. Tailwind not used (tokens do not depend on it); Bubblegum is light; the extension first imports the package in `THEME-01b`.
 - **Acceptance Criteria:**
   - `packages/ui` holds CSS custom-property tokens and Neon (default), Bubblegum and Brutal presets switched by `data-theme`; Bubblegum keeps dark ink text.
   - Hand-rolled `Button`, `Chip`, `StickerBadge`, `Card`, `Field`, `Switch`, `Tabs`, `EmptyState`.
@@ -373,13 +373,15 @@
 #### `THEME-01b`: Apply the Design to Screens
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** M (2 sessions)
-- **Status:** Planned
+- **Status:** In review (PR pending). ADR-0021.
 - **Acceptance Criteria:**
-  - Job, You and Setup restyled with the base components; fit chance as a sticker badge; answers as cards with a character-limit ring.
-  - Claim check "receipts": `F03` chips expand to the source fact; uncited claims keep the underline, gain a text label and Remove.
-  - Preset picker in Setup, stored in settings (check the backup schema per the `SET-01` note).
-  - Moved from `UX-01`: a stepper (Capture, Fit, Answers) and a sticky primary action on the Job tab; this means lifting the Check fit and Generate buttons out of `GeneratePanel`.
-- **Required Tests:** Existing view tests unchanged and green; preset persistence; receipt expand and collapse.
+  - Every screen follows the active preset: bare elements are restyled from tokens in one stylesheet; the tab bar, onboarding, checklist, Jobs, fit, answers and copy use the `@slayply/ui` components.
+  - Fit chance is a sticker badge (level written in text). Each answer is a card; an answer with a character limit shows a ring plus the count and "over the limit" in text.
+  - Receipts: each cited fact is a native expandable row (ID badge, then the fact text). Uncited claims keep the underline, the "no matching citation" label and Remove. Receipts are per answer; per-sentence chips are a follow-up.
+  - Preset picker in Setup, stored in settings (not in the backup file, so `BACKUP_VERSION` is unchanged).
+  - Moved from `UX-01`: a stepper (Capture, Fit, Answers) and a sticky primary action ("Check my fit", then "Write N answers", then "Write again"; "Stop" while running), rendered inside `GeneratePanel` so its logic is not lifted.
+- 🧪 **Manual Test:** Load the unpacked extension. In Setup switch Neon, Bubblegum and Brutal and check every tab in each (text readable, focus ring visible). Capture a job: the stepper moves, the bottom button changes from Check my fit to Write answers and stays above the tab bar while scrolling. Run a fit check (sticker), write answers (cards, ring with a limit set, open a receipt), copy. Turn on OS reduced motion.
+- **Required Tests:** Existing view tests unchanged and green (the expected settings object gains `preset`); `jobSteps`, `primaryAction`, `charStatus`, stored preset; render tests for stepper, action bar, ring, picker, cards, receipts and the fit sticker.
 
 #### `THEME-01c`: Micro-interactions
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
@@ -443,6 +445,7 @@
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 | **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
 | **ADR-0012** | Gemini Adapter | Accepted | Key in header; ends only on `STOP`; thinking budget (2.5) or level (3+) by model id; models ordered by version | Key in URL, trusting a partial stream, relying on the models `thinking` field |
+| **ADR-0021** | Applying the Design to the Panel | Accepted | Global token stylesheet for legacy elements, components for rebuilt screens; stepper and action bar inside `GeneratePanel`; native `<details>` receipts | Rewrite every panel, lift handlers into `App`, per-sentence chips with state |
 | **ADR-0020** | UI Package, Tokens and Base Components | Accepted | Source package; tokens in plain CSS parsed by the contrast test; hand-written `sl-*` classes | `tsc` build, tokens in TypeScript, Tailwind, CSS-in-JS |
 | **ADR-0019** | Panel Shell and Navigation | Accepted | Bottom tab bar; all panels stay mounted and hidden; pure tab logic in `lib/panel-nav.ts` | Left icon rail, one scroll with anchors |
 | **ADR-0013** | Direct Mode | Accepted | Optional host permission requested at toggle time; `direct` flag picks `streamDirect` in the existing controller; Claude only | Static host permission, a second controller |
@@ -465,6 +468,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-30:** `THEME-01b` in review: the panel follows the chosen look (Neon, Bubblegum or Brutal, picked in Setup), has a Capture/Fit/Answers stepper and a bottom button for the next step, fit chance as a sticker, answers as cards with a character-limit ring, and citations as expandable receipts (ADR-0021). Look and sticky behaviour are manual-test only.
 
 - **2026-10-30:** `THEME-01a` in review: `packages/ui` now has the design tokens, the Neon, Bubblegum and Brutal presets and eight base components, with an automated WCAG AA contrast test over every preset and reduced-motion rules for the CSS (ADR-0020). No screen uses it yet (`THEME-01b`).
 
