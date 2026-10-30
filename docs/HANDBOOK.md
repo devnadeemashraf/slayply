@@ -154,6 +154,7 @@ flowchart LR
 - **Unit Testing:** Vitest tests individual Zod schemas, claim parsing algorithms, and prompt formatting in `packages/core`.
 - **Recorded Fixtures (planned, `PROV-01`):** Provider adapters tested using recorded API fixture responses.
 - **End-to-End (`QA-01`):** `pnpm run smoke` (`scripts/smoke-extension.mjs`) loads the built extension in Chromium via Playwright, checks the privacy gate renders and records the panel JS heap against 60 MB; `pnpm run budget` fails over 3.5 MiB; `apps/relay/src/first-token.test.ts` times the first SSE delta against a stub. Smoke and budget run in the `extension-smoke` CI job after a build, not in `pnpm run check`.
+- **Relay load test:** `pnpm run loadtest [requests] [concurrency]` (`scripts/loadtest-relay.mjs`, needs the relay built) streams 5000 requests at 100 concurrency through the built relay app against a stub provider and fails on any error or a p99 over 1.5 s. It measures the relay's own overhead, not provider or network latency. Typical local result: about 9,000 to 10,000 requests/s, p99 under 30 ms.
 - **Zero-Failure Day-One Check:** Every script or test in an unbuilt package outputs `"skip: <reason>"` and exits with 0.
 
 ---

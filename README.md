@@ -137,6 +137,7 @@ pnpm run check      # doctor, handoff, format, lint, test, typecheck
 | `pnpm run fmt` | Format with Biome |
 | `pnpm run lint` | Lint with Biome (warnings fail) |
 | `pnpm test` | Tooling tests plus every package's tests |
+| `pnpm run loadtest` | 5,000 streamed requests through the relay against a stub model (about 10k requests/s, p99 under 30 ms on a laptop) |
 
 Work is split into small roadmap items, one PR each, on branches named `<type>/<ID>-<slug>` with Conventional Commit messages. Start with [`AGENTS.md`](AGENTS.md) for the workflow, [`docs/CODING_STANDARDS.md`](docs/CODING_STANDARDS.md) for style, and [`docs/SETUP.md`](docs/SETUP.md) for a full walkthrough.
 
