@@ -51,3 +51,5 @@ jobs:
       - run: pnpm run budget
       - run: pnpm exec playwright-core install --with-deps chromium
       - run: pnpm run smoke
+      - run: pnpm exec turbo run build --filter=@slayply/site
+      - run: pnpm run smoke:site

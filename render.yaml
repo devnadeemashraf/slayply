@@ -1,0 +1,26 @@
+# Render blueprint: relay (free web service) and landing site (static). See SPEC section 8.
+services:
+  - type: web
+    name: slayply-relay
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter "@slayply/relay..." run build
+    startCommand: node apps/relay/dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: NODE_ENV
+        value: production
+      # Your extension's ID from chrome://extensions (comma-separated for several). Required.
+      - key: EXTENSION_IDS
+        sync: false
+      # Number of proxies in front of the relay. Verify Render's hop count before relying on the
+      # rate limiter; 0 puts every client in one bucket.
+      - key: TRUST_PROXY_HOPS
+        sync: false
+  - type: web
+    name: slayply-site
+    runtime: static
+    buildCommand: node apps/site/build.mjs
+    staticPublishPath: apps/site/dist

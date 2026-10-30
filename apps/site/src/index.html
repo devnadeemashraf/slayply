@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slayply</title>
+    <meta
+      name="description"
+      content="Turn a job description and its questions into honest answers grounded in your own facts."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav><a href="index.html">Slayply</a><a href="privacy.html">Privacy</a></nav>
+    <main>
+      <h1>Honest answers to job application questions</h1>
+      <p class="lede">
+        Slayply is a Chrome side panel. Give it a job description and the questions, and it drafts
+        answers using only facts you saved about yourself, with every claim traceable to its source.
+      </p>
+      <h2>What it does</h2>
+      <ul>
+        <li>Keeps your profile, resumes and saved jobs in your browser only.</li>
+        <li>Drafts answers, cover letters and messages with the model you choose (Claude, OpenAI or Gemini).</li>
+        <li>Flags any first-person sentence that does not cite one of your saved facts.</li>
+        <li>Never fills in or submits an application form for you.</li>
+      </ul>
+      <h2>Install</h2>
+      <ol>
+        <li>Download or clone the repository and run <code>pnpm install</code>.</li>
+        <li>Run <code>pnpm --filter @slayply/extension build</code>.</li>
+        <li>Open <code>chrome://extensions</code>, turn on Developer mode and choose <strong>Load unpacked</strong>.</li>
+        <li>Select <code>apps/extension/.output/chrome-mv3</code>, then open the Slayply side panel.</li>
+        <li>Add your own API key in Setup. You pay your provider directly; Slayply has no accounts or fees.</li>
+      </ol>
+      <h2>Self-host the relay</h2>
+      <p>
+        The relay forwards requests to your provider and stores nothing. The repository's
+        <code>render.yaml</code> deploys it to Render. Set <code>EXTENSION_IDS</code> to your
+        extension's ID (shown at <code>chrome://extensions</code>) and rebuild the extension with
+        <code>WXT_RELAY_URL</code> pointing at it.
+      </p>
+    </main>
+    <footer>MIT licensed. <a href="privacy.html">Privacy details</a></footer>
+  </body>
+</html>
