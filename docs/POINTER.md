@@ -72,9 +72,9 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR (pending) | `BP-loadtest` | `pnpm run loadtest`: in-process relay load test with stub provider, p99 budget gate, short run in tests | Manual test: No
 - PR (pending) | `BP-readme` | README: honest status, live URLs, build-it-yourself install, roadmap table brought up to date | Manual test: No
 - PR (pending) | `REL-01` | Release prep: icons, 1.0.0, deployment handbook, store listing, release notes, red-team fixes | Manual test: Yes
 - PR #50 | `SITE-01` | Landing and privacy pages, Render blueprint | Manual test: Yes
 - PR (pending) | `QA-01` | `bundle-budget.mjs`, `smoke-extension.mjs`, relay first-token test, `extension-smoke` CI job | Manual test: Yes
 - PR #48 | `HIST-02` | `findPastAnswers`, "Earlier answer" block in the question list, saved jobs loaded in the generate panel | Manual test: Yes
-- PR (pending) | `GEN-02` | Draft kinds, tone/length, Shorter/Longer, draft limit in prompt, `fitToLimit` + Fit button | Manual test: Yes
