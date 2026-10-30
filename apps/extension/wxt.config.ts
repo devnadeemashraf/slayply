@@ -1,4 +1,5 @@
 import { defineConfig } from "wxt";
+import { OPTIONAL_HOST_PERMISSIONS } from "./src/lib/manifest-hosts";
 
 // Relay base URL baked in at build time. The production URL arrives with SITE-01.
 const relayUrl = resolveRelayUrl(process.env.WXT_RELAY_URL);
@@ -30,10 +31,10 @@ export default defineConfig({
     name: "Slayply",
     description: "Turn a job description and its questions into honest, grounded answers.",
     // activeTab is granted by the user clicking the icon or a context menu item and lets Slayply read
-    // that one tab then; there is no broad host access.
+    // that one tab then; there is no host access granted at install.
     permissions: ["sidePanel", "storage", "contextMenus", "activeTab", "scripting"],
-    // Asked for at Direct Mode toggle time (chrome.permissions.request), not at install.
-    optional_host_permissions: ["https://api.anthropic.com/*"],
+    // Nothing is granted at install; see manifest-hosts.ts for what may be asked for, and when.
+    optional_host_permissions: OPTIONAL_HOST_PERMISSIONS,
     host_permissions: [`${new URL(relayUrl).origin}/*`],
     action: { default_title: "Capture this job with Slayply" },
     // Alt+Shift+S does what clicking the icon does. Users can rebind it at chrome://extensions/shortcuts.

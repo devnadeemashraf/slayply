@@ -6,6 +6,8 @@ export type SettingsViewProps = {
   message: string | null;
   directMode: boolean;
   onToggleDirect: (on: boolean) => void;
+  jobSites: boolean;
+  onToggleJobSites: (on: boolean) => void;
   onExport: () => void;
   onChooseFile: (file: File | undefined) => void;
   onAskWipe: () => void;
@@ -23,6 +25,24 @@ export function SettingsView(props: SettingsViewProps) {
         <p>{PRIVACY_STATEMENT}</p>
       </details>
       <p className="notice">{TRAINING_WARNING}</p>
+
+      <h3>Job sites</h3>
+      <label>
+        <input
+          type="checkbox"
+          checked={props.jobSites}
+          disabled={busy}
+          onChange={(event) => props.onToggleJobSites(event.target.checked)}
+        />{" "}
+        Capture on popular job sites
+      </label>
+      <p className="muted">
+        Lets the Capture button read pages, including application forms embedded in them, on
+        Greenhouse, Lever, Ashby, Workday, Oracle, iCIMS, SmartRecruiters and similar sites without
+        asking each time. It reads only when you capture, never in the background, and never on
+        LinkedIn. Other sites ask once. You can turn this off here or in the browser's extension
+        settings.
+      </p>
 
       <h3>Direct Mode</h3>
       <label>

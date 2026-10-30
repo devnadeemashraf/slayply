@@ -1,5 +1,5 @@
 import type { IDBPDatabase } from "idb";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BACKUP_MAX_CHARS,
   exportBackup,
@@ -9,6 +9,7 @@ import {
 } from "../lib/backup.js";
 import { createDirectModeController } from "../lib/direct-mode.js";
 import { downloadText } from "../lib/download.js";
+import { createSiteAccessController } from "../lib/job-sites.js";
 import type { SettingsStore } from "../lib/settings.js";
 import { SettingsView } from "./settings-view.js";
 
@@ -42,6 +43,12 @@ export function SettingsPanel({
     }
   }
 
+  const sites = useMemo(() => createSiteAccessController(chrome.permissions), []);
+  const [jobSites, setJobSites] = useState(false);
+  useEffect(() => {
+    void sites.isEnabled().then(setJobSites);
+  }, [sites]);
+
   const direct = useMemo(
     () =>
       createDirectModeController({
@@ -57,6 +64,15 @@ export function SettingsPanel({
       busy={busy}
       message={message}
       directMode={directMode}
+      jobSites={jobSites}
+      onToggleJobSites={(on) =>
+        void run(async () => {
+          // `enable` asks the browser first thing, so the click's permission to ask is still valid.
+          const result = on ? await sites.enable() : await sites.disable();
+          setMessage(result.ok ? null : result.message);
+          setJobSites(await sites.isEnabled());
+        })
+      }
       onToggleDirect={(on) =>
         void run(async () => {
           const result = on ? await direct.enable() : await direct.disable();

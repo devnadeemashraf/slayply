@@ -132,6 +132,29 @@ describe("detected application questions", () => {
     expect(labels).toEqual(["First form choice?", "Second form choice?"]);
   });
 
+  it("finds custom text widgets (role=textbox, contenteditable) by their label, never their content", () => {
+    const questions = questionsOf(
+      `<html><body><main>
+        <div id="l1">Describe your most relevant experience</div>
+        <div role="textbox" aria-labelledby="l1" aria-multiline="true">my typed secret text</div>
+        <div contenteditable="true" aria-label="Why are you leaving your current role?">another typed secret</div>
+        <div role="textbox" aria-label="Search">search box</div>
+      </main></body></html>`,
+    );
+    expect(questions.map((q) => [q.label, q.type])).toEqual([
+      ["Describe your most relevant experience", "longtext"],
+      ["Why are you leaving your current role?", "longtext"],
+    ]);
+    expect(JSON.stringify(questions)).not.toContain("secret");
+  });
+
+  it("keeps a short real question that merely contains the letters of search, but skips real search boxes", () => {
+    const labels = questionsOf(
+      '<html><body><main><textarea aria-label="Why research us?"></textarea><textarea aria-label="Search jobs"></textarea><div contenteditable="true" aria-label="Message"></div><textarea aria-label="Comment"></textarea></main></body></html>',
+    ).map((q) => q.label);
+    expect(labels).toEqual(["Why research us?"]);
+  });
+
   it("returns none for pages without a form", () => {
     expect(questionsOf(GREENHOUSE_HTML)).toEqual([]);
     expect(questionsOf(LEVER_HTML)).toEqual([]);

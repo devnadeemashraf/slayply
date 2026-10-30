@@ -293,6 +293,13 @@
 - **Acceptance Criteria:** Detected questions become a checklist (free text ticked, choices not); each row is editable with its own max-characters limit, Generate and Remove; "Add question"; "Generate N answers" sends every ticked row with its limit and the captured job title, company and location; the job description is collapsed after a capture.
 - 🧪 **Manual Test:** Capture a Greenhouse application form, untick one question, press "Generate N answers": each answer appears with its label and respects the limit; press a row's Generate to redo just that one.
 
+#### `CAP-05`: Job-Site Access and Embedded Frames
+- **Spec Section:** §2, §4 Feature 3 `[MUST]` (see ADR-0017)
+- **Size:** M
+- **Status:** In review (PR pending)
+- **Acceptance Criteria:** A Settings switch allows a fixed list of popular job boards (never LinkedIn) in one click; other sites ask once; capture reads embedded frames and merges them; the injected reader refuses LinkedIn hosts in any frame; custom text widgets are detected by label.
+- 🧪 **Manual Test:** Turn on "Capture on popular job sites"; on a Workday and an Oracle application page, and on a company page that embeds a Greenhouse form, click the icon: the questions of the form are listed.
+
 #### `HIST-01`: Job Log & Saved History
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S (1 session)

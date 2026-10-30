@@ -10,6 +10,8 @@ const base: SettingsViewProps = {
   message: null,
   directMode: false,
   onToggleDirect: noop,
+  jobSites: false,
+  onToggleJobSites: noop,
   onExport: noop,
   onChooseFile: noop,
   onAskWipe: noop,
@@ -21,6 +23,13 @@ const text = (props: Partial<SettingsViewProps> = {}) =>
   renderToString(<SettingsView {...base} {...props} />).replace(/&#x27;/g, "'");
 
 describe("SettingsView", () => {
+  it("offers the popular job sites switch and says what it does and does not cover", () => {
+    const html = text();
+    expect(html).toContain("Capture on popular job sites");
+    expect(html).toContain("LinkedIn");
+    expect(text({ jobSites: true })).toMatch(/checked/);
+  });
+
   it("shows the privacy statement and the training warning", () => {
     const html = text();
     expect(html).toContain(PRIVACY_STATEMENT.slice(0, 40));
