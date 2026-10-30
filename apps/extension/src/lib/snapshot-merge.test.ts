@@ -134,3 +134,35 @@ describe("mergeSnapshots text budget", () => {
     expect(mergeSnapshots([main, form])?.questions).toHaveLength(1);
   });
 });
+
+describe("hardening caps", () => {
+  const form = (n: number) => snap({ text: long(`form${n}`), questions: [q(`Question ${n}?`)] });
+
+  it("considers at most 12 embedded frames, keeping the ones with questions first", () => {
+    const junk = Array.from({ length: 30 }, (_, i) => ({
+      frameId: i + 1,
+      result: snap({ text: long(`ad${i}`) }),
+    }));
+    const results = [
+      { frameId: 0, result: snap({ text: long("top") }) },
+      ...junk,
+      { frameId: 99, result: form(99) },
+    ];
+    const merged = mergeFrameResults(results);
+    expect(merged?.questions.map((x) => x.label)).toContain("Question 99?");
+    expect(new Set(merged?.text.match(/ad\d+/g)).size).toBe(11);
+  });
+
+  it("caps questions at 40 and structured data at 10 across frames", () => {
+    const many = Array.from({ length: 6 }, (_, f) =>
+      snap({
+        text: long(`f${f}`),
+        jsonLd: Array.from({ length: 5 }, (_, j) => `{"a":${f}${j}}`),
+        questions: Array.from({ length: 10 }, (_, i) => q(`Q ${f}-${i}?`)),
+      }),
+    );
+    const merged = mergeSnapshots(many);
+    expect(merged?.questions).toHaveLength(40);
+    expect(merged?.jsonLd).toHaveLength(10);
+  });
+});

@@ -2,6 +2,8 @@ import type { DetectedQuestion, PageSnapshot } from "./page-snapshot.js";
 
 const TEXT_MAX = 60_000;
 const QUESTIONS_MAX = 40;
+/** Embedded frames considered per capture. */
+const FRAMES_MAX = 12;
 /** A frame with less text than this and nothing else (no form, no structured data) is an ad or a widget. */
 const USEFUL_TEXT = 200;
 
@@ -18,7 +20,19 @@ export function mergeFrameResults(results: readonly FrameResult[]): PageSnapshot
   const embedded = results.flatMap((entry) =>
     entry.frameId !== 0 && entry.result ? [entry.result] : [],
   );
-  return mergeSnapshots([top, ...embedded]);
+  // A page can hold dozens of frames (ads, widgets). Frames with the most questions come first, then the
+  // longest, and only the first few are merged.
+  const ranked = embedded
+    .map((frame, index) => ({ frame, index }))
+    .sort(
+      (a, b) =>
+        b.frame.questions.length - a.frame.questions.length ||
+        b.frame.text.length - a.frame.text.length ||
+        a.index - b.index,
+    )
+    .slice(0, FRAMES_MAX)
+    .map((entry) => entry.frame);
+  return mergeSnapshots([top, ...ranked]);
 }
 
 /** Splits the budget evenly, giving a part that needs less its share back to the others. */
