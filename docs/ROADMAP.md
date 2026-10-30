@@ -345,14 +345,55 @@
 
 ### Phase 5: Polish & Open-Source Launch
 
-#### `THEME-01`: Gen-Z Design System
+#### `UX-01`: Panel Shell and Navigation
+- **Spec Section:** §4 Feature 10 `[SHOULD]` (layout only)
+- **Size:** M (2 sessions). Runs before `THEME-01a`; needs an ADR (bottom tabs vs left rail vs one scroll with anchors).
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - Tab bar: Job, Jobs, You, Setup. Existing panels move into tabs with no change to their props or logic; Jobs shows an empty state until `HIST-01`.
+  - Header with a relay status pulse; the Job tab has a stepper (Capture, Fit, Answers) and a sticky primary action.
+  - Setup checklist (key, profile, resume) in the Job empty state; Generate stays disabled with a reason until key and profile exist.
+  - Onboarding becomes three short cards (stay local, what leaves, training warning) using the `lib/privacy.ts` text; same stored flag.
+  - Errors render beside the action that failed. Tabs follow the ARIA tabs pattern with arrow-key navigation. Fluid from 320 px.
+- 🧪 **Manual Test:** Load the unpacked extension, resize the panel narrow to wide, tab through it by keyboard, confirm every earlier panel is reachable and onboarding still blocks first use.
+- **Required Tests:** Each tab renders its panels; onboarding gate; Generate disabled without key or profile; arrow-key tab navigation.
+- **Plan:** `docs/research/panel-ux-and-visual-design.md`. Decisions taken: tabs, hand-rolled components (no Radix), Neon default, system font only, no mascot.
+
+#### `THEME-01a`: Tokens, Presets and Base Components
+- **Spec Section:** §4 Feature 10 `[SHOULD]`
+- **Size:** M (2 sessions)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - `packages/ui` holds CSS custom-property tokens and Neon (default), Bubblegum and Brutal presets switched by `data-theme`; Bubblegum keeps dark ink text.
+  - Hand-rolled `Button`, `Chip`, `StickerBadge`, `Card`, `Field`, `Switch`, `Tabs`, `EmptyState`.
+  - A global `prefers-reduced-motion` block replaces the motion tokens and keyframes.
+  - Verify the current Tailwind setup for WXT/Vite before using it; the tokens must not depend on it.
+- **Required Tests:** Automated WCAG AA contrast test over every text and boundary pairing in every preset; snapshot tests per component and preset; every component keyframe has a reduced-motion override.
+
+#### `THEME-01b`: Apply the Design to Screens
+- **Spec Section:** §4 Feature 10 `[SHOULD]`
+- **Size:** M (2 sessions)
+- **Status:** Planned
+- **Acceptance Criteria:**
+  - Job, You and Setup restyled with the base components; fit chance as a sticker badge; answers as cards with a character-limit ring.
+  - Claim check "receipts": `F03` chips expand to the source fact; uncited claims keep the underline, gain a text label and Remove.
+  - Preset picker in Setup, stored in settings (check the backup schema per the `SET-01` note).
+- **Required Tests:** Existing view tests unchanged and green; preset persistence; receipt expand and collapse.
+
+#### `THEME-01c`: Micro-interactions
 - **Spec Section:** §4 Feature 10 `[SHOULD]`
 - **Size:** S (1 session)
 - **Status:** Planned
-- **Acceptance Criteria:**
-  - Neon, Bubblegum, and Brutal dark presets.
-  - Micro-interactions, copy button pop feedback, WCAG AA contrast check.
-- **Required Tests:** Visual regression / snapshot tests in `packages/ui`.
+- **Acceptance Criteria:** The catalogue in the plan section 6 (press, copy pop, step stamp, sticker drop, tab view-transition with feature detection, field shake, claim collapse), CSS only, `transform` and `opacity` only, each with a reduced-motion replacement. Confetti on "applied" stays `[LATER]`.
+- 🧪 **Manual Test:** Toggle OS reduced motion and confirm no scaling or movement remains; copy an answer and check the "copied ✓" revert.
+- **Required Tests:** `useCopyFeedback` revert timing; reduced-motion snapshot.
+
+#### `THEME-01d`: Voice and Empty States
+- **Spec Section:** §4 Feature 10 `[SHOULD]`
+- **Size:** S (1 session)
+- **Status:** Planned
+- **Acceptance Criteria:** All copy in one `copy.ts`; playful text only on empty states, copy and loading; privacy, errors, keys and wipe stay plain. Empty states for Job, Jobs and You. Human reviews the copy.
+- **Required Tests:** A test asserting no playful string appears in the serious-message list.
 
 #### `SITE-01`: Landing Page & Deployment Blueprint
 - **Spec Section:** §8 Hosting `[MUST]`
@@ -421,6 +462,8 @@
 ---
 
 ## 8. Status Log
+
+- **2026-10-30:** Panel UX research and plan (`docs/research/panel-ux-and-visual-design.md`). `THEME-01` split into `UX-01` and `THEME-01a` to `d`; defaults chosen by the maintainer: four tabs, hand-rolled components, Neon default, system font, no mascot.
 
 - **2026-10-30:** `PROV-04` in review: provider, model and effort picker. Spec change approved (§6 gains optional `provider`, `model`, `effort`); the relay checks provider against the key header and the model against the provider's list; one key per provider in the panel; Direct Mode stays Claude only (ADR-0014).
 - **2026-10-30:** `DIRECT-01` in review: a Direct Mode switch in settings that calls Anthropic straight from the side panel with the user's key, skipping the relay; the browser asks for permission to reach api.anthropic.com only when it is turned on (ADR-0013). Claude only for now.
