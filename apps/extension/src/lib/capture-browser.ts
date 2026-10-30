@@ -5,25 +5,40 @@ import {
   captureFromTab,
   captureOneClick,
 } from "./capture.js";
-import { snapshotPage } from "./page-snapshot.js";
+import { selectionText, snapshotPage } from "./page-snapshot.js";
+import { mergeFrameResults } from "./snapshot-merge.js";
 
-/** Runs the capture helpers in a tab. `activeTab` (granted by the user's click) is the only permission used. */
+/**
+ * Runs the capture helpers in a tab, in every frame the extension may access (the top page first).
+ * A frame it has no permission for is simply left out. `activeTab` from the user's click, or a host
+ * permission the user granted, is what allows the read.
+ */
 export const browserCaptureDeps: CaptureDeps = {
   async readPage(tabId) {
-    const [injection] = await chrome.scripting.executeScript({
-      target: { tabId },
+    const injections = await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
       func: snapshotPage,
       args: [],
     });
-    if (!injection?.result) throw new Error("No result from the page");
-    return injection.result;
+    const merged = mergeFrameResults(
+      injections.map((injection) => ({ frameId: injection.frameId, result: injection.result })),
+    );
+    if (!merged) throw new Error("No result from the page");
+    return merged;
   },
   async readSelection(tabId) {
-    const [injection] = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => window.getSelection()?.toString() ?? "",
+    const injections = await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      func: selectionText,
+      args: [],
     });
-    return injection?.result ?? "";
+    // The top page's selection wins; an embedded frame is used only when the top page has none.
+    const ordered = [...injections].sort((a, b) =>
+      a.frameId === 0 ? -1 : b.frameId === 0 ? 1 : 0,
+    );
+    return (
+      ordered.map((injection) => injection.result ?? "").find((text) => text.trim() !== "") ?? ""
+    );
   },
 };
 

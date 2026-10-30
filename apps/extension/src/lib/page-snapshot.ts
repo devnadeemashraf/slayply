@@ -24,6 +24,12 @@ export type PageSnapshot = {
  * calls it with no arguments. It only reads; it never writes to the page.
  */
 export function snapshotPage(doc: Document = document, maxChars = 60_000): PageSnapshot {
+  // Defense in depth: this also runs inside embedded frames, and it never reads a LinkedIn page.
+  const frameHost = (doc.location?.hostname ?? "").toLowerCase().replace(/\.+$/, "");
+  if (/(^|\.)(linkedin\.com|linkedin\.cn|lnkd\.in)$/.test(frameHost)) {
+    return { title: "", ogTitle: "", ogSiteName: "", jsonLd: [], text: "", questions: [] };
+  }
+
   const meta = (property: string): string =>
     doc.querySelector(`meta[property="${property}"]`)?.getAttribute("content")?.trim() ?? "";
 
@@ -179,7 +185,9 @@ export function snapshotPage(doc: Document = document, maxChars = 60_000): PageS
     const seenRadios = new Set<string>();
     const forms: Element[] = [];
     for (const root of roots) {
-      for (const control of Array.from(root.querySelectorAll("textarea, input, select"))) {
+      // Custom widgets (common on enterprise boards) are text fields by role; only their label is read.
+      const selector = 'textarea, input, select, [role="textbox"], [contenteditable="true"]';
+      for (const control of Array.from(root.querySelectorAll(selector))) {
         if (found.length >= maxQuestions) return found;
         const tag = control.tagName.toLowerCase();
         const kind = (control.getAttribute("type") ?? "").toLowerCase();
@@ -224,6 +232,10 @@ export function snapshotPage(doc: Document = document, maxChars = 60_000): PageS
           .trim()
           .slice(0, 300);
         if (label === "" || (label.length <= 100 && identity.test(label))) continue;
+        // Real search boxes and chat or comment widgets are not questions. Match the start of a short
+        // label, so "Why research us?" still counts.
+        if (label.length <= 30 && /^(search|message|chat|comment|reply|type a)\b/i.test(label))
+          continue;
         const key = label.toLowerCase();
         if (seenLabels.has(key)) continue;
         seenLabels.add(key);
@@ -238,7 +250,12 @@ export function snapshotPage(doc: Document = document, maxChars = 60_000): PageS
           attr > 0 ? attr : note ? Number.parseInt(note[1]?.replace(/,/g, "") ?? "", 10) : 0;
         found.push({
           label,
-          type: tag === "textarea" ? "longtext" : tag === "select" || isRadio ? "choice" : "text",
+          type:
+            tag === "textarea" || (tag !== "input" && tag !== "select")
+              ? "longtext"
+              : tag === "select" || isRadio
+                ? "choice"
+                : "text",
           required,
           maxChars: limit > 0 && limit <= 100_000 ? limit : null,
         });
@@ -246,4 +263,16 @@ export function snapshotPage(doc: Document = document, maxChars = 60_000): PageS
     }
     return found;
   }
+}
+
+/**
+ * The text the user has selected in this frame. Injected like `snapshotPage`, so self-contained.
+ * An explicit selection on a LinkedIn page itself is allowed; a LinkedIn frame embedded in another
+ * site is ignored, so nothing from it is taken.
+ */
+export function selectionText(win: Window = window): string {
+  const host = (win.location?.hostname ?? "").toLowerCase().replace(/\.+$/, "");
+  const linkedIn = /(^|\.)(linkedin\.com|linkedin\.cn|lnkd\.in)$/.test(host);
+  if (linkedIn && win.top !== win) return "";
+  return win.getSelection?.()?.toString() ?? "";
 }

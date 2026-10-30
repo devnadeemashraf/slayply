@@ -39,7 +39,7 @@ const BLOCKED_MESSAGE =
   "Slayply could not read this page. Browser pages and the web store are off limits; on other pages click the Slayply toolbar icon, or select text and right-click it.";
 
 // linkedin.cn is LinkedIn China; lnkd.in is its short-link host.
-const LINKEDIN_HOSTS = ["linkedin.com", "linkedin.cn", "lnkd.in"];
+export const LINKEDIN_HOSTS = ["linkedin.com", "linkedin.cn", "lnkd.in"];
 
 /** True for linkedin.com and its subdomains. A URL that cannot be parsed counts as LinkedIn: fail closed. */
 export function isLinkedInUrl(url: string): boolean {
