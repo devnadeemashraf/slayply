@@ -4,6 +4,7 @@ export { Chip } from "./chip.js";
 export { contrastRatio } from "./contrast.js";
 export { EmptyState } from "./empty-state.js";
 export { Field, type FieldProps } from "./field.js";
+export { unguardedAnimations } from "./motion-audit.js";
 export { StickerBadge, type StickerTone } from "./sticker-badge.js";
 export { Switch } from "./switch.js";
 export { nextIndex, type TabItem, TabPanel, Tabs } from "./tabs.js";

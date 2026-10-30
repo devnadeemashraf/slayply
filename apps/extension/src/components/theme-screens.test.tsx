@@ -11,7 +11,57 @@ import { JobStepper } from "./job-stepper.js";
 import { PresetPicker } from "./preset-picker.js";
 
 const noop = () => {};
+
+const DONE_FOR_COPY: GenerationState = {
+  phase: "done",
+  attempts: 1,
+  profile: { facts: [], stories: [] },
+  response: {
+    outputs: [{ id: "q1", label: "Answer", text: "Hello.", claims: [], charCount: 6 }],
+    warnings: [],
+  },
+};
 const idle = { hasJd: false, fitDone: false, answered: false, fitRunning: false, running: false };
+
+describe("micro-interaction hooks in markup", () => {
+  it("stamps the check on a finished step only", () => {
+    const html = renderToString(
+      <JobStepper
+        steps={[
+          { id: "capture", label: "Capture", state: "done" },
+          { id: "fit", label: "Fit", state: "current" },
+          { id: "answers", label: "Answers", state: "todo" },
+        ]}
+      />,
+    );
+    expect(html.match(/step-mark/g)).toHaveLength(3);
+    expect(html).toMatch(/step-done[^>]*><span class="step-mark"[^>]*>✓/);
+  });
+
+  it("pops the copy button and adds a check once copied, keeping the text", () => {
+    const state: GenerationState = DONE_FOR_COPY;
+    const html = renderToString(
+      <GenerationView state={state} copyState="copied" onCopy={noop} edits={{}} onEdit={noop} />,
+    );
+    expect(html).toContain("sl-pop");
+    expect(html).toContain("Copied!");
+    expect(html).toContain("✓");
+  });
+
+  it("does not pop an idle copy button", () => {
+    const html = renderToString(
+      <GenerationView
+        state={DONE_FOR_COPY}
+        copyState="idle"
+        onCopy={noop}
+        edits={{}}
+        onEdit={noop}
+      />,
+    );
+    expect(html).not.toContain("sl-pop");
+    expect(html).not.toContain("✓");
+  });
+});
 
 describe("PresetPicker", () => {
   it("lists the three presets and marks only the current one pressed", () => {

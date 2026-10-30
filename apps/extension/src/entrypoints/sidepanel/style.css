@@ -178,7 +178,8 @@ fieldset.plain legend {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .status .dot {
+  .status-checking .dot,
+  .status-warming .dot {
     animation: none;
   }
 }
@@ -351,4 +352,40 @@ button.remove {
   bottom: 0;
   margin: 0 calc(var(--space-4) * -1);
   background: var(--bg);
+}
+
+.step-done .step-mark {
+  display: inline-block;
+  animation: step-stamp var(--dur-slow) var(--ease-pop) backwards;
+}
+
+.leaving {
+  animation: claim-leave var(--dur-base) var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-done .step-mark {
+    animation: none;
+  }
+
+  .leaving {
+    animation: none;
+  }
+}
+
+@keyframes step-stamp {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+  }
+}
+
+@keyframes claim-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+::view-transition-group(root) {
+  animation-duration: var(--dur-fast);
 }

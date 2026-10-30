@@ -6,10 +6,11 @@ import {
   summarizeClaims,
 } from "@slayply/core";
 import { Button, Card, StickerBadge } from "@slayply/ui";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CopyState } from "../lib/copy.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
+import { createExit, exitDelay, prefersReducedMotion } from "../lib/motion.js";
 import { CharRing } from "./char-ring.js";
 
 const COPY_LABEL: Record<CopyState, string> = {
@@ -28,7 +29,12 @@ function CopyButton({
   onCopy: () => void;
 }) {
   return (
-    <Button disabled={!enabled} onClick={onCopy}>
+    <Button
+      className={copyState === "copied" ? "sl-pop" : undefined}
+      disabled={!enabled}
+      onClick={onCopy}
+    >
+      {copyState === "copied" && <span aria-hidden="true">✓ </span>}
       {COPY_LABEL[copyState]}
     </Button>
   );
@@ -74,6 +80,22 @@ function CheckedAnswer({
     [text, output.claims, state.profile],
   );
   const summary = claimSummary(checked);
+
+  // A removed sentence fades out before it goes, unless the user has asked for no motion.
+  const [leaving, setLeaving] = useState<number | null>(null);
+  const exit = useMemo(
+    () =>
+      createExit<number>(
+        exitDelay(
+          prefersReducedMotion(
+            typeof window === "undefined" ? undefined : window.matchMedia?.bind(window),
+          ),
+        ),
+        setLeaving,
+      ),
+    [],
+  );
+  useEffect(() => () => exit.cancel(), [exit]);
   const sources = new Map<string, string>();
   for (const sentence of checked) {
     for (const source of sentence.cited) sources.set(source.id, source.text);
@@ -85,14 +107,16 @@ function CheckedAnswer({
     if (sentence.start > cursor) parts.push(text.slice(cursor, sentence.start));
     if (sentence.status === "uncited") {
       parts.push(
-        <span key={sentence.start}>
+        <span key={sentence.start} className={leaving === sentence.start ? "leaving" : undefined}>
           <mark className="uncited">{sentence.text}</mark>{" "}
           <span className="muted">({whyUncited(sentence)}) </span>
           <button
             type="button"
             className="secondary remove"
             aria-label={`Remove: ${sentence.text}`}
-            onClick={() => onEdit(output.id, removeSentence(text, sentence))}
+            onClick={() =>
+              exit.start(sentence.start, () => onEdit(output.id, removeSentence(text, sentence)))
+            }
           >
             Remove
           </button>

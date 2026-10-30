@@ -9,7 +9,10 @@ export function JobStepper({ steps }: { steps: readonly Step[] }) {
           className={`step step-${step.state}`}
           aria-current={step.state === "current" ? "step" : undefined}
         >
-          <span aria-hidden="true">{step.state === "done" ? "✓" : "•"}</span> {step.label}
+          <span className="step-mark" aria-hidden="true">
+            {step.state === "done" ? "✓" : "•"}
+          </span>{" "}
+          {step.label}
           {step.state === "done" && <span className="sr-only"> (done)</span>}
         </li>
       ))}

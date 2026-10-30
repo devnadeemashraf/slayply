@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "./contrast.js";
+import { unguardedAnimations } from "./motion-audit.js";
 import { DEFAULT_PRESET, isPreset, PRESETS } from "./themes.js";
 
 const theme = readFileSync(new URL("./theme.css", import.meta.url), "utf8");
@@ -115,13 +116,13 @@ describe("motion", () => {
     }
   });
 
-  it("overrides every component keyframe under reduced motion", () => {
-    const names = [...components.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1] as string);
-    const reducedComponents = components.slice(
-      components.indexOf("@media (prefers-reduced-motion: reduce)"),
-    );
-    for (const name of names) {
-      expect(reducedComponents, `${name} has no reduced-motion rule`).toContain(name);
+  it("gives every animated component rule a reduced-motion rule for the same selector", () => {
+    expect(unguardedAnimations(components)).toEqual([]);
+  });
+
+  it("defines the keyframes the components use, and a plain fade to replace movement", () => {
+    for (const name of ["sl-pop", "sl-drop", "sl-shake", "sl-fade"]) {
+      expect(components, `missing @keyframes ${name}`).toContain(`@keyframes ${name}`);
     }
   });
 });
