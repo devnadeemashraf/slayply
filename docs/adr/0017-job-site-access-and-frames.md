@@ -32,3 +32,7 @@ Chosen Option: **1**.
 - The vendor hosts are from general knowledge and unverified (`docs/VERSIONS.md`); a missing host just falls back to the one-time prompt.
 - Workday and Oracle forms are untested against real pages. They are reached by the generic label scan; vendor-specific handling needs saved pages of real forms.
 - Which frames were skipped for lack of access is not reported.
+
+## Amendment (CAP-06): Greenhouse questions API
+
+`https://boards-api.greenhouse.io/*` joins the job-site list. On a Greenhouse job page (exact hosts, board and job id read from the URL) a capture also makes one credential-less GET with no redirects, a 5 s timeout and a 2 MB cap, and merges the custom questions over the page result (the page's widget type and limits win). It never prompts: without the grant it does nothing. The switch reads on only while the API host is granted, so anyone who enabled it before CAP-06 sees it off and re-enables it once. Not covered: a Greenhouse form embedded in a company page (the tab URL is not a Greenhouse host); the DOM capture still handles it.

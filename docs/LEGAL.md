@@ -40,6 +40,7 @@ All third-party dependencies used across the monorepo must adhere to compatible 
 - **Zero Server Retention:** The relay (`apps/relay`) never logs or stores request payloads, resumes, prompts, or API keys.
 - **Local-Only Storage:** User profile facts, saved resumes, and application logs exist solely within local browser storage (`IndexedDB` and `chrome.storage.local`).
 - **Provider Policies Apply:** When a user issues a generation request, the necessary context is dispatched to the chosen LLM provider (Anthropic, OpenAI, or Google) using the user's personal API key. The user's account agreement and privacy policy with that provider govern the handling of that data.
+- **Greenhouse job lookup (`CAP-06`):** Only when the user has switched on "Capture on popular job sites" and captures a Greenhouse job page, the extension asks Greenhouse's public Job Board API (`boards-api.greenhouse.io`) for that job's application questions. The request carries the board name and job number already in the page address and no personal data, key or cookie. The reply is used locally.
 
 ---
 

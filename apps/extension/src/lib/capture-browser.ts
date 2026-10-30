@@ -5,6 +5,7 @@ import {
   captureFromTab,
   captureOneClick,
 } from "./capture.js";
+import { createGreenhouseReader } from "./greenhouse.js";
 import { selectionText, snapshotPage } from "./page-snapshot.js";
 import { mergeFrameResults } from "./snapshot-merge.js";
 
@@ -26,6 +27,7 @@ export const browserCaptureDeps: CaptureDeps = {
     if (!merged) throw new Error("No result from the page");
     return merged;
   },
+  readApi: createGreenhouseReader(chrome.permissions, (u, init) => fetch(u, init)),
   async readSelection(tabId) {
     const injections = await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
