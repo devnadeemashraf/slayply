@@ -37,6 +37,27 @@ export const SERIOUS = {
   keyEmpty: "Enter your API key.",
   keyInvalid: "That key has characters the relay cannot accept.",
   genericError: "Something went wrong.",
+  errorTimeout:
+    "The model took longer than 2 minutes, so the relay stopped it and nothing was kept. Thinking models are the slowest: pick a faster model or a lower effort in Setup, then try again.",
+  errorRateLimited: "Too many requests in a short time. Wait a minute, then try again.",
+  errorTooManyStreams:
+    "Two generations are already running. Wait for one to finish, then try again.",
+  errorUpstreamRateLimited:
+    "The provider is rate limiting this key. Wait a bit, check your plan's limits, or pick another model in Setup.",
+  errorOverloaded:
+    "The provider is overloaded. Try again in a moment, or pick another model in Setup.",
+  errorAuth: "The provider rejected the API key. Check the key in Setup.",
+  errorRejected:
+    "The provider rejected the request. The model may not support it: pick another model in Setup.",
+  errorUpstream: "The provider request failed. Try again, or pick another model in Setup.",
+  errorIncomplete: "The answer stream ended early and nothing was kept. Try again.",
+  errorForbiddenOrigin:
+    "This extension is not allowed to use the relay. Ask whoever runs it to add this extension, or turn on Direct Mode in Setup (Claude only).",
+  errorUpstreamRateLimitedDirect:
+    "The provider is rate limiting this key. Wait a bit and check your plan's limits.",
+  errorOverloadedDirect: "The provider is overloaded. Try again in a moment.",
+  errorRejectedDirect: "The provider rejected the request. Try again, and check your key's access.",
+  errorUpstreamDirect: "The provider request failed. Try again in a moment.",
   reformattingAnswer: "Reformatting answer, attempt 2 of 2",
   reformattingFit: "Reformatting the fit check, attempt 2 of 2",
 } as const;

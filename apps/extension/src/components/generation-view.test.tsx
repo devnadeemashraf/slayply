@@ -107,6 +107,27 @@ describe("GenerationView", () => {
     expect(html).toContain("The provider rejected the API key");
   });
 
+  it("explains a timeout and offers a retry only when a retry handler is given", () => {
+    const state: GenerationState = {
+      phase: "error",
+      message: "The generation took too long",
+      code: "STREAM_TIMEOUT",
+    };
+    expect(render(state)).toMatch(/2 minutes/);
+    expect(render(state)).not.toContain("Try again");
+    const withRetry = renderToString(
+      <GenerationView
+        state={state}
+        copyState="idle"
+        onCopy={() => {}}
+        edits={{}}
+        onEdit={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+    expect(withRetry).toContain("Try again");
+  });
+
   it("marks a cited first-person sentence as checked and names its source fact", () => {
     const html = render(
       doneWith("I built billing.", [{ sentence: "I built billing.", factIds: ["F01"] }]),

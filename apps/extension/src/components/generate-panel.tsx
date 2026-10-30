@@ -381,6 +381,7 @@ export function GeneratePanel({
           rememberResume(suggested.id);
         }}
         onRerun={() => void checkFit(true)}
+        direct={direct}
       />
       <GenerationView
         state={state}
@@ -389,6 +390,8 @@ export function GeneratePanel({
         limits={limits}
         onEdit={applyEdit}
         onFit={applyEdit}
+        onRetry={() => void slay()}
+        direct={direct}
         onCopy={() => {
           const text = copyTextOf(state, edits);
           if (text !== null) void feedback.copy(text);

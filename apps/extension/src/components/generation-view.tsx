@@ -14,6 +14,7 @@ import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
 import { createExit, exitDelay, prefersReducedMotion } from "../lib/motion.js";
 import { CharRing } from "./char-ring.js";
+import { ErrorNotice } from "./error-notice.js";
 
 const COPY_LABEL: Record<CopyState, string> = {
   idle: "Copy to Clipboard",
@@ -189,6 +190,8 @@ export function GenerationView({
   edits,
   onEdit,
   onFit,
+  onRetry,
+  direct = false,
   limits,
 }: {
   state: GenerationState;
@@ -199,6 +202,10 @@ export function GenerationView({
   /** Answer text after the user removed sentences, by output ID. */
   edits: Readonly<Record<string, string>>;
   onEdit: (outputId: string, text: string) => void;
+  /** Runs the generation again; the retry button shows only for failures a repeat can fix. */
+  onRetry?: () => void;
+  /** Direct Mode: error advice about choosing another model does not apply. */
+  direct?: boolean;
   /** Replaces an answer with its trimmed text; the fit button shows only when this is given. */
   onFit?: (outputId: string, text: string) => void;
 }) {
@@ -206,9 +213,7 @@ export function GenerationView({
 
   if (state.phase === "error") {
     return (
-      <p className="error" role="alert">
-        {state.message}
-      </p>
+      <ErrorNotice code={state.code} message={state.message} onRetry={onRetry} direct={direct} />
     );
   }
 

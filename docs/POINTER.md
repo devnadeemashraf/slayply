@@ -4,6 +4,7 @@
 - Phase 0: Bootstrap completed.
 - Git repository active with branch PR workflow; monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- `BP-errors`: a failed generation now says what happened and what to do, with Try again where a repeat can help (`explainError`, `ErrorNotice`). Found in production: a Gemini fit check hit the relay's 120 s stream deadline ("The generation took too long"). **Root cause not found:** the Gemini adapter drops thinking parts and the relay sends nothing while the model thinks, so the panel gets no progress and a slow thinking model can run past 120 s; fit checks may also run twice (ADR-0006). Next, in order: progress indication during a fit check (elapsed time, stage), then find why it is slow with a real key, then the UX redesign the maintainer asked for. Retry clicks are manual-test only.
 - Live (2026-10-31): site `https://slayply-site.onrender.com`, relay `https://slayply-relay.onrender.com` (`/health` and site return 200). README states plainly that no real provider key has ever been used; v1.0.0 is not tagged. `TRUST_PROXY_HOPS` two-network test and the end-to-end checklist in `docs/DEPLOYMENT.md` are not recorded as done.
 - `REL-01`: icons, version 1.0.0, `docs/DEPLOYMENT.md` (the go-live handbook), `docs/STORE_LISTING.md`, `docs/RELEASE_NOTES_v1.0.0.md`, a permissions test, release-build guard (`relay-url.ts`), relay needs `TRUST_PROXY_HOPS` in production. Open `BP-007` relay: a client that stops reading can hold a socket past the stream deadline; `BP-008` rate-limit key should be the IPv6 /64; `BP-009` prompt-tag sanitizer misses invisible format characters (strip `p{Cf}`). Nothing deployed or tagged yet.
 - `SITE-01`: `apps/site` static landing and privacy pages (`build.mjs` copies `src` to `dist`), root `render.yaml` for the relay and site, `pnpm run smoke:site` in the CI `extension-smoke` job. Never deployed: Render hop count, build command and free-tier behaviour are unverified; `WXT_RELAY_URL` for a release build still needs the deployed relay address.
@@ -72,9 +73,8 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR (pending) | `BP-errors` | `error-copy.ts`, `ErrorNotice`, Direct Mode wording, retry on fit and generate errors | Manual test: Yes
 - PR (pending) | `BP-loadtest` | `pnpm run loadtest`: in-process relay load test with stub provider, p99 budget gate, short run in tests | Manual test: No
 - PR (pending) | `BP-readme` | README: honest status, live URLs, build-it-yourself install, roadmap table brought up to date | Manual test: No
 - PR (pending) | `REL-01` | Release prep: icons, 1.0.0, deployment handbook, store listing, release notes, red-team fixes | Manual test: Yes
 - PR #50 | `SITE-01` | Landing and privacy pages, Render blueprint | Manual test: Yes
-- PR (pending) | `QA-01` | `bundle-budget.mjs`, `smoke-extension.mjs`, relay first-token test, `extension-smoke` CI job | Manual test: Yes
-- PR #48 | `HIST-02` | `findPastAnswers`, "Earlier answer" block in the question list, saved jobs loaded in the generate panel | Manual test: Yes

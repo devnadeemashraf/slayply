@@ -8,6 +8,7 @@ import { Button, Card, StickerBadge, type StickerTone } from "@slayply/ui";
 import { useMemo } from "react";
 import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
+import { ErrorNotice } from "./error-notice.js";
 
 const CHANCE_TONE: Record<FitCheck["chance"], StickerTone> = {
   high: "ok",
@@ -156,12 +157,15 @@ export function FitView({
   suggestion,
   onUseResume,
   onRerun,
+  direct = false,
 }: {
   state: GenerationState;
   result: FitResult | null;
   suggestion: ResumeSuggestion | null;
   onUseResume: () => void;
   onRerun: () => void;
+  /** Direct Mode: error advice about choosing another model does not apply. */
+  direct?: boolean;
 }) {
   if (state.phase === "streaming") {
     return (
@@ -172,9 +176,7 @@ export function FitView({
   }
   if (state.phase === "error") {
     return (
-      <p className="error" role="alert">
-        {state.message}
-      </p>
+      <ErrorNotice code={state.code} message={state.message} onRetry={onRerun} direct={direct} />
     );
   }
   if (state.phase === "raw") {
