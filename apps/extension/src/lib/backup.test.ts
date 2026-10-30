@@ -16,6 +16,7 @@ import {
   wipeLocalData,
 } from "./backup.js";
 import { createFitStore } from "./fit-store.js";
+import { createJobStore } from "./job-store.js";
 import { createProfileStore, openProfileDb, STORE_NAMES } from "./profile-store.js";
 import { createResumeStore } from "./resume-store.js";
 import { createSettingsStore, type StorageAreaLike } from "./settings.js";
@@ -65,6 +66,14 @@ async function fill(db: ReturnType<typeof freshDb>) {
       stories: stored.stories.map(({ id, text }) => ({ id, text })),
     },
   });
+  await createJobStore(db).save("job-1", {
+    title: "Backend engineer",
+    company: "Acme",
+    location: "Remote",
+    jd: "Build billing.",
+    resumeName: "cv.pdf",
+    answers: [{ question: "Why us?", text: "Because billing." }],
+  });
   return { stored, resume };
 }
 
@@ -108,7 +117,7 @@ describe("export and import", () => {
 
     const target = freshDb();
     const result = await importBackup(target, text);
-    expect(result).toEqual({ ok: true, resumes: 1, fits: 1 });
+    expect(result).toEqual({ ok: true, resumes: 1, fits: 1, jobs: 1 });
     expect(await snapshot(target)).toEqual(await snapshot(source));
   });
 
@@ -116,11 +125,12 @@ describe("export and import", () => {
     const text = serializeBackup(await exportBackup(freshDb(), NOW));
     expect(JSON.parse(text)).toMatchObject({
       format: "slayply-backup",
-      version: 1,
+      version: 2,
       profile: null,
       answers: null,
       resumes: [],
       fits: [],
+      jobs: [],
     });
     expect((await importBackup(freshDb(), text)).ok).toBe(true);
   });
@@ -150,6 +160,12 @@ describe("export and import", () => {
     const db = freshDb();
     await (await db).put("profile", { broken: true }, "current");
     await expect(exportBackup(db, NOW)).rejects.toThrow(/profile/i);
+  });
+
+  it("refuses to export a saved job that no longer matches the schema", async () => {
+    const db = freshDb();
+    await (await db).put("jobs", { id: "bad", status: 7 });
+    await expect(exportBackup(db, NOW)).rejects.toThrow(/job/i);
   });
 
   it("skips a fit result that no longer matches the schema (it is only a cache)", async () => {
@@ -190,7 +206,31 @@ describe("hostile and malformed imports", () => {
 
   it("rejects a newer or unknown version", async () => {
     const parsed = JSON.parse(await validText());
-    await expectRejected(JSON.stringify({ ...parsed, version: 2 }));
+    await expectRejected(JSON.stringify({ ...parsed, version: 3 }));
+  });
+
+  it("still reads a version 1 file, which has no jobs, and clears stored jobs", async () => {
+    const { jobs: _jobs, ...v1 } = JSON.parse(await validText());
+    const target = freshDb();
+    await fill(target);
+    const result = await importBackup(target, JSON.stringify({ ...v1, version: 1 }));
+    expect(result).toEqual({ ok: true, resumes: 1, fits: 1, jobs: 0 });
+    expect(await createJobStore(target).list()).toEqual([]);
+  });
+
+  it("rejects a version 1 file that carries jobs, and a version 2 file without them", async () => {
+    const parsed = JSON.parse(await validText());
+    await expectRejected(JSON.stringify({ ...parsed, version: 1 }));
+    const { jobs: _jobs, ...noJobs } = parsed;
+    await expectRejected(JSON.stringify(noJobs));
+  });
+
+  it("rejects an invalid job, a repeated job id and too many jobs", async () => {
+    const parsed = JSON.parse(await validText());
+    await expectRejected(JSON.stringify({ ...parsed, jobs: [{ ...parsed.jobs[0], status: "x" }] }));
+    await expectRejected(JSON.stringify({ ...parsed, jobs: [parsed.jobs[0], parsed.jobs[0]] }));
+    const many = Array.from({ length: 501 }, (_, i) => ({ ...parsed.jobs[0], id: `j${i}` }));
+    await expectRejected(JSON.stringify({ ...parsed, jobs: many }));
   });
 
   it("rejects an invalid resume and keeps the existing data untouched", async () => {

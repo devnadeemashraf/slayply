@@ -18,6 +18,7 @@ import { createAnswersStore } from "../../lib/answers-store.js";
 import type { JobFields } from "../../lib/capture-fields.js";
 import { RELAY_URL } from "../../lib/config.js";
 import { createFitStore } from "../../lib/fit-store.js";
+import { createJobStore } from "../../lib/job-store.js";
 import type { Incoming } from "../../lib/incoming.js";
 import { SERIOUS } from "../../lib/copy-text.js";
 import { showYouEmpty, TABS, type TabId } from "../../lib/panel-nav.js";
@@ -82,6 +83,8 @@ export function App() {
   const answersStore = useMemo(() => createAnswersStore(db), [db]);
   const resumeStore = useMemo(() => createResumeStore(db), [db]);
   const fitStore = useMemo(() => createFitStore(db), [db]);
+  const jobStore = useMemo(() => createJobStore(db), [db]);
+  const [jobsVersion, setJobsVersion] = useState(0);
   const [resumes, setResumes] = useState<StoredResume[]>([]);
   const [resumesLoaded, setResumesLoaded] = useState(false);
   const [resumesError, setResumesError] = useState<string | null>(null);
@@ -243,13 +246,15 @@ export function App() {
                 profile={profile}
                 resumes={resumes}
                 fitStore={fitStore}
+                jobStore={jobStore}
+                onJobSaved={() => setJobsVersion((version) => version + 1)}
                 incoming={incoming}
                 job={job}
               />
             )}
           </TabPanel>
           <TabPanel id="jobs" active={tab === "jobs"}>
-            <JobsTab />
+            <JobsTab store={jobStore} refresh={jobsVersion} />
           </TabPanel>
           <TabPanel id="you" active={tab === "you"}>
             {profileProblem}

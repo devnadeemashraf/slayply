@@ -2,6 +2,8 @@ import {
   type ContextAnswers,
   type FitCacheEntry,
   fitCacheEntrySchema,
+  type JobRecord,
+  jobRecordSchema,
   parseContextAnswers,
   parseStoredProfile,
   type StoredProfile,
@@ -10,9 +12,11 @@ import {
 } from "@slayply/core";
 import type { IDBPDatabase } from "idb";
 import { FIT_CACHE_LIMIT } from "./fit-store.js";
+import { JOB_LIMIT } from "./job-store.js";
 import {
   ANSWERS_STORE,
   FITS_STORE,
+  JOBS_STORE,
   PROFILE_STORE,
   RECORD_KEY,
   RESUMES_STORE,
@@ -22,7 +26,8 @@ import type { SettingsStore } from "./settings.js";
 import { REMEMBERED_RESUME_KEY } from "./storage-keys.js";
 
 export const BACKUP_FORMAT = "slayply-backup";
-export const BACKUP_VERSION = 1;
+/** Version 2 added `jobs`; version 1 files (no `jobs` key) are still read. */
+export const BACKUP_VERSION = 2;
 /** Characters, not bytes: a file this long is refused before it is parsed. */
 export const BACKUP_MAX_CHARS = 25_000_000;
 export const BACKUP_MAX_RESUMES = 200;
@@ -35,10 +40,11 @@ export type Backup = {
   answers: ContextAnswers | null;
   resumes: StoredResume[];
   fits: FitCacheEntry[];
+  jobs: JobRecord[];
 };
 
 export type ImportResult =
-  | { ok: true; resumes: number; fits: number }
+  | { ok: true; resumes: number; fits: number; jobs: number }
   | { ok: false; message: string };
 
 type Envelope = {
@@ -47,9 +53,11 @@ type Envelope = {
   answers: unknown;
   resumes: unknown[];
   fits: unknown[];
+  jobs: unknown[];
 };
 
-const ENVELOPE_KEYS = ["format", "version", "exportedAt", "profile", "answers", "resumes", "fits"];
+const V1_KEYS = ["format", "version", "exportedAt", "profile", "answers", "resumes", "fits"];
+const V2_KEYS = [...V1_KEYS, "jobs"];
 
 // Each part is validated again by its own parser below; the envelope only fixes the shape and caps.
 // Unknown keys are refused, which also rejects a hostile `__proto__` entry.
@@ -57,15 +65,18 @@ function readEnvelope(json: unknown): Envelope | null {
   if (typeof json !== "object" || json === null || Array.isArray(json)) return null;
   const record = json as Record<string, unknown>;
   const keys = Object.keys(record);
-  if (keys.length !== ENVELOPE_KEYS.length || !ENVELOPE_KEYS.every((key) => keys.includes(key))) {
+  const { format, version, exportedAt, profile, answers, resumes, fits } = record;
+  if (format !== BACKUP_FORMAT || (version !== 1 && version !== BACKUP_VERSION)) return null;
+  const expected = version === 1 ? V1_KEYS : V2_KEYS;
+  if (keys.length !== expected.length || !expected.every((key) => keys.includes(key))) {
     return null;
   }
-  const { format, version, exportedAt, profile, answers, resumes, fits } = record;
-  if (format !== BACKUP_FORMAT || version !== BACKUP_VERSION) return null;
+  const jobs = version === 1 ? [] : record.jobs;
   if (typeof exportedAt !== "string" || Number.isNaN(Date.parse(exportedAt))) return null;
   if (!Array.isArray(resumes) || resumes.length > BACKUP_MAX_RESUMES) return null;
   if (!Array.isArray(fits) || fits.length > FIT_CACHE_LIMIT) return null;
-  return { exportedAt, profile, answers, resumes, fits };
+  if (!Array.isArray(jobs) || jobs.length > JOB_LIMIT) return null;
+  return { exportedAt, profile, answers, resumes, fits, jobs };
 }
 
 /**
@@ -81,11 +92,12 @@ export async function exportBackup(
 ): Promise<Backup> {
   const db = await dbPromise;
   const tx = db.transaction([...STORE_NAMES], "readonly");
-  const [profileRaw, answersRaw, resumesRaw, fitsRaw] = await Promise.all([
+  const [profileRaw, answersRaw, resumesRaw, fitsRaw, jobsRaw] = await Promise.all([
     tx.objectStore(PROFILE_STORE).get(RECORD_KEY) as Promise<unknown>,
     tx.objectStore(ANSWERS_STORE).get(RECORD_KEY) as Promise<unknown>,
     tx.objectStore(RESUMES_STORE).getAll() as Promise<unknown[]>,
     tx.objectStore(FITS_STORE).getAll() as Promise<unknown[]>,
+    tx.objectStore(JOBS_STORE).getAll() as Promise<unknown[]>,
   ]);
   await tx.done;
 
@@ -112,6 +124,13 @@ export async function exportBackup(
     }
     return parsed.data;
   });
+  const jobs = jobsRaw.map((record) => {
+    const parsed = jobRecordSchema.safeParse(record);
+    if (!parsed.success) {
+      throw new Error("A saved job could not be read, so nothing was exported.");
+    }
+    return parsed.data;
+  });
   const fits = fitsRaw.flatMap((record) => {
     const parsed = fitCacheEntrySchema.safeParse(record);
     return parsed.success ? [parsed.data] : [];
@@ -125,6 +144,7 @@ export async function exportBackup(
     answers,
     resumes,
     fits,
+    jobs,
   };
 }
 
@@ -179,7 +199,18 @@ function parseBackup(text: string): Parsed {
       return fail("A job result in that file is not valid; nothing was imported.");
     fits.push(parsed.data);
   }
-  if (hasDuplicates(resumes.map((r) => r.id)) || hasDuplicates(fits.map((f) => f.key))) {
+  const jobs: JobRecord[] = [];
+  for (const record of envelope.jobs) {
+    const parsed = jobRecordSchema.safeParse(record);
+    if (!parsed.success)
+      return fail("A saved job in that file is not valid; nothing was imported.");
+    jobs.push(parsed.data);
+  }
+  if (
+    hasDuplicates(resumes.map((r) => r.id)) ||
+    hasDuplicates(fits.map((f) => f.key)) ||
+    hasDuplicates(jobs.map((j) => j.id))
+  ) {
     return fail("That file repeats an entry; nothing was imported.");
   }
 
@@ -193,6 +224,7 @@ function parseBackup(text: string): Parsed {
       answers,
       resumes,
       fits,
+      jobs,
     },
   };
 }
@@ -219,6 +251,7 @@ export async function importBackup(
     if (backup.answers) await tx.objectStore(ANSWERS_STORE).put(backup.answers, RECORD_KEY);
     for (const resume of backup.resumes) await tx.objectStore(RESUMES_STORE).put(resume);
     for (const fit of backup.fits) await tx.objectStore(FITS_STORE).put(fit);
+    for (const job of backup.jobs) await tx.objectStore(JOBS_STORE).put(job);
     await tx.done;
   } catch {
     try {
@@ -229,7 +262,12 @@ export async function importBackup(
     await finished;
     return { ok: false, message: "The backup could not be written; nothing was changed." };
   }
-  return { ok: true, resumes: backup.resumes.length, fits: backup.fits.length };
+  return {
+    ok: true,
+    resumes: backup.resumes.length,
+    fits: backup.fits.length,
+    jobs: backup.jobs.length,
+  };
 }
 
 /**

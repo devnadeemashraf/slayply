@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PLAYFUL } from "../lib/copy-text.js";
 import { showYouEmpty } from "../lib/panel-nav.js";
 import { JobEmpty, YouEmpty } from "./empty-states.js";
-import { JobsTab } from "./jobs-tab.js";
+import { JobsView } from "./jobs-view.js";
 
 describe("empty states use the shared copy", () => {
   it("Job", () => {
@@ -13,7 +13,9 @@ describe("empty states use the shared copy", () => {
   });
 
   it("Jobs", () => {
-    const html = renderToString(<JobsTab />);
+    const html = renderToString(
+      <JobsView jobs={[]} error={null} onStatus={() => {}} onRemove={() => {}} />,
+    );
     expect(html).toContain(PLAYFUL.jobsEmptyTitle);
     expect(html).toContain(PLAYFUL.jobsEmptyBody);
   });

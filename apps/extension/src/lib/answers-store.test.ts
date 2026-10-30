@@ -58,6 +58,7 @@ describe("database upgrade from version 1", () => {
     expect([...(await db).objectStoreNames].sort()).toEqual([
       "answers",
       "fits",
+      "jobs",
       "profile",
       "resumes",
     ]);

@@ -1,11 +1,12 @@
 import { parseStoredProfile, type StoredProfile } from "@slayply/core";
 import { type IDBPDatabase, openDB } from "idb";
 
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 const STORE = "profile";
 export const ANSWERS_STORE = "answers";
 export const RESUMES_STORE = "resumes";
 export const FITS_STORE = "fits";
+export const JOBS_STORE = "jobs";
 const KEY = "current";
 
 /** The stored record exists but does not match the schema. Loading stops so nothing overwrites it. */
@@ -28,7 +29,7 @@ export class StaleProfileError extends Error {
 
 /**
  * Opens the extension database. Each version adds stores and never touches existing records:
- * version 1 has `profile`, version 2 adds `answers`, version 3 adds `resumes`, version 4 adds `fits`. Later items add more.
+ * version 1 has `profile`, version 2 adds `answers`, version 3 adds `resumes`, version 4 adds `fits`, version 5 adds `jobs`. Later items add more.
  */
 export function openProfileDb(name = "slayply"): Promise<IDBPDatabase> {
   return openDB(name, DB_VERSION, {
@@ -37,6 +38,7 @@ export function openProfileDb(name = "slayply"): Promise<IDBPDatabase> {
       if (oldVersion < 2) db.createObjectStore(ANSWERS_STORE);
       if (oldVersion < 3) db.createObjectStore(RESUMES_STORE, { keyPath: "id" });
       if (oldVersion < 4) db.createObjectStore(FITS_STORE, { keyPath: "key" });
+      if (oldVersion < 5) db.createObjectStore(JOBS_STORE, { keyPath: "id" });
     },
   });
 }
@@ -57,7 +59,7 @@ export function assertProfileWritable(existing: unknown, incoming: StoredProfile
 export { KEY as RECORD_KEY, STORE as PROFILE_STORE };
 
 /** Every object store in the database. Export, import and wipe all walk this list. */
-export const STORE_NAMES = [STORE, ANSWERS_STORE, RESUMES_STORE, FITS_STORE] as const;
+export const STORE_NAMES = [STORE, ANSWERS_STORE, RESUMES_STORE, FITS_STORE, JOBS_STORE] as const;
 
 /** The whole profile is one record, so a save is atomic: it is either fully replaced or not at all. */
 export function createProfileStore(dbPromise: Promise<IDBPDatabase>) {

@@ -3,6 +3,7 @@ export * from "./context-answers.js";
 export * from "./context-compile.js";
 export * from "./context-pack.js";
 export * from "./fit-check.js";
+export * from "./job-record.js";
 export * from "./limits.js";
 export * from "./prompt.js";
 export * from "./questionnaire.js";

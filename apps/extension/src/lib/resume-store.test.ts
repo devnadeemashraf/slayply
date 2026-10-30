@@ -68,7 +68,13 @@ describe("resume store (IndexedDB)", () => {
     const saved = await createResumeStore(openProfileDb(name)).add(NEW);
     const db = await openProfileDb(name);
     expect(await createResumeStore(Promise.resolve(db)).list()).toEqual([saved]);
-    expect([...db.objectStoreNames].sort()).toEqual(["answers", "fits", "profile", "resumes"]);
+    expect([...db.objectStoreNames].sort()).toEqual([
+      "answers",
+      "fits",
+      "jobs",
+      "profile",
+      "resumes",
+    ]);
   });
 
   it("stops on an unreadable record instead of hiding or overwriting it", async () => {
