@@ -333,7 +333,7 @@
 #### `HIST-02`: Reuse a Past Answer
 - **Spec Section:** §4 Feature 7 `[SHOULD]`
 - **Size:** S
-- **Status:** Planned
+- **Status:** In review (PR pending). Offered as a "Copy this answer" button under the question, not inserted into the answer text.
 - **Acceptance Criteria:** When a question resembles one answered for an earlier job, offer that answer as editable text beside the question; nothing is sent to the provider for the lookup.
 - 🧪 **Manual Test:** Save a job with an answer, capture another job with a similar question: the earlier answer is offered.
 

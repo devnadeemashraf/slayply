@@ -60,3 +60,32 @@ describe("QuestionList", () => {
     expect(html).toContain("Remove question 1");
   });
 });
+
+describe("QuestionList: past answers", () => {
+  const past = {
+    q1: [
+      {
+        jobId: "a",
+        company: "Acme",
+        title: "BE",
+        question: "Why us?",
+        text: "Because <b>x</b>.",
+        score: 1,
+      },
+    ],
+  };
+
+  it("offers earlier answers under the matching question, as plain text", () => {
+    const html = renderToString(
+      <QuestionList {...base} pastFor={(id) => past[id as "q1"] ?? []} onUsePast={noop} />,
+    );
+    expect(html).toContain("Earlier answer (1)");
+    expect(html).toContain("Acme");
+    expect(html).toContain("Because &lt;b&gt;x&lt;/b&gt;.");
+    expect(html.match(/Earlier answer/g)).toHaveLength(1);
+  });
+
+  it("shows nothing when there are no past answers", () => {
+    expect(renderToString(<QuestionList {...base} />)).not.toContain("Earlier answer");
+  });
+});
