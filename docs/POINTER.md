@@ -4,6 +4,7 @@
 - Phase 0: Bootstrap completed.
 - Git repository active with branch PR workflow; monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- Live (2026-10-31): site `https://slayply-site.onrender.com`, relay `https://slayply-relay.onrender.com` (`/health` and site return 200). README states plainly that no real provider key has ever been used; v1.0.0 is not tagged. `TRUST_PROXY_HOPS` two-network test and the end-to-end checklist in `docs/DEPLOYMENT.md` are not recorded as done.
 - `REL-01`: icons, version 1.0.0, `docs/DEPLOYMENT.md` (the go-live handbook), `docs/STORE_LISTING.md`, `docs/RELEASE_NOTES_v1.0.0.md`, a permissions test, release-build guard (`relay-url.ts`), relay needs `TRUST_PROXY_HOPS` in production. Open `BP-007` relay: a client that stops reading can hold a socket past the stream deadline; `BP-008` rate-limit key should be the IPv6 /64; `BP-009` prompt-tag sanitizer misses invisible format characters (strip `p{Cf}`). Nothing deployed or tagged yet.
 - `SITE-01`: `apps/site` static landing and privacy pages (`build.mjs` copies `src` to `dist`), root `render.yaml` for the relay and site, `pnpm run smoke:site` in the CI `extension-smoke` job. Never deployed: Render hop count, build command and free-tier behaviour are unverified; `WXT_RELAY_URL` for a release build still needs the deployed relay address.
 - `QA-01`: `pnpm run budget` fails over 3.5 MB (tested with an over-budget fixture), `pnpm run smoke` loads the built extension in Chromium via `playwright-core`, checks the privacy gate and records the panel JS heap (a lower bound of the 60 MB budget, not whole-process memory); a relay test measures first delta against a stub. Both run in a new CI job `extension-smoke`, not in `pnpm run check`; the Linux job is unverified until it runs.
@@ -71,10 +72,9 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
+- PR (pending) | `BP-readme` | README: honest status, live URLs, build-it-yourself install, roadmap table brought up to date | Manual test: No
 - PR (pending) | `REL-01` | Release prep: icons, 1.0.0, deployment handbook, store listing, release notes, red-team fixes | Manual test: Yes
 - PR #50 | `SITE-01` | Landing and privacy pages, Render blueprint | Manual test: Yes
 - PR (pending) | `QA-01` | `bundle-budget.mjs`, `smoke-extension.mjs`, relay first-token test, `extension-smoke` CI job | Manual test: Yes
 - PR #48 | `HIST-02` | `findPastAnswers`, "Earlier answer" block in the question list, saved jobs loaded in the generate panel | Manual test: Yes
 - PR (pending) | `GEN-02` | Draft kinds, tone/length, Shorter/Longer, draft limit in prompt, `fitToLimit` + Fit button | Manual test: Yes
-- PR (pending) | `HIST-01` | Job log: `jobRecordSchema`, `job-store.ts`, `job-draft.ts`, Jobs tab + Save job, IndexedDB v5, backup v2 | Manual test: Yes
-- PR (pending) | `BP-flaky-pdf` | 30 s timeout on the first pdfjs test in `pdf-extract.test.ts` (cold import is slow under load); assertions unchanged | Manual test: No

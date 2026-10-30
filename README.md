@@ -8,16 +8,39 @@ A personal Chrome side panel that turns a job description and its application qu
 
 [![CI](https://github.com/devnadeemashraf/slayply/actions/workflows/ci.yml/badge.svg)](https://github.com/devnadeemashraf/slayply/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status](https://img.shields.io/badge/status-pre--release-orange)
+![Status](https://img.shields.io/badge/status-needs%20real--key%20testers-orange)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4)
 ![Telemetry](https://img.shields.io/badge/telemetry-none-brightgreen)
 
-[How it works](#how-it-works) · [Principles](#principles) · [Privacy](#privacy) · [Roadmap](#roadmap) · [Development](#development)
+[Honest status](#honest-status) · [Try it](#try-it) · [How it works](#how-it-works) · [Principles](#principles) · [Privacy](#privacy) · [Development](#development)
 
 </div>
 
-> [!NOTE]
-> Slayply is **pre-release**. The shared contract (`@slayply/core`) is built; the relay, side panel and provider adapters are in progress. Nothing here is installable yet. See the [roadmap](#roadmap) for where things stand.
+## Honest status
+
+Everything on the roadmap is built, and a relay and landing site are live. What is **not** done is the one thing that matters most: **nobody has run it with a real, paid-for API key.**
+
+Free LLM credits turned out to be a myth, and the companies that sell tokens by the gram have not been moved by this project's plight. So every test so far uses fake credentials and stubbed providers. The capture, profile, claim-checking, saving and copy flow is covered by an automated suite and a Chromium smoke test, and the relay streams correctly against a stand-in model. The part that has never met a real provider is the last mile:
+
+- Claude, OpenAI and Gemini replies, model lists and reasoning-effort settings were written from the vendors' documentation, not from live responses. OpenAI and Gemini are the least certain.
+- The panel's look, the three style presets, and capture on real Workday, Oracle and Lever pages have only been checked by hand on a few pages.
+
+So please do not call this production-ready. Call it **a finished build that needs a brave tester**. If you have credits and ten spare minutes, running one real generation and [opening an issue](https://github.com/devnadeemashraf/slayply/issues/new) with what broke (or "it worked!") would be a huge help, and you will have this author's sincere and slightly desperate gratitude. Never paste your API key into an issue.
+
+## Try it
+
+- **Site and privacy page:** https://slayply-site.onrender.com
+- **Relay:** https://slayply-relay.onrender.com (the free tier sleeps, so the first request after a pause can take up to a minute; the panel says "waking the relay" while it waits)
+- **Install:** not on the Chrome Web Store. Build it yourself:
+
+  ```bash
+  pnpm install
+  WXT_RELAY_URL=https://slayply-relay.onrender.com pnpm --filter @slayply/extension build
+  ```
+
+  Then open `chrome://extensions`, turn on Developer mode, choose **Load unpacked** and pick `apps/extension/.output/chrome-mv3`.
+- **One catch:** the relay only accepts extension IDs its operator has listed, and an unpacked build's ID depends on its folder path. Until a store version exists, run your own relay (`render.yaml` and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)) or a local one with `pnpm --filter @slayply/relay dev` (localhost is always allowed). You can also open an issue asking for your extension's ID to be added.
+- Direct Mode (Claude only) skips the relay and calls Anthropic from your browser.
 
 ---
 
@@ -76,10 +99,10 @@ flowchart LR
 
 | Package | Purpose |
 | :-- | :-- |
-| `apps/extension` | Chrome side panel, Manifest V3 (WXT, React, Tailwind) |
+| `apps/extension` | Chrome side panel, Manifest V3 (WXT, React) |
 | `apps/relay` | Stateless Hono server that forwards LLM calls and streams the reply |
 | `apps/site` | Static landing and privacy pages |
-| `packages/core` | Zod schemas, validators, and later the prompt builder and claim checker |
+| `packages/core` | Zod schemas, validators, prompt builder and claim checker |
 | `packages/providers` | One adapter per LLM behind a single interface |
 | `packages/ui` | Shared components and themes |
 
@@ -90,9 +113,9 @@ flowchart LR
 | 0 | Bootstrap: monorepo, checks, hooks, CI | Done |
 | 1 | Shared contract, relay, side panel shell, first generation loop | Done |
 | 2 | Profile, resume parsing, fit check, claim checker, settings and backup | Done |
-| 3 | OpenAI and Gemini, effort controls, direct mode | In progress (adapters done, Direct Mode in review) |
-| 4 | Capture, job history, cover letters and messages | Planned |
-| 5 | Themes, site, security review, v1.0 | Planned |
+| 3 | OpenAI and Gemini, effort controls, direct mode | Built, never run with real keys |
+| 4 | Capture, job history, cover letters and messages | Done |
+| 5 | Themes, site, security review, release prep | Done; v1.0.0 not tagged until real-key testing |
 
 Item-level detail lives in [`docs/ROADMAP.md`](docs/ROADMAP.md); the product definition is [`docs/SPEC.md`](docs/SPEC.md).
 
