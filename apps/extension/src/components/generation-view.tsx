@@ -8,6 +8,7 @@ import {
 import { Button, Card, StickerBadge } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import type { CopyState } from "../lib/copy.js";
+import { fitToLimit } from "../lib/char-limit.js";
 import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
@@ -62,6 +63,29 @@ function whyUncited(sentence: CheckedSentence): string {
   return "no matching citation";
 }
 
+/** Offers to drop trailing sentences until the text fits, or says why it cannot. */
+function FitControl({
+  text,
+  max,
+  onFit,
+}: {
+  text: string;
+  max: number;
+  onFit: (text: string) => void;
+}) {
+  const fitted = fitToLimit(text, max);
+  if (!fitted) {
+    return (
+      <p className="muted">Too long to trim by whole sentences. Shorten it or write it again.</p>
+    );
+  }
+  return (
+    <Button variant="secondary" onClick={() => onFit(fitted.text)}>
+      {`Fit to ${max.toLocaleString("en-US")} characters`}
+    </Button>
+  );
+}
+
 /** One answer with uncited first-person sentences marked and removable. Plain text children only. */
 function CheckedAnswer({
   output,
@@ -69,18 +93,21 @@ function CheckedAnswer({
   max,
   state,
   onEdit,
+  onFit,
 }: {
   output: OutputAnswer;
   text: string;
   max?: number;
   state: Extract<GenerationState, { phase: "done" }>;
   onEdit: (outputId: string, text: string) => void;
+  onFit?: (outputId: string, text: string) => void;
 }) {
   const checked = useMemo(
     () => checkClaims(text, output.claims, state.profile),
     [text, output.claims, state.profile],
   );
   const summary = claimSummary(checked);
+  const over = max !== undefined && max > 0 && text.length > max;
 
   // A removed sentence fades out before it goes, unless the user has asked for no motion.
   const [leaving, setLeaving] = useState<number | null>(null);
@@ -134,6 +161,9 @@ function CheckedAnswer({
     <>
       <p className="answer">{parts}</p>
       <CharRing length={text.length} max={max} />
+      {over && onFit && (
+        <FitControl text={text} max={max as number} onFit={(fitted) => onFit(output.id, fitted)} />
+      )}
       {summary && <p className="muted">{summary}</p>}
       {sources.size > 0 && (
         <div className="receipts">
@@ -158,6 +188,7 @@ export function GenerationView({
   onCopy,
   edits,
   onEdit,
+  onFit,
   limits,
 }: {
   state: GenerationState;
@@ -168,6 +199,8 @@ export function GenerationView({
   /** Answer text after the user removed sentences, by output ID. */
   edits: Readonly<Record<string, string>>;
   onEdit: (outputId: string, text: string) => void;
+  /** Replaces an answer with its trimmed text; the fit button shows only when this is given. */
+  onFit?: (outputId: string, text: string) => void;
 }) {
   if (state.phase === "idle") return null;
 
@@ -204,6 +237,7 @@ export function GenerationView({
                 max={limits?.[output.id]}
                 state={state}
                 onEdit={onEdit}
+                onFit={onFit}
               />
             </Card>
           ))}

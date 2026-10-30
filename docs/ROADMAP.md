@@ -340,7 +340,7 @@
 #### `GEN-02`: Cover Letter & Cold Messages
 - **Spec Section:** §4 Feature 5 `[MUST]`
 - **Size:** S (1 session)
-- **Status:** Planned
+- **Status:** In review (PR pending). Prompts for the three drafts already existed in core; this adds the picker, tone/length, Shorter/Longer, a draft character limit and a sentence-wise fitter. The relocation note is an `answers` task with one fixed question (the contract has no relocation task).
 - **Acceptance Criteria:**
   - Specialized prompts for cover letters, recruiter messages, and cold emails.
   - Tone options: crisp, warm, bold; regenerate a single answer; shorten or lengthen.
