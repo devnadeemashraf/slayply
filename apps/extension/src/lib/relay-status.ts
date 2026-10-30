@@ -1,3 +1,5 @@
+import { PLAYFUL, SERIOUS } from "./copy-text.js";
+
 /** After this long without a healthy probe the panel offers Direct Mode (SPEC §5). */
 export const DIRECT_MODE_AFTER_MS = 60_000;
 
@@ -19,22 +21,23 @@ export function describeRelayStatus(input: {
   outcome: ProbeOutcome;
 }): RelayStatus {
   const { elapsedMs, outcome } = input;
-  if (outcome === "ok") return { phase: "awake", label: "Connected", offerDirectMode: false };
+  if (outcome === "ok")
+    return { phase: "awake", label: SERIOUS.relayConnected, offerDirectMode: false };
   if (elapsedMs >= DIRECT_MODE_AFTER_MS) {
     return {
       phase: "unreachable",
-      label: "Relay not responding. You can switch to Direct Mode.",
+      label: SERIOUS.relayNotResponding,
       offerDirectMode: true,
     };
   }
   if (outcome === "failed" || elapsedMs >= WARMING_AFTER_MS) {
     return {
       phase: "warming",
-      label: "Waking the relay… cooking your answer ☕",
+      label: PLAYFUL.relayWarming,
       offerDirectMode: false,
     };
   }
-  return { phase: "checking", label: "Checking relay…", offerDirectMode: false };
+  return { phase: "checking", label: SERIOUS.relayChecking, offerDirectMode: false };
 }
 
 export type MonitorOptions = {
