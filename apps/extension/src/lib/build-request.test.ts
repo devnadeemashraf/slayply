@@ -7,10 +7,12 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   buildAnswerRequest,
+  buildDraftRequest,
   buildFitRequest,
   describeProfileUse,
   NO_PROFILE_NOTICE,
 } from "./build-request.js";
+import { RELOCATION_QUESTION } from "./draft-kinds.js";
 
 describe("provider choice in requests", () => {
   const choice = { provider: "openai", model: "gpt-5.1", effort: "low" } as const;
@@ -260,5 +262,56 @@ describe("buildFitRequest", () => {
     const long = buildFitRequest({ jd: "x".repeat(60_001) });
     expect(long).toMatchObject({ ok: false });
     if (!long.ok) expect(long.message).toMatch(/job description/i);
+  });
+});
+
+describe("style and drafts", () => {
+  it("sends the chosen tone and length with answers, defaulting to crisp / medium", () => {
+    const styled = buildAnswerRequest({
+      jd: "JD",
+      question: "Q",
+      style: { tone: "bold", length: "long" },
+    });
+    const plain = buildAnswerRequest({ jd: "JD", question: "Q" });
+    if (!styled.ok || !plain.ok) throw new Error("expected ok");
+    expect(styled.request.style).toEqual({ tone: "bold", length: "long" });
+    expect(plain.request.style).toEqual({ tone: "crisp", length: "medium" });
+  });
+
+  it("builds a cover letter request with no questions when there is no limit", () => {
+    const built = buildDraftRequest({ kind: "cover_letter", jd: "JD" });
+    if (!built.ok) throw new Error("expected ok");
+    expect(built.request.task).toBe("cover_letter");
+    expect(built.request.questions).toBeUndefined();
+  });
+
+  it("carries a limit as a question named after the task, so the prompt can state it", () => {
+    const built = buildDraftRequest({ kind: "message", jd: "JD", maxChars: 300 });
+    if (!built.ok) throw new Error("expected ok");
+    expect(built.request.questions).toEqual([
+      { id: "message", text: expect.any(String), maxChars: 300 },
+    ]);
+  });
+
+  it("builds a relocation note as one answers task with a fixed question", () => {
+    const built = buildDraftRequest({ kind: "relocation", jd: "JD", maxChars: 500 });
+    if (!built.ok) throw new Error("expected ok");
+    expect(built.request.task).toBe("answers");
+    expect(built.request.questions).toEqual([
+      { id: "relocation", text: RELOCATION_QUESTION, maxChars: 500 },
+    ]);
+  });
+
+  it("ignores a limit that is not a positive whole number", () => {
+    for (const maxChars of [0, -5, 1.5, Number.NaN, 100_000]) {
+      const built = buildDraftRequest({ kind: "email", jd: "JD", maxChars });
+      if (!built.ok) throw new Error("expected ok");
+      expect(built.request.questions).toBeUndefined();
+    }
+  });
+
+  it("asks for a job description when it is empty", () => {
+    const built = buildDraftRequest({ kind: "email", jd: "  " });
+    expect(built.ok).toBe(false);
   });
 });

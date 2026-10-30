@@ -4,9 +4,12 @@ import {
   LIMITS,
   type StoredProfile,
   type StoredResume,
+  type Style,
+  type TaskKind,
   toProfile,
   validateGenerateRequest,
 } from "@slayply/core";
+import { DRAFT_QUESTION, type DraftKindId, RELOCATION_QUESTION } from "./draft-kinds.js";
 
 /** Shown next to the Slay button when there is no profile to ground the answer in. */
 export const NO_PROFILE_NOTICE =
@@ -53,6 +56,7 @@ export type ProviderChoice = {
 export type JobDetails = { title: string; company: string; location: string; salary?: string };
 
 type BuildInput = {
+  style?: Style;
   choice?: ProviderChoice;
   job?: JobDetails;
   jd: string;
@@ -62,7 +66,7 @@ type BuildInput = {
 
 function buildRequest(
   input: BuildInput,
-  task: "answers" | "fit_check",
+  task: TaskKind,
   questions?: { id: string; text: string; maxChars?: number }[],
 ): GenerateRequest | { issues: { path: string }[] } {
   const result = validateGenerateRequest({
@@ -78,7 +82,7 @@ function buildRequest(
       ? { track: input.resume.track, region: input.resume.region, text: input.resume.text }
       : { track: "general", region: "any", text: NO_RESUME_TEXT },
     profile: input.profile ? toProfile(input.profile) : EMPTY_PROFILE,
-    style: { tone: "crisp", length: "medium" },
+    style: input.style ?? { tone: "crisp", length: "medium" },
     ...(input.choice
       ? {
           provider: input.choice.provider,
@@ -136,6 +140,37 @@ export function buildFitRequest(input: BuildInput): BuildResult {
     return explain(
       built.issues.map((issue) => issue.path),
       "The fit check request is not valid.",
+    );
+  }
+  return { ok: true, request: built };
+}
+
+/** A positive whole number within the contract's cap, else no limit is sent. */
+const usableLimit = (value: number | undefined): value is number =>
+  value !== undefined && Number.isInteger(value) && value > 0 && value <= LIMITS.questionMaxChars;
+
+/**
+ * A cover letter, message, cold email or relocation note. A limit travels as one question named
+ * after the task (a relocation note is an answers task with one fixed question).
+ */
+export function buildDraftRequest(
+  input: BuildInput & { kind: Exclude<DraftKindId, "answers">; maxChars?: number },
+): BuildResult {
+  const limit = usableLimit(input.maxChars) ? { maxChars: input.maxChars } : {};
+  const built =
+    input.kind === "relocation"
+      ? buildRequest(input, "answers", [{ id: "relocation", text: RELOCATION_QUESTION, ...limit }])
+      : buildRequest(
+          input,
+          input.kind,
+          usableLimit(input.maxChars)
+            ? [{ id: input.kind, text: DRAFT_QUESTION[input.kind], ...limit }]
+            : undefined,
+        );
+  if ("issues" in built) {
+    return explain(
+      built.issues.map((issue) => issue.path),
+      "The draft request is not valid.",
     );
   }
   return { ok: true, request: built };

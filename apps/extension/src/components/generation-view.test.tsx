@@ -152,3 +152,31 @@ describe("GenerationView", () => {
     expect(html).toContain("&lt;script&gt;");
   });
 });
+
+describe("GenerationView: fit to limit", () => {
+  const long = "First sentence here. Second sentence here. Third sentence here.";
+  const view = (limits: Record<string, number>) =>
+    renderToString(
+      <GenerationView
+        state={doneWith(long, [])}
+        copyState="idle"
+        onCopy={() => {}}
+        edits={{}}
+        onEdit={() => {}}
+        onFit={() => {}}
+        limits={limits}
+      />,
+    );
+
+  it("offers a fit button only for an answer over its limit", () => {
+    expect(view({ q1: 45 })).toContain("Fit to 45 characters");
+    expect(view({ q1: 500 })).not.toContain("Fit to");
+    expect(view({})).not.toContain("Fit to");
+  });
+
+  it("says so when no whole sentence fits instead of offering a button", () => {
+    const html = view({ q1: 5 });
+    expect(html).not.toContain("Fit to");
+    expect(html).toContain("Too long to trim by whole sentences");
+  });
+});

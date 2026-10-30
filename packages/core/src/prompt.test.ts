@@ -266,3 +266,32 @@ describe("buildPrompt: prompt-injection probes", () => {
     expect((content.match(/<\/slayply-profile>/gi) ?? []).length).toBe(1);
   });
 });
+
+describe("buildPrompt: draft character limit", () => {
+  const withLimit = (task: TaskKind, id: string, maxChars?: number) =>
+    buildPrompt(
+      request({
+        task,
+        questions: [{ id, text: "LinkedIn connection note", ...(maxChars ? { maxChars } : {}) }],
+      }),
+    ).messages[0].content;
+
+  it.each(["cover_letter", "message", "email"] as const)(
+    "states a hard limit in the task block for %s when its own question has maxChars",
+    (task) => {
+      const content = withLimit(task, task, 300);
+      const taskBlock = content.slice(0, content.indexOf("</slayply-task>"));
+      expect(taskBlock).toContain("at most 300 characters");
+    },
+  );
+
+  it("says the limit overrides the length guidance", () => {
+    expect(withLimit("message", "message", 300)).toContain("overrides the length");
+  });
+
+  it("adds no limit line without maxChars or when the question is not the task's own", () => {
+    expect(withLimit("message", "message")).not.toContain("at most");
+    const other = withLimit("message", "q1", 300);
+    expect(other.slice(0, other.indexOf("</slayply-task>"))).not.toContain("at most");
+  });
+});

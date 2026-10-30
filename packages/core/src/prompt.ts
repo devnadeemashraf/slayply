@@ -150,11 +150,21 @@ function renderProfile(profile: GenerateRequest["profile"]): string {
 /** Turns a validated request into the provider-neutral prompt for SPEC §7. */
 export function buildPrompt(request: GenerateRequest): Prompt {
   const { task, style } = request;
+  // A draft's limit rides on a question named after the task (the contract has no other field).
+  const draftLimit =
+    task === "cover_letter" || task === "message" || task === "email"
+      ? request.questions?.find((question) => question.id === task)?.maxChars
+      : undefined;
   const taskBlock = block(
     "task",
     [
       `task: ${task}`,
       TASK_GUIDANCE[task],
+      ...(draftLimit === undefined
+        ? []
+        : [
+            `limit: the text must be at most ${draftLimit} characters in total. This is a hard limit and overrides the length below.`,
+          ]),
       `tone: ${style.tone} (${TONE_GUIDANCE[style.tone]})`,
       `length: ${style.length} (${LENGTH_GUIDANCE[task][style.length]})`,
     ].join("\n"),

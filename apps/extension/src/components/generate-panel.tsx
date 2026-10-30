@@ -1,14 +1,23 @@
-import { type StoredProfile, type StoredResume, suggestResume } from "@slayply/core";
+import {
+  type Length,
+  LIMITS,
+  type StoredProfile,
+  type StoredResume,
+  suggestResume,
+  type Tone,
+} from "@slayply/core";
 import { Button } from "@slayply/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildAnswerRequest,
+  buildDraftRequest,
   buildFitRequest,
   describeProfileUse,
   type JobDetails,
   type ProviderChoice,
 } from "../lib/build-request.js";
 import { RELAY_URL } from "../lib/config.js";
+import { type DraftKindId, draftKind, shiftLength } from "../lib/draft-kinds.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import { createFitRunner } from "../lib/fit-flow.js";
 import { type FitStore, fitKey } from "../lib/fit-store.js";
@@ -20,6 +29,7 @@ import {
 import { applyIncoming, type Incoming } from "../lib/incoming.js";
 import { buildJobDraft } from "../lib/job-draft.js";
 import type { JobStore } from "../lib/job-store.js";
+import { DraftControls } from "./draft-controls.js";
 import { jobSteps, primaryAction } from "../lib/job-steps.js";
 import {
   addRow,
@@ -92,6 +102,12 @@ export function GeneratePanel({
   const runner = useMemo(() => createGenerationRunner(setState), []);
   const [fitState, setFitState] = useState<GenerationState>({ phase: "idle" });
   const [fitResult, setFitResult] = useState<FitResult | null>(null);
+  const [kind, setKind] = useState<DraftKindId>("answers");
+  const [tone, setTone] = useState<Tone>("crisp");
+  const [length, setLength] = useState<Length>("medium");
+  const [draftLimit, setDraftLimit] = useState("");
+  // What produced the current result, so Shorter / Longer never rerun a different kind.
+  const [resultKind, setResultKind] = useState<DraftKindId>("answers");
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const fitRunner = useMemo(
     () => createFitRunner({ store: fitStore, onState: setFitState, onResult: setFitResult }),
@@ -163,22 +179,34 @@ export function GeneratePanel({
   };
   const action = primaryAction({
     ...progress,
-    questionCount: rows.filter((row) => row.checked).length,
+    questionCount: kind === "answers" ? rows.filter((row) => row.checked).length : 1,
   });
   const limits: Record<string, number> = {};
+  const draftMax = Number(draftLimit.trim());
+  const limitOk = Number.isInteger(draftMax) && draftMax > 0 && draftMax <= LIMITS.questionMaxChars;
+  if (kind !== "answers" && limitOk) {
+    limits[draftKind(kind).task === "answers" ? kind : draftKind(kind).task] = draftMax;
+  }
   for (const row of rows) {
     if (typeof row.maxChars === "number" && row.maxChars > 0) limits[row.id] = row.maxChars;
   }
 
-  async function slay(onlyId?: string) {
-    const built = buildAnswerRequest({
-      jd,
-      questions: rowsToQuestions(rows, onlyId),
-      job,
-      profile,
-      resume,
-      choice: requestChoice,
-    });
+  async function slay(onlyId?: string, style = { tone, length }) {
+    if (kind !== "answers" && draftLimit.trim() !== "" && !limitOk) {
+      setFormError(
+        `The character limit must be a whole number from 1 to ${LIMITS.questionMaxChars.toLocaleString("en-US")}.`,
+      );
+      return;
+    }
+    const common = { jd, job, profile, resume, choice: requestChoice, style };
+    const built =
+      kind === "answers"
+        ? buildAnswerRequest({ ...common, questions: rowsToQuestions(rows, onlyId) })
+        : buildDraftRequest({
+            ...common,
+            kind,
+            ...(draftLimit.trim() === "" ? {} : { maxChars: draftMax }),
+          });
     if (!built.ok || directBlocked) {
       setFormError(built.ok ? DIRECT_BLOCKED : built.message);
       return;
@@ -186,6 +214,7 @@ export function GeneratePanel({
     setFormError(null);
     setCopyState("idle");
     setEdits({});
+    setResultKind(kind);
     await runner.start({
       baseUrl: RELAY_URL,
       apiKey,
@@ -193,6 +222,11 @@ export function GeneratePanel({
       request: built.request,
       fetchFn: (url, init) => fetch(url, init),
     });
+  }
+
+  function applyEdit(outputId: string, text: string) {
+    setEdits((current) => ({ ...current, [outputId]: text }));
+    setCopyState("idle");
   }
 
   async function saveJob() {
@@ -270,15 +304,35 @@ export function GeneratePanel({
             }}
           />
         </details>
-        <QuestionList
-          rows={rows}
-          running={running}
-          onChange={(id, patch) => changeRows((current) => updateRow(current, id, patch))}
-          onRemove={(id) => changeRows((current) => removeRow(current, id))}
-          onAdd={() => changeRows((current, floor) => addRow(current, "", floor))}
-          onGenerateOne={(id) => void slay(id)}
-          onGenerateAll={() => void slay()}
+        <DraftControls
+          kind={kind}
+          tone={tone}
+          length={length}
+          maxChars={draftLimit}
+          canResize={
+            state.phase === "done" && !running && resultKind === kind && kind !== "answers"
+          }
+          onKind={setKind}
+          onTone={setTone}
+          onLength={setLength}
+          onMaxChars={setDraftLimit}
+          onResize={(direction) => {
+            const next = shiftLength(length, direction);
+            setLength(next);
+            void slay(undefined, { tone, length: next });
+          }}
         />
+        {kind === "answers" && (
+          <QuestionList
+            rows={rows}
+            running={running}
+            onChange={(id, patch) => changeRows((current) => updateRow(current, id, patch))}
+            onRemove={(id) => changeRows((current) => removeRow(current, id))}
+            onAdd={() => changeRows((current, floor) => addRow(current, "", floor))}
+            onGenerateOne={(id) => void slay(id)}
+            onGenerateAll={() => void slay()}
+          />
+        )}
         {formError && (
           <p className="error" role="alert">
             {formError}
@@ -301,10 +355,8 @@ export function GeneratePanel({
         copyState={copyState}
         edits={edits}
         limits={limits}
-        onEdit={(outputId, text) => {
-          setEdits((current) => ({ ...current, [outputId]: text }));
-          setCopyState("idle");
-        }}
+        onEdit={applyEdit}
+        onFit={applyEdit}
         onCopy={() => {
           const text = copyTextOf(state, edits);
           if (text !== null) void feedback.copy(text);
