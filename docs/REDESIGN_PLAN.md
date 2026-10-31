@@ -21,7 +21,7 @@ Found by using the production build with a real Gemini key:
 
 - One purpose per screen; one primary button, always in the dock.
 - Details open in drawers or popovers; a screen should fit in about 720 px without scrolling for the common case.
-- Colour: light (white, `#0b5fff` accent), dark (greyish black `#17181b`, `#7fa8ff` accent). Status colours only for status (ok, warn, bad). Meaning never depends on colour alone.
+- Colour: light (white, `#0b5fff` accent), dark (greyish black `#222222`, `#7fa8ff` accent). Status colours only for status (ok, warn, bad). Meaning never depends on colour alone.
 - Motion is small (press, copy, popover, step change) and every motion has a reduced-motion rule and a test.
 - Plain copy everywhere except empty states.
 
