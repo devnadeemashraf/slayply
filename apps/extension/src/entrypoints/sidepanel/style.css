@@ -391,3 +391,17 @@ button.remove {
 ::view-transition-group(root) {
   animation-duration: var(--dur-fast);
 }
+
+.activity {
+  margin: var(--space-2) 0;
+}
+
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.activity-row [role="status"] {
+  flex: 1;
+}

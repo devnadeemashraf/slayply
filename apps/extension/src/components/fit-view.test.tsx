@@ -1,7 +1,7 @@
 import type { FitCheck } from "@slayply/core";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { PLAYFUL } from "../lib/copy-text.js";
+import { stageLabel } from "../lib/activity.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { type FitResult, FitView } from "./fit-view.js";
 
@@ -58,7 +58,14 @@ describe("FitView", () => {
   });
 
   it("shows a progress line while checking", () => {
-    expect(render({ phase: "streaming", attempt: 1, preview: "" })).toContain(PLAYFUL.fitLoading);
+    const html = render({
+      phase: "streaming",
+      attempt: 1,
+      preview: "",
+      stage: "waiting",
+      startedAt: 0,
+    });
+    expect(html).toContain(stageLabel("waiting", 1));
   });
 
   it("shows the chance, reason, gaps, deal-breakers and salary answer", () => {

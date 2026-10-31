@@ -466,7 +466,7 @@
 
 #### `REDO-03`: Activity Indicator
 - **Size:** M
-- **Status:** Planned
+- **Status:** In review (PR pending). Stages connecting, waiting, writing, checking; attempt 2 is named in the label; the relay sends `event: ping` every 10 s. `PLAYFUL.fitLoading`, `draftLoading` and the two `reformatting*` strings are gone (serious `stage*`, `secondAttempt`, `slowRun`, `cancel` replace them).
 - **Acceptance Criteria:** Every long task shows stage, time elapsed and Cancel from an explicit stage machine; relay keep-alive; slow-run note. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-04`: Model and Effort Chip

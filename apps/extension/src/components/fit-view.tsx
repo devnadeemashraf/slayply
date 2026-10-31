@@ -6,8 +6,8 @@ import {
 } from "@slayply/core";
 import { Button, Card, Badge, type BadgeTone } from "@slayply/ui";
 import { useMemo } from "react";
-import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
+import { ActivityIndicator } from "./activity-indicator.js";
 import { ErrorNotice } from "./error-notice.js";
 
 const CHANCE_TONE: Record<FitCheck["chance"], BadgeTone> = {
@@ -156,6 +156,7 @@ export function FitView({
   suggestion,
   onUseResume,
   onRerun,
+  onCancel,
   direct = false,
 }: {
   state: GenerationState;
@@ -163,14 +164,19 @@ export function FitView({
   suggestion: ResumeSuggestion | null;
   onUseResume: () => void;
   onRerun: () => void;
+  /** Stops the running check; the indicator shows Cancel only when this is given. */
+  onCancel?: () => void;
   /** Direct Mode: error advice about choosing another model does not apply. */
   direct?: boolean;
 }) {
   if (state.phase === "streaming") {
     return (
-      <p className="muted" aria-live="polite">
-        {state.attempt === 2 ? SERIOUS.reformattingFit : PLAYFUL.fitLoading}
-      </p>
+      <ActivityIndicator
+        stage={state.stage}
+        attempt={state.attempt}
+        startedAt={state.startedAt}
+        onCancel={onCancel}
+      />
     );
   }
   if (state.phase === "error") {

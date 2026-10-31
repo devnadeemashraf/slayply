@@ -1,8 +1,16 @@
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { PLAYFUL } from "../lib/copy-text.js";
+import { stageLabel } from "../lib/activity.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { GenerationView } from "./generation-view.js";
+
+const STREAMING = {
+  phase: "streaming",
+  attempt: 1,
+  preview: "",
+  stage: "waiting",
+  startedAt: 0,
+} as const satisfies GenerationState;
 
 function render(
   state: GenerationState,
@@ -59,15 +67,15 @@ describe("GenerationView", () => {
   });
 
   it("shows the live preview as a draft with Copy disabled", () => {
-    const html = render({ phase: "streaming", attempt: 1, preview: "Working on it" });
+    const html = render({ ...STREAMING, preview: "Working on it", stage: "writing" });
     expect(html).toContain("Working on it");
-    expect(html).toContain(PLAYFUL.draftLoading);
+    expect(html).toContain(stageLabel("writing", 1));
     expect(html).toMatch(/<button[^>]*disabled[^>]*>Copy/);
   });
 
   it("says which attempt is running on the retry", () => {
-    const html = render({ phase: "streaming", attempt: 2, preview: "" });
-    expect(html).toContain("Reformatting answer, attempt 2 of 2");
+    const html = render({ ...STREAMING, attempt: 2 });
+    expect(html).toContain("attempt 2 of 2");
   });
 
   it("shows the validated answer, its warnings and an enabled Copy button", () => {

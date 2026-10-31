@@ -2,8 +2,8 @@
 
 ## State
 - Phase 0: Bootstrap completed.
-- Git repository active with branch PR workflow; monorepo tooling (pnpm + Turborepo + Biome) operational and verified.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
+- `REDO-03`: every answer and fit-check run shows an `ActivityIndicator` (stage, elapsed time, Cancel, a note after 30 s) fed by a `stage` and run-wide `startedAt` on the streaming state; the relay sends a `ping` event every 10 s (clients ignore it). Replaces `PLAYFUL.fitLoading` / `draftLoading`. **Gives the real timing of the slow Gemini fit check once run with a live key: note the time shown at the stage change.** Ticking, Cancel click and layout are manual-test only; the ping is not yet checked through Render's proxy.
 - `REDO-02`: tabs renamed Apply/Saved/You/Setup, `AppBar` (theme toggle, chip slot for `REDO-04`), floating pill tab bar in a `Dock`, and `Section`/`Drawer`/`Popover` primitives (no screen uses the last three yet). Look, glider, sticky dock and Escape/outside-press closing are manual-test only; the action bar still sits above the dock via `--dock-h: 72px`.
 - `REDO-01`: light, dark and auto themes (`settings.theme`, default auto; old `preset` ignored), one accent, soft shadows, `Badge` replaces `StickerBadge`, `--border-strong` for controls; `apps/site` copies `theme.css` so both share tokens. Look in a real side panel and on the site is manual-test only; ADR-0020/0021 are partly superseded by ADR-0022.
 - `BP-fit-timeout`: the Gemini adapter now sends `low` thinking when no effort is chosen (it sent none, so 2.5 thought dynamically and 3 defaulted to high), the likely cause of the fit-check timeout (ADR-0012 amendment). **Not confirmed with a live key**: re-run a fit check on Gemini and note the time; the relay is still silent while a model thinks (keep-alive and progress are `REDO-03`). Roadmap is now the REDO series; `REDO-01` is next once the maintainer approves the look.
@@ -37,7 +37,7 @@
 - None.
 
 ## NEXT UP
-- **Item:** Phase 6 redesign (`docs/REDESIGN_PLAN.md`, ADR-0022). `REDO-02` (shell) in review; next then `REDO-03` activity indicator and `REDO-04` model chip. `REDO-06/07/08` wait for SPEC edits by the maintainer.
+- **Item:** Phase 6 redesign (`docs/REDESIGN_PLAN.md`, ADR-0022). `REDO-03` (activity indicator) in review; next `REDO-04` model chip, then `REDO-05`. `REDO-06/07/08` wait for SPEC edits by the maintainer.
 - **Why now:** real-key use of the live build showed no progress while waiting, a long scroll, no fill or rewrite, and a dated look.
 - **Open from `CAP-01`:** needs a manual test in a real unpacked extension (steps in the roadmap entry; plus the toolbar-icon path for the panel buttons, and LinkedIn: "Capture visible JD" must refuse, selection must work). `capture-panel.tsx`, `background.ts` and `capture-browser.ts` have no automated tests. Job fields and notes live in panel memory only (`JOBS-01` / `HIST-01` should persist them). The panel's page button needs `activeTab`, so after a tab switch the user may need to click the toolbar icon first. `innerText` behaviour is untested (tests use linkedom `textContent`). Workday and other script-rendered boards may give little text. Only the top frame is read by the panel buttons (a job post inside an iframe needs the right-click path); `info.selectionText` length limits are unchecked; "Use as…" before a key and profile exist shows nothing until the generate panel appears. The context-menu "page" item shows on LinkedIn too and answers with a refusal message.
 - **Open from `PROV-04`:** needs a manual test in a real extension (see the roadmap entry; `provider-panel.tsx`, `generate-panel.tsx` and `App.tsx` have no automated tests). OpenAI and Gemini remain live-untested (no keys), so model filtering and effort support are still guessed from ids. Claude has no effort control (the Claude adapter never sets `supportsEffort`). Direct Mode is Claude only and picks the newest Claude model (no list in Direct Mode); OpenAI/Gemini direct calls need host permissions and a CORS check (own PR, own ADR). The saved fit result is keyed by job description only, so changing provider or model does not refresh it (use Run again). The model list is fetched through the relay whenever the panel opens or the key or provider changes (the relay caches it for 10 minutes). The relay now checks the key format before taking the stream slot (a bad key used to leak one slot until restart).
@@ -76,5 +76,5 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
-- PR (pending) | `REDO-02` | App bar, Apply/Saved tabs, floating dock, Section/Drawer/Popover primitives | Manual test: Yes
-- PR #58 | `REDO-01` | Light/dark/auto themes, one accent, Badge, ThemePicker, site shares tokens | Manual test: Yes
+- PR (pending) | `REDO-03` | Activity indicator with stages, elapsed time, Cancel; relay keep-alive ping | Manual test: Yes
+- PR #59 | `REDO-02` | App bar, Apply/Saved tabs, floating dock, Section/Drawer/Popover primitives | Manual test: Yes

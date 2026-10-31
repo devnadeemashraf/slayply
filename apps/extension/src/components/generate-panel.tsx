@@ -117,6 +117,10 @@ export function GeneratePanel({
     () => createFitRunner({ store: fitStore, onState: setFitState, onResult: setFitResult }),
     [fitStore],
   );
+  const stopAll = useCallback(() => {
+    runner.stop();
+    fitRunner.stop();
+  }, [runner, fitRunner]);
 
   // Ids already handed out, so a removed question's id (and its stale edit) is never reused.
   const idFloor = useRef(0);
@@ -381,6 +385,7 @@ export function GeneratePanel({
           rememberResume(suggested.id);
         }}
         onRerun={() => void checkFit(true)}
+        onCancel={stopAll}
         direct={direct}
       />
       <GenerationView
@@ -391,6 +396,7 @@ export function GeneratePanel({
         onEdit={applyEdit}
         onFit={applyEdit}
         onRetry={() => void slay()}
+        onCancel={stopAll}
         direct={direct}
         onCopy={() => {
           const text = copyTextOf(state, edits);
@@ -409,10 +415,7 @@ export function GeneratePanel({
         action={action}
         onFit={() => void checkFit(false)}
         onAnswers={() => void slay()}
-        onStop={() => {
-          runner.stop();
-          fitRunner.stop();
-        }}
+        onStop={stopAll}
       />
     </section>
   );

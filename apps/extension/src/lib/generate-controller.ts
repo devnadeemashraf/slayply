@@ -4,14 +4,18 @@ import {
   validateGenerateResponse,
 } from "@slayply/core";
 import { stripCodeFence } from "@slayply/providers";
+import type { Stage } from "./activity.js";
 import { streamDirect } from "./direct-client.js";
 import { extractAnswerPreview } from "./partial-text.js";
 import { isAbortError, RelayError, streamGenerate } from "./relay-client.js";
 
 export type GenerationState =
   | { phase: "idle" }
-  /** `preview` is unvalidated and only for display; `attempt` 2 is the single automatic retry. */
-  | { phase: "streaming"; attempt: 1 | 2; preview: string }
+  /**
+   * `preview` is unvalidated and only for display; `attempt` 2 is the single automatic retry.
+   * `startedAt` is when the run began (not the attempt), so elapsed time never resets.
+   */
+  | { phase: "streaming"; attempt: 1 | 2; preview: string; stage: Stage; startedAt: number }
   /** `profile` is the facts and stories that were sent, which the claim check cites against. */
   | {
       phase: "done";
@@ -33,6 +37,8 @@ export type RunGenerationOptions = {
   signal: AbortSignal;
   /** Direct Mode: call the provider from the panel instead of the relay. */
   direct?: boolean;
+  /** The clock, for the elapsed time; defaults to `Date.now`. */
+  now?: () => number;
   onState: (state: GenerationState) => void;
 };
 
@@ -57,19 +63,35 @@ function checkReply(
  */
 export async function runGeneration(options: RunGenerationOptions): Promise<void> {
   const { onState } = options;
+  const startedAt = (options.now ?? Date.now)();
   let lastIssues: Issue[] = [];
   let lastText = "";
 
   for (const attempt of [1, 2] as const) {
-    onState({ phase: "streaming", attempt, preview: "" });
+    const streaming = (stage: Stage, preview = ""): GenerationState => ({
+      phase: "streaming",
+      attempt,
+      preview,
+      stage,
+      startedAt,
+    });
+    onState(streaming("connecting"));
     let buffer = "";
+    let writing = false;
+    const connected = () => {
+      if (!writing) onState(streaming("waiting"));
+    };
     try {
-      for await (const delta of (options.direct ? streamDirect : streamGenerate)(options)) {
+      for await (const delta of (options.direct ? streamDirect : streamGenerate)({
+        ...options,
+        onConnected: connected,
+      })) {
+        writing = true;
         buffer += delta;
         if (buffer.length > MAX_REPLY_CHARS) {
           throw new RelayError("TOO_LARGE", "The reply was larger than expected. Try again.");
         }
-        onState({ phase: "streaming", attempt, preview: extractAnswerPreview(buffer) });
+        onState(streaming("writing", extractAnswerPreview(buffer)));
       }
     } catch (error) {
       if (isAbortError(error) || options.signal.aborted) {
@@ -86,6 +108,7 @@ export async function runGeneration(options: RunGenerationOptions): Promise<void
       return;
     }
 
+    onState(streaming("checking", extractAnswerPreview(buffer)));
     const result = checkReply(options.request, validateGenerateResponse(stripCodeFence(buffer)));
     if (result.success) {
       onState({
