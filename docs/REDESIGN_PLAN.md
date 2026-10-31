@@ -33,7 +33,7 @@ Each PR branches from up-to-date `main`, has tests, and is manually testable. Si
 | :-- | :-- | :-- | :-- |
 | REDO-00 | Plan, prototype, ADR-0022 | S | This PR. No app change. Maintainer approves the look. |
 | REDO-01 | Theme foundation | M | Light, dark, auto; one accent; remove the 3 presets (stored `preset` ignored); `packages/ui` tokens shared with `apps/site`; contrast tests kept. Supersedes ADR-0020/0021 parts. |
-| REDO-02 | New shell | M | App bar (brand, model chip slot, theme toggle, relay status), restyled tabs, sticky dock, section/drawer/popover primitives. |
+| REDO-02 | New shell | M | Tabs renamed Apply, Saved, You, Setup (today's "Job" and "Jobs" look like a duplicate). App bar (brand, model chip slot, theme toggle, relay status), restyled tabs, sticky dock, section/drawer/popover primitives. |
 | REDO-03 | Activity indicator | M | `ActivityIndicator` fed by an explicit stage machine in the generate controller (connecting, waiting, writing, checking, second attempt) with elapsed time and Cancel; relay keep-alive event; slow-run note after 30 s. Replaces `PLAYFUL.fitLoading` and `draftLoading`. Gives real timings for the slow fit check. |
 | REDO-04 | Model and effort chip | S | Popover in the app bar; Setup keeps keys and data. Direct Mode ignores the choice (existing rule). |
 | REDO-05 | Job tab restructure | L | Capture, Questions, Answers steps; job text in a drawer; compact question rows; fit check as summary card plus drawer; answer cards collapse. |

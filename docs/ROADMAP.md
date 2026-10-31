@@ -462,7 +462,7 @@
 #### `REDO-02`: New Shell
 - **Size:** M
 - **Status:** Planned
-- **Acceptance Criteria:** App bar, restyled tabs, sticky dock, section/drawer/popover primitives; existing screens still work. Detail: `docs/REDESIGN_PLAN.md`.
+- **Acceptance Criteria:** Tabs renamed Apply, Saved, You, Setup; app bar, restyled tabs, sticky dock, section/drawer/popover primitives; existing screens still work. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-03`: Activity Indicator
 - **Size:** M

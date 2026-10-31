@@ -339,6 +339,21 @@
             <div class="card row"><b class="grow">Describe a system you scaled.</b><span class="pill ok">checked</span><button class="btn">Open</button></div>
             <div class="card row"><b class="grow">Why are you leaving your role?</b><span class="pill ok">checked</span><button class="btn">Open</button></div>`,
         },
+        saved: {
+          title: "Saved jobs",
+          tab: "jobs",
+          primary: "Capture a new job",
+          why: "The log of jobs you saved, with where each one stands. Filter chips replace a long list; each card shows its status, changeable in one tap.",
+          html: () => `<div class="row"><h3 class="grow" style="margin:0;font-size:15px">Saved jobs</h3><span class="muted">7 total</span></div>
+            <div class="actions">
+              <button class="btn solid">All</button><button class="btn">Saved 3</button><button class="btn">Applied 2</button><button class="btn">Interview 1</button><button class="btn">Offer 1</button>
+            </div>
+            ${[
+              ["Senior Backend Engineer", "Acme · Remote", "Interview", "acc", "3 answers · fit strong"],
+              ["Platform Engineer", "Globex · Berlin", "Applied", "", "2 answers · fit medium"],
+              ["Staff Engineer", "Initech · London", "Saved", "", "no answers yet"],
+            ].map(([t, c, st, tone, meta]) => `<div class="card"><div class="row"><b class="grow">${t}</b><span class="pill ${tone}">${st}</span></div><div class="muted" style="margin:2px 0 8px">${c} · ${meta}</div><div class="actions"><button class="btn">Open</button><button class="btn">Change status</button></div></div>`).join("")}`,
+        },
         you: {
           title: "You · quick profile",
           tab: "you",
@@ -369,7 +384,7 @@
         },
       };
 
-      const order = ["capture", "questions", "working", "answers", "you", "setup"];
+      const order = ["capture", "questions", "working", "answers", "saved", "you", "setup"];
       const $ = (id) => document.getElementById(id);
       let current = "capture";
       let timer;
@@ -400,11 +415,11 @@
 
       $("nav").innerHTML = order.map((n) => `<button data-n="${n}">${screens[n].title}</button>`).join("");
       $("nav").onclick = (e) => e.target.dataset.n && show(e.target.dataset.n);
-      $("tabs").innerHTML = [["job", "Job"], ["jobs", "Jobs"], ["you", "You"], ["setup", "Setup"]]
+      $("tabs").innerHTML = [["job", "Apply"], ["jobs", "Saved"], ["you", "You"], ["setup", "Setup"]]
         .map(([id, label]) => `<button class="tab" data-t="${id}">${ico[id]}${label}</button>`).join("");
       $("tabs").onclick = (e) => {
         const t = e.target.closest("button")?.dataset.t;
-        const map = { job: "capture", you: "you", setup: "setup", jobs: "questions" }; // Jobs tab is not designed in R0; it shows Questions as a stand-in
+        const map = { job: "capture", you: "you", setup: "setup", jobs: "saved" };
         if (t) show(map[t]);
       };
       $("chip").onclick = () => {
