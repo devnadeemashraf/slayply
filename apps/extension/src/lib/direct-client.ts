@@ -23,7 +23,11 @@ const FAILURES: Record<ProviderErrorKind, { code: string; message: string }> = {
  */
 export async function* streamDirect(options: StreamGenerateOptions): AsyncGenerator<string> {
   const adapter = createClaudeAdapter({
-    fetch: (input, init) => options.fetchFn(String(input), { ...init, redirect: "error" }),
+    fetch: async (input, init) => {
+      const response = await options.fetchFn(String(input), { ...init, redirect: "error" });
+      if (response.ok) options.onConnected?.();
+      return response;
+    },
     browserAccess: true,
     ...(options.request.model !== undefined ? { model: options.request.model } : {}),
   });

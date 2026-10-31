@@ -9,10 +9,10 @@ import { Button, Card, Badge } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import type { CopyState } from "../lib/copy.js";
 import { fitToLimit } from "../lib/char-limit.js";
-import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
 import { createExit, exitDelay, prefersReducedMotion } from "../lib/motion.js";
+import { ActivityIndicator } from "./activity-indicator.js";
 import { CharRing } from "./char-ring.js";
 import { ErrorNotice } from "./error-notice.js";
 
@@ -191,6 +191,7 @@ export function GenerationView({
   onEdit,
   onFit,
   onRetry,
+  onCancel,
   direct = false,
   limits,
 }: {
@@ -204,6 +205,8 @@ export function GenerationView({
   onEdit: (outputId: string, text: string) => void;
   /** Runs the generation again; the retry button shows only for failures a repeat can fix. */
   onRetry?: () => void;
+  /** Stops a running generation; the indicator shows Cancel only when this is given. */
+  onCancel?: () => void;
   /** Direct Mode: error advice about choosing another model does not apply. */
   direct?: boolean;
   /** Replaces an answer with its trimmed text; the fit button shows only when this is given. */
@@ -223,9 +226,12 @@ export function GenerationView({
     <section className="result" aria-live="polite">
       {state.phase === "streaming" && (
         <>
-          <p className="muted">
-            {state.attempt === 2 ? SERIOUS.reformattingAnswer : PLAYFUL.draftLoading}
-          </p>
+          <ActivityIndicator
+            stage={state.stage}
+            attempt={state.attempt}
+            startedAt={state.startedAt}
+            onCancel={onCancel}
+          />
           <p className="answer">{state.preview}</p>
         </>
       )}

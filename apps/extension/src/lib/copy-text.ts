@@ -9,8 +9,6 @@
 
 export const PLAYFUL = {
   relayWarming: "Waking the relay… cooking your answer ☕",
-  fitLoading: "Reading the fine print…",
-  draftLoading: "Cooking up a draft… we check the format at the end",
   jobEmptyTitle: "No job yet",
   jobEmptyBody: "Open a posting and hit Capture, or paste a description below.",
   jobsEmptyTitle: "No saved jobs yet",
@@ -58,6 +56,12 @@ export const SERIOUS = {
   errorOverloadedDirect: "The provider is overloaded. Try again in a moment.",
   errorRejectedDirect: "The provider rejected the request. Try again, and check your key's access.",
   errorUpstreamDirect: "The provider request failed. Try again in a moment.",
-  reformattingAnswer: "Reformatting answer, attempt 2 of 2",
-  reformattingFit: "Reformatting the fit check, attempt 2 of 2",
+  stageConnecting: "Connecting…",
+  stageWaiting: "Waiting for the model…",
+  stageWriting: "Writing…",
+  stageChecking: "Checking the result…",
+  secondAttempt: "The reply was not in the expected format, so this is attempt 2 of 2.",
+  slowRun:
+    "This is taking longer than usual. Thinking models can take a minute or two, and the relay stops a run at 2 minutes. You can cancel and pick a faster model or a lower effort in Setup.",
+  cancel: "Cancel",
 } as const;

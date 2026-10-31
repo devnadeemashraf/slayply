@@ -20,7 +20,7 @@ const built = buildAnswerRequest({ jd: "Build things", question: "Why you?" });
 if (!built.ok) throw new Error("fixture request must be valid");
 const REQUEST = built.request;
 
-function setup(replies: Array<() => Response | Promise<Response>>) {
+function setup(replies: Array<() => Response | Promise<Response>>, now?: () => number) {
   const fetchFn = vi.fn(async () => {
     const next = replies.shift();
     if (!next) throw new Error("unexpected extra request");
@@ -35,6 +35,7 @@ function setup(replies: Array<() => Response | Promise<Response>>) {
       request: REQUEST,
       fetchFn,
       signal: controller.signal,
+      ...(now ? { now } : {}),
       onState: (state) => states.push(state),
     });
   return { fetchFn, states, controller, done };
@@ -49,6 +50,57 @@ function pieces(reply: string, count = 6): string[] {
 }
 
 describe("runGeneration (against a stubbed relay)", () => {
+  it("walks the stages in order: connecting, waiting, writing, checking", async () => {
+    const reply = validReply("Staged.");
+    const { states, done } = setup([() => sseResponse(relayStream(pieces(reply)), 9)]);
+    await done();
+
+    const stages = states.flatMap((s) => (s.phase === "streaming" ? [s.stage] : []));
+    const order = stages.filter((stage, i) => stage !== stages[i - 1]);
+    expect(order).toEqual(["connecting", "waiting", "writing", "checking"]);
+    expect(states.at(-1)?.phase).toBe("done");
+  });
+
+  it("stays in waiting while the relay sends only keep-alive pings", async () => {
+    const text = `${sseEvent("ping", {})}${sseEvent("ping", {})}${relayStream(pieces(validReply("Late.")))}`;
+    const { states, done } = setup([() => sseResponse(text, 9)]);
+    await done();
+
+    const first = states.findIndex((s) => s.phase === "streaming" && s.stage === "writing");
+    const before = states.slice(0, first);
+    expect(before.map((s) => (s.phase === "streaming" ? s.stage : s.phase))).toEqual([
+      "connecting",
+      "waiting",
+    ]);
+    expect(states.at(-1)?.phase).toBe("done");
+  });
+
+  it("keeps one start time across both attempts so elapsed never resets", async () => {
+    let clock = 1_000;
+    const { states, done } = setup(
+      [
+        () => sseResponse(relayStream(["not json"])),
+        () => sseResponse(relayStream(pieces(validReply("Second.")))),
+      ],
+      () => clock++,
+    );
+    await done();
+
+    const starts = new Set(states.flatMap((s) => (s.phase === "streaming" ? [s.startedAt] : [])));
+    expect(starts.size).toBe(1);
+    expect([...starts][0]).toBe(1_000);
+    const second = states.find((s) => s.phase === "streaming" && s.attempt === 2);
+    expect(second).toMatchObject({ stage: "connecting" });
+  });
+
+  it("reports connecting until the relay answers, and a refused request never reaches waiting", async () => {
+    const { states, done } = setup([() => relayErrorResponse(429, "RATE_LIMITED", "Too many")]);
+    await done();
+    const stages = states.flatMap((s) => (s.phase === "streaming" ? [s.stage] : []));
+    expect(stages).toEqual(["connecting"]);
+    expect(states.at(-1)).toMatchObject({ phase: "error", code: "RATE_LIMITED" });
+  });
+
   it("streams a live preview, then ends with the validated answer", async () => {
     const reply = validReply("I build reliable systems.");
     const { states, done, fetchFn } = setup([() => sseResponse(relayStream(pieces(reply)), 9)]);
@@ -284,7 +336,15 @@ describe("runGeneration (against a stubbed relay)", () => {
 
   it("cannot copy before an answer is validated", () => {
     expect(copyTextOf({ phase: "idle" })).toBeNull();
-    expect(copyTextOf({ phase: "streaming", attempt: 1, preview: "partial" })).toBeNull();
+    expect(
+      copyTextOf({
+        phase: "streaming",
+        attempt: 1,
+        preview: "partial",
+        stage: "writing",
+        startedAt: 0,
+      }),
+    ).toBeNull();
     expect(copyTextOf({ phase: "error", message: "x", code: "NETWORK" })).toBeNull();
   });
 });

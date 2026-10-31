@@ -39,6 +39,8 @@ export type AppOptions = {
   maxOpenStreamsPerIp?: number;
   /** Time a request body may take to arrive in full. */
   bodyTimeoutMs?: number;
+  /** Gap between `ping` events while a stream is open, so a silent thinking model is visible. */
+  keepAliveMs?: number;
 };
 
 type RelayEnv = {
@@ -50,6 +52,7 @@ const DEFAULT_RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 const DEFAULT_STREAM_DEADLINE_MS = 120_000;
 const DEFAULT_MAX_OPEN_STREAMS = 2;
 const DEFAULT_BODY_TIMEOUT_MS = 15_000;
+const DEFAULT_KEEP_ALIVE_MS = 10_000;
 const MODELS_TIMEOUT_MS = 10_000;
 const MAX_TRACKED_IPS = 10_000;
 // Printable ASCII only, so a key can never be an invalid header value for the upstream call.
@@ -108,6 +111,7 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
   const streamDeadlineMs = options.streamDeadlineMs ?? DEFAULT_STREAM_DEADLINE_MS;
   const maxOpenStreams = options.maxOpenStreamsPerIp ?? DEFAULT_MAX_OPEN_STREAMS;
   const bodyTimeoutMs = options.bodyTimeoutMs ?? DEFAULT_BODY_TIMEOUT_MS;
+  const keepAliveMs = options.keepAliveMs ?? DEFAULT_KEEP_ALIVE_MS;
   const openStreams = new Map<string, number>();
   const app = new Hono<RelayEnv>();
 
@@ -249,6 +253,7 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
     const abort = new AbortController();
     let timedOut = false;
     let released = false;
+    let keepAlive: ReturnType<typeof setInterval> | undefined;
     const deadline = setTimeout(() => {
       timedOut = true;
       // Free the slot now: a client that stopped reading can block writeSSE past the abort.
@@ -258,6 +263,7 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
       if (released) return;
       released = true;
       clearTimeout(deadline);
+      clearInterval(keepAlive);
       abort.abort();
       const remaining = (openStreams.get(clientIp) ?? 1) - 1;
       if (remaining > 0) openStreams.set(clientIp, remaining);
@@ -275,6 +281,10 @@ export function createApp(options: AppOptions): Hono<RelayEnv> {
 
     return streamSSE(c, async (stream) => {
       stream.onAbort(() => abort.abort());
+      // A model that thinks sends nothing for a while; the ping shows the relay is still there.
+      keepAlive = setInterval(() => {
+        stream.writeSSE({ event: "ping", data: "{}" }).catch(() => {});
+      }, keepAliveMs);
       try {
         for await (const chunk of chunks) {
           if (chunk.type === "done") break;
