@@ -49,14 +49,28 @@ test("every local link and stylesheet points at a built file", () => {
   }
 });
 
-test("pages load no scripts and no third-party resources", () => {
+test("pages load only the site's own script and no third-party resources", () => {
   for (const page of pages) {
     const html = read(page);
-    assert.doesNotMatch(html, /<script/i, page);
+    assert.doesNotMatch(html, /<script(?![^>]*\ssrc="release\.js")/i, page);
     for (const [, target] of html.matchAll(/(?:href|src)="(https?:[^"]+)"/gi)) {
       assert.ok(target.startsWith(REPO_URL), `${page}: ${target}`);
     }
   }
+});
+
+test("the release script reads only GitHub's latest-release API and sets text, not markup", () => {
+  const script = read("release.js");
+  assert.deepEqual(
+    [...script.matchAll(/https:\/\/[^\s"`]+/g)].map((m) => m[0].replace(/\$.*/, "")),
+    [
+      "https://api.github.com/repos/devnadeemashraf/slayply/releases/latest",
+      "https://github.com/devnadeemashraf/slayply/releases/tag/",
+    ],
+  );
+  assert.doesNotMatch(script, /innerHTML|insertAdjacentHTML|eval\(/);
+  assert.match(script, /TAG\.test\(release\.tag_name\)/);
+  assert.match(read("index.html"), /id="release-link"/);
 });
 
 test("privacy page states the key facts", () => {
