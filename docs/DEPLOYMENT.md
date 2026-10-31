@@ -1,8 +1,13 @@
 # Slayply Deployment Handbook
 
-Follow the steps in order. Each step ends with a check; do not move on until it passes. Nothing here has been run against a real Render account yet (see "Known unverified"), so treat the first deploy as the test.
+**Status (2026-10-31):** the relay (`https://slayply-relay.onrender.com`) and site (`https://slayply-site.onrender.com`) are deployed. Steps 1 to 4 were done once; use them again for a new deploy.
 
-**Order matters:** the relay URL must exist before the extension is built, and the extension ID must exist before the relay accepts it.
+> [!IMPORTANT]
+> **Do this once for prebuilt downloads:** the extension now has a fixed ID, `iljnmipngombklkmmjlfgbgdbnagbnbn`. In Render, open `slayply-relay`, Environment, and add it to `EXTENSION_IDS` (comma-separated with any ID already there), then let it redeploy. Until you do, the downloaded build shows "Origin is not allowed".
+
+Follow the steps in order. Each step ends with a check; do not move on until it passes.
+
+**Order matters:** the relay URL must exist before the extension is built. The extension ID is fixed (step 5), so it can be added to the relay at any time.
 
 ```
 1. Merge the release PR        4. Build the release extension
@@ -90,12 +95,13 @@ tar -a -c -f ..\slayply-1.0.0.zip *
 
 ## 5. Extension ID and `EXTENSION_IDS`
 
-The ID differs by how the extension is loaded, and the relay only accepts IDs it is told about.
+The extension carries a fixed public key in its manifest (`apps/extension/src/lib/extension-id.ts`), so Chrome gives it the same ID on every machine and from every folder: `iljnmipngombklkmmjlfgbgdbnagbnbn`. Put that ID in `EXTENSION_IDS` on the relay and every prebuilt download works. A test proves the ID matches the key.
 
-- **Unpacked (testing):** the ID comes from the folder path. Copy it from `chrome://extensions`.
-- **Chrome Web Store:** the ID is assigned when you first create the item in the developer dashboard (upload the zip as a draft; you do not have to submit it for review). Copy it from the item page.
+- Only the public key is in the repository; the private key was never saved. That is enough to load the extension; it only matters if you ever want to sign a `.crx` yourself.
+- **Chrome Web Store:** the store assigns its own ID unless it accepts the `key` field. This is untested. If you publish there, add the ID shown in the developer dashboard to `EXTENSION_IDS` as well (comma-separated).
+- Changing the key changes the ID and strands every installed copy, so do not.
 
-Set `EXTENSION_IDS` on the relay to every ID you use, comma-separated, and let Render redeploy. Without this the panel shows "Origin is not allowed".
+Without the right ID in `EXTENSION_IDS` the panel shows "Origin is not allowed".
 
 ## 6. End-to-end test with the release build
 
@@ -121,6 +127,22 @@ Load the release build unpacked (`chrome://extensions` > Developer mode > Load u
    ```
    Use `docs/RELEASE_NOTES_v1.0.0.md` as the GitHub release text.
 
+## Publish a prebuilt download (GitHub release)
+
+The site's download button points at `releases/latest/download/slayply-extension.zip`, so a GitHub release with that file is all it needs.
+
+1. Merge everything for the release to `main`; make sure `apps/extension/package.json` has the version and `docs/RELEASE_NOTES_v<version>.md` exists (a test checks this).
+2. Tag and push (this is the only step you run):
+   ```
+   git tag -a v1.0.0 -m "Slayply 1.0.0"
+   git push origin v1.0.0
+   ```
+3. The **Release** workflow (`.github/workflows/release.yml`) runs the full check, builds the zip against the live relay, writes a SHA-256 file and creates the release with both attached. Watch it under the repository's Actions tab.
+4. Check: open `https://github.com/devnadeemashraf/slayply/releases/latest/download/slayply-extension.zip`; it should download. Unzip it, load it unpacked, and confirm the panel says "Connected".
+5. A failed workflow publishes nothing. Fix the cause, delete the tag (`git push origin :v1.0.0` and `git tag -d v1.0.0`), and tag again.
+
+To update users: tag a new version. Chrome does not auto-update unpacked extensions; the site and README tell people to download again.
+
 ## Rollback
 
 - **Relay:** Render dashboard > the service > Events > roll back to the previous deploy. The extension keeps working with an older relay because the contract is unchanged.
@@ -141,5 +163,6 @@ These were never tested against live services; the first deploy is where they ge
 - Render build and start commands, free-tier cold start time, and its SSE timeout behaviour.
 - Render's proxy hop count (verified only by the two-network test above).
 - OpenAI and Gemini live behaviour (no keys were available): model lists and effort mappings come from id patterns.
-- Whether the Chrome Web Store accepts the optional `https://*/*` host permission without extra questions.
+- Whether the Chrome Web Store accepts the optional `https://*/*` host permission without extra questions, and whether it accepts a manifest with a `key` field.
+- The Release workflow has never run (no tag has been pushed); its first run is its test.
 - Linux CI passes the smoke test; a real side panel on your machine is the only check of the panel's look and memory use.

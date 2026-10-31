@@ -447,6 +447,17 @@
 - **Required Tests:** Regression tests for each fixed finding; `pnpm run check` green on the tagged commit.
 - 🧪 **Manual Test:** Follow `docs/DEPLOYMENT.md` end to end on a real Render account and a real browser.
 
+#### `REL-02`: Prebuilt Download, Pinned ID, Disclaimer and New Icon
+- **Size:** S
+- **Status:** In review (PR pending). Tag `v1.0.0` not pushed; the Release workflow has never run.
+- **Acceptance Criteria:**
+  - Pushing a `v*` tag publishes `slayply-extension.zip` and a SHA-256 file to a GitHub release, built against the live relay after `pnpm run check`.
+  - The site has a download button to the stable asset URL, install steps for the zip, and a disclaimer; README, LEGAL and release notes carry the same disclaimer.
+  - The extension has a fixed ID (manifest `key`) so the relay accepts every unzipped copy; a test proves the ID matches the key.
+  - The icon and site favicon use the new mark (white S on the accent-blue square).
+- **Required Tests:** key-to-ID test; site tests for the download link, disclaimer phrases and own-repo-only links; workflow test (tag trigger, checks before publish, asset name, least privilege, release notes exist).
+- 🧪 **Manual Test:** add the pinned ID to `EXTENSION_IDS` on Render; push `v1.0.0`; download the zip from the site; unzip, load unpacked, confirm "Connected".
+
 ---
 
 ## 5. Decisions Table

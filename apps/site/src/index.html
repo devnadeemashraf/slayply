@@ -8,15 +8,23 @@
       name="description"
       content="Turn a job description and its questions into honest answers grounded in your own facts."
     />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <nav><a href="index.html">Slayply</a><a href="privacy.html">Privacy</a></nav>
+    <nav><a href="index.html">Slayply</a><a href="privacy.html">Privacy</a><a href="#disclaimer">Disclaimer</a></nav>
     <main>
       <h1>Honest answers to job application questions</h1>
       <p class="lede">
         Slayply is a Chrome side panel. Give it a job description and the questions, and it drafts
         answers using only facts you saved about yourself, with every claim traceable to its source.
+      </p>
+      <p>
+        <a class="download" href="https://github.com/devnadeemashraf/slayply/releases/latest/download/slayply-extension.zip">Download the extension (zip)</a>
+      </p>
+      <p class="muted">
+        Free and unofficial. It has had one real test (answer generation with a Gemini key) and little else, so expect rough edges.
+        Read the <a href="#disclaimer">disclaimer</a> first.
       </p>
       <h2>What it does</h2>
       <ul>
@@ -26,6 +34,18 @@
         <li>Never fills in or submits an application form for you.</li>
       </ul>
       <h2>Install</h2>
+      <h3>From the download</h3>
+      <ol>
+        <li>Download the zip above and unzip it. You should see a folder containing <code>manifest.json</code>.</li>
+        <li>Open <code>chrome://extensions</code> and turn on <strong>Developer mode</strong>.</li>
+        <li>Choose <strong>Load unpacked</strong> and select the unzipped folder.</li>
+        <li>Open the Slayply side panel, add your own API key in Setup, and start from the privacy screen.</li>
+      </ol>
+      <p class="muted">
+        It is not on the Chrome Web Store, so Chrome does not update it. To update, download the new
+        zip and replace the folder. Each release lists a SHA-256 checksum so you can verify the file.
+      </p>
+      <h3>Or build it yourself</h3>
       <ol>
         <li>Download or clone the repository and run <code>pnpm install</code>.</li>
         <li>Run <code>pnpm --filter @slayply/extension build</code>.</li>
@@ -36,11 +56,54 @@
       <h2>Self-host the relay</h2>
       <p>
         The relay forwards requests to your provider and keeps no prompts, answers or keys. The repository's
-        <code>render.yaml</code> deploys it to Render. Set <code>EXTENSION_IDS</code> to your
-        extension's ID (shown at <code>chrome://extensions</code>) and rebuild the extension with
-        <code>WXT_RELAY_URL</code> pointing at it.
+        <code>render.yaml</code> deploys it to Render. The extension has a fixed ID, <code>iljnmipngombklkmmjlfgbgdbnagbnbn</code>; set
+        <code>EXTENSION_IDS</code> to it, and rebuild the extension with <code>WXT_RELAY_URL</code>
+        pointing at your relay.
       </p>
+      <h2 id="disclaimer">Disclaimer</h2>
+      <p>
+        Slayply is free, open-source software (MIT licence), provided <strong>as is</strong>, without
+        warranty of any kind. You use it at your own risk.
+      </p>
+      <ul>
+        <li>
+          <strong>Not affiliated.</strong> Slayply is not affiliated with, endorsed by or sponsored by
+          Anthropic, OpenAI, Google, LinkedIn, Greenhouse, Lever, Ashby, Workday, Oracle or any
+          employer. Their names and trademarks belong to their owners.
+        </li>
+        <li>
+          <strong>AI can be wrong.</strong> You are responsible for reading, correcting and submitting
+          everything that carries your name. The claim check helps but does not guarantee accuracy.
+          Never state anything untrue in an application.
+        </li>
+        <li>
+          <strong>Your accounts and costs.</strong> You are responsible for following the terms of the
+          websites you use it on, of employers and recruiters, and of your AI provider, and for any
+          charges on your API key. Some provider plans may train on what you send.
+        </li>
+        <li>
+          <strong>No guarantees.</strong> It does not promise interviews, offers or any outcome. It is
+          not legal, career or professional advice.
+        </li>
+        <li>
+          <strong>Limit of liability.</strong> To the fullest extent the law allows, the author is not
+          liable for any loss or damage from using it, including lost opportunities, rejected
+          applications, account action by a third party, API charges or lost data. Back up your data
+          from Settings.
+        </li>
+        <li>
+          <strong>Downloads are unsigned.</strong> The prebuilt zip is not from the Chrome Web Store
+          and is not code-signed. Check its SHA-256 against the value on the release page, or build it
+          from source.
+        </li>
+        <li>
+          <strong>The hosted relay is a courtesy.</strong> It is free, has no uptime promise and may be
+          stopped at any time. You can run your own.
+        </li>
+      </ul>
     </main>
-    <footer>MIT licensed. <a href="privacy.html">Privacy details</a></footer>
+    <footer>
+      MIT licensed. <a href="privacy.html">Privacy details</a> · <a href="#disclaimer">Disclaimer</a>
+    </footer>
   </body>
 </html>
