@@ -407,7 +407,7 @@
 - **Size:** S (1 session)
 - **Status:** In review (PR pending). No ADR.
 - **Acceptance Criteria:**
-  - Playful wording lives only in `PLAYFUL` in `lib/copy-text.ts` (not `copy.ts`, which is the clipboard logic): the relay warm-up, fit and draft loading lines, and the Job, Jobs and You empty states. Privacy, errors, keys and data deletion stay plain.
+  - Playful wording lives only in `PLAYFUL` in `lib/copy-text.ts` (not `copy.ts`, which is the clipboard logic): the Job, Jobs and You empty states. Privacy, errors, keys and data deletion stay plain.
   - `SERIOUS` in the same file holds the messages `App.tsx` and the relay status write themselves; the privacy and training texts stay in `lib/privacy.ts`.
   - The long static text of the settings, questionnaire, capture and provider panels is **not** moved (hundreds of strings, no wording change); a test scans every source file so an emoji cannot appear outside `copy-text.ts`.
   - Corrected: the Direct Mode notice still said Direct Mode "will be available in a later release"; it shipped with `DIRECT-01`.
@@ -497,7 +497,7 @@
 
 #### `REDO-09`: Jobs, Setup and Motion Polish
 - **Size:** M
-- **Status:** Planned
+- **Status:** In review (PR pending). Done: the relay warm-up message is plain (`SERIOUS.relayWarming`; `PLAYFUL` is now empty states only), Saved has a header with a count and a status badge per job, You and Setup sections are cards. Not done (left for the maintainer's look at the build): per-screen layout changes for You and Setup beyond the card styling, and a new motion pass (the existing motion audit and reduced-motion tests still pass).
 - **Acceptance Criteria:** Remaining screens restyled; one micro-interaction pass with reduced-motion tests; playful copy only in empty states. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-10`: Site and Release
