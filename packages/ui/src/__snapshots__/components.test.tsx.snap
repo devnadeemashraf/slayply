@@ -1,5 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`Badge > always shows its text and carries a tone class 1`] = `"<span class="sl-badge sl-badge-ok">High chance</span>"`;
+
 exports[`Button > is a non-submitting button by default and carries its variant 1`] = `"<button type="button" class="sl-btn sl-btn-secondary">Save</button>"`;
 
 exports[`Card > renders a titled section 1`] = `"<section class="sl-card"><h2 class="sl-card-title">Fit</h2><p>body</p></section>"`;
@@ -13,8 +15,6 @@ exports[`EmptyState > shows a title, a body and an optional action 1`] = `"<sect
 exports[`Field > marks the input invalid and announces the error 1`] = `"<div class="sl-field"><label class="sl-field-label" for="_R_0_">Key</label><input id="_R_0_" aria-describedby="_R_0_-error" aria-invalid="true" class="sl-field-control"/><p id="_R_0_-error" class="sl-field-error" role="alert">Enter your API key.</p></div>"`;
 
 exports[`Field > ties the label to the input 1`] = `"<div class="sl-field"><label class="sl-field-label" for="_R_0_">Company</label><input id="_R_0_" class="sl-field-control" value="Acme"/></div>"`;
-
-exports[`StickerBadge > always shows its text and carries a tone class 1`] = `"<span class="sl-sticker sl-sticker-ok">High chance</span>"`;
 
 exports[`Switch > exposes role=switch with its state and label 1`] = `"<button type="button" role="switch" aria-checked="true" class="sl-switch"><span class="sl-switch-track" aria-hidden="true"><span class="sl-switch-thumb"></span></span><span>Direct Mode</span></button>"`;
 

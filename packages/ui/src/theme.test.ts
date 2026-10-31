@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "./contrast.js";
 import { unguardedAnimations } from "./motion-audit.js";
-import { DEFAULT_PRESET, isPreset, PRESETS } from "./themes.js";
+import { DEFAULT_THEME, isTheme, THEMES } from "./themes.js";
 
 const theme = readFileSync(new URL("./theme.css", import.meta.url), "utf8");
 const components = readFileSync(new URL("./components.css", import.meta.url), "utf8");
@@ -28,16 +28,19 @@ const COLOUR_TOKENS = [
   "--ink-muted",
   "--accent",
   "--accent-ink",
+  "--accent-soft",
   "--focus",
   "--border",
+  "--border-strong",
   "--ok",
+  "--ok-soft",
   "--warn",
+  "--warn-soft",
   "--bad",
+  "--bad-soft",
   "--on-status",
-  "--shadow-color",
+  "--shadow",
 ];
-
-const SHAPE_TOKENS = ["--radius-sm", "--radius-md", "--radius-lg", "--border-w", "--shadow-offset"];
 
 // [foreground, background, minimum ratio]: 4.5 for text, 3 for focus rings and control borders.
 const PAIRS: [string, string, number][] = [
@@ -46,39 +49,54 @@ const PAIRS: [string, string, number][] = [
   ["--ink", "--surface-2", 4.5],
   ["--ink-muted", "--bg", 4.5],
   ["--ink-muted", "--surface", 4.5],
+  ["--ink-muted", "--surface-2", 4.5],
+  ["--ok", "--surface", 4.5],
+  ["--warn", "--surface", 4.5],
+  ["--bad", "--surface", 4.5],
   ["--accent-ink", "--accent", 4.5],
+  ["--accent", "--bg", 4.5],
+  ["--ink", "--accent-soft", 4.5],
   ["--on-status", "--ok", 4.5],
   ["--on-status", "--warn", 4.5],
   ["--on-status", "--bad", 4.5],
+  ["--ok", "--ok-soft", 4.5],
+  ["--warn", "--warn-soft", 4.5],
+  ["--bad", "--bad-soft", 4.5],
   ["--focus", "--bg", 3],
   ["--focus", "--surface", 3],
-  ["--border", "--bg", 3],
-  ["--border", "--surface", 3],
+  ["--border-strong", "--bg", 3],
+  ["--border-strong", "--surface", 3],
 ];
 
-describe("presets", () => {
-  it("lists neon, bubblegum and brutal, with neon as the default", () => {
-    expect([...PRESETS]).toEqual(["neon", "bubblegum", "brutal"]);
-    expect(DEFAULT_PRESET).toBe("neon");
-    expect(isPreset("brutal")).toBe(true);
-    expect(isPreset("matrix")).toBe(false);
-    expect(isPreset(undefined)).toBe(false);
+describe("themes", () => {
+  it("lists auto, light and dark, with auto as the default", () => {
+    expect([...THEMES]).toEqual(["auto", "light", "dark"]);
+    expect(DEFAULT_THEME).toBe("auto");
+    expect(isTheme("dark")).toBe(true);
+    expect(isTheme("neon")).toBe(false);
+    expect(isTheme(undefined)).toBe(false);
   });
 
-  it("serves the default preset when no data-theme is set", () => {
-    const root = tokensOf(theme, ":root");
-    const neon = tokensOf(theme, '[data-theme="neon"]');
-    expect(root["--bg"]).toBe(neon["--bg"]);
-    expect(root["--accent"]).toBe(neon["--accent"]);
+  it("declares dark twice: for the system setting unless light is forced, and when forced", () => {
+    const system = tokensOf(theme, 'html:not([data-theme="light"])');
+    const forced = tokensOf(theme, 'html[data-theme="dark"]');
+    expect(system).toEqual(forced);
+    expect(theme).toContain("@media (prefers-color-scheme: dark)");
   });
 
-  for (const preset of PRESETS) {
-    describe(preset, () => {
-      const tokens = tokensOf(theme, `[data-theme="${preset}"]`);
+  it("keeps the old presets out of the stylesheet", () => {
+    for (const name of ["neon", "bubblegum", "brutal"]) expect(theme).not.toContain(name);
+  });
 
-      it("defines every colour and shape token", () => {
-        for (const name of [...COLOUR_TOKENS, ...SHAPE_TOKENS]) {
-          expect(tokens[name], `${preset} is missing ${name}`).toBeDefined();
+  const themes = {
+    light: tokensOf(theme, 'html[data-theme="light"]'),
+    dark: tokensOf(theme, 'html[data-theme="dark"]'),
+  };
+  for (const [name, tokens] of Object.entries(themes)) {
+    describe(name, () => {
+      it("defines every colour token", () => {
+        for (const token of COLOUR_TOKENS) {
+          expect(tokens[token], `${name} is missing ${token}`).toBeDefined();
         }
       });
 
@@ -87,7 +105,7 @@ describe("presets", () => {
           const ratio = contrastRatio(tokens[foreground] as string, tokens[background] as string);
           expect(
             ratio,
-            `${preset}: ${tokens[foreground]} on ${tokens[background]}`,
+            `${name}: ${tokens[foreground]} on ${tokens[background]}`,
           ).toBeGreaterThanOrEqual(minimum);
         });
       }
@@ -97,6 +115,11 @@ describe("presets", () => {
       });
     });
   }
+
+  it("uses one accent per theme and no other hue for primary actions", () => {
+    expect(themes.light["--accent"]).toBe("#0b5fff");
+    expect(themes.dark["--accent"]).toBe("#7fa8ff");
+  });
 });
 
 describe("motion", () => {
@@ -121,7 +144,7 @@ describe("motion", () => {
   });
 
   it("defines the keyframes the components use, and a plain fade to replace movement", () => {
-    for (const name of ["sl-pop", "sl-drop", "sl-shake", "sl-fade"]) {
+    for (const name of ["sl-pop", "sl-shake", "sl-fade"]) {
       expect(components, `missing @keyframes ${name}`).toContain(`@keyframes ${name}`);
     }
   });

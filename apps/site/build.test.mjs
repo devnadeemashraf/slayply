@@ -14,7 +14,23 @@ const pages = ["index.html", "privacy.html"];
 const REPO_URL = "https://github.com/devnadeemashraf/slayply/";
 
 test("build copies every page and the stylesheet", () => {
-  for (const file of [...pages, "style.css"]) assert.ok(fs.existsSync(path.join(out, file)), file);
+  for (const file of [...pages, "style.css", "theme.css"])
+    assert.ok(fs.existsSync(path.join(out, file)), file);
+});
+
+test("the site uses the same theme tokens as the side panel", () => {
+  const tokens = fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), "../../packages/ui/src/theme.css"),
+    "utf8",
+  );
+  assert.equal(read("theme.css"), tokens);
+  for (const page of pages) {
+    const html = read(page);
+    assert.ok(html.indexOf('href="theme.css"') > -1, `${page} links theme.css`);
+    assert.ok(html.indexOf('href="theme.css"') < html.indexOf('href="style.css"'), page);
+  }
+  // The page stylesheet must not redeclare colours of its own.
+  assert.doesNotMatch(read("style.css"), /#[0-9a-f]{6}(?![0-9a-f])/i);
 });
 
 test("a rebuild removes stale files", () => {

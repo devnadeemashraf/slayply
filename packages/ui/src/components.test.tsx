@@ -5,7 +5,7 @@ import { Card } from "./card.js";
 import { Chip } from "./chip.js";
 import { EmptyState } from "./empty-state.js";
 import { Field } from "./field.js";
-import { StickerBadge } from "./sticker-badge.js";
+import { Badge } from "./badge.js";
 import { Switch } from "./switch.js";
 import { nextIndex, TabPanel, Tabs } from "./tabs.js";
 
@@ -55,16 +55,16 @@ describe("Chip", () => {
   });
 });
 
-describe("StickerBadge", () => {
+describe("Badge", () => {
   it("always shows its text and carries a tone class", () => {
-    const html = renderToString(<StickerBadge tone="ok">High chance</StickerBadge>);
+    const html = renderToString(<Badge tone="ok">High chance</Badge>);
     expect(html).toContain("High chance");
-    expect(html).toContain("sl-sticker-ok");
+    expect(html).toContain("sl-badge-ok");
     expect(html).toMatchSnapshot();
   });
 
   it("defaults to the neutral tone", () => {
-    expect(renderToString(<StickerBadge>New</StickerBadge>)).toContain("sl-sticker-neutral");
+    expect(renderToString(<Badge>New</Badge>)).toContain("sl-badge-neutral");
   });
 });
 

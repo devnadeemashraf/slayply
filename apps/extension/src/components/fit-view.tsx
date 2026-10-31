@@ -4,13 +4,13 @@ import {
   type FitCheck,
   type StoredResume,
 } from "@slayply/core";
-import { Button, Card, StickerBadge, type StickerTone } from "@slayply/ui";
+import { Button, Card, Badge, type BadgeTone } from "@slayply/ui";
 import { useMemo } from "react";
 import { PLAYFUL, SERIOUS } from "../lib/copy-text.js";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { ErrorNotice } from "./error-notice.js";
 
-const CHANCE_TONE: Record<FitCheck["chance"], StickerTone> = {
+const CHANCE_TONE: Record<FitCheck["chance"], BadgeTone> = {
   high: "ok",
   medium: "warn",
   low: "bad",
@@ -113,8 +113,7 @@ function Result({
   return (
     <>
       <p>
-        <StickerBadge tone={CHANCE_TONE[fit.chance]}>{`Chance: ${fit.chance}`}</StickerBadge>{" "}
-        {fit.reason}
+        <Badge tone={CHANCE_TONE[fit.chance]}>{`Chance: ${fit.chance}`}</Badge> {fit.reason}
       </p>
       {rows.length > 0 && (
         <table>

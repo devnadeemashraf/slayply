@@ -1,26 +1,9 @@
-:root {
-  color-scheme: light dark;
-  --bg: #ffffff;
-  --fg: #16181d;
-  --muted: #4a5060;
-  --accent: #0b5fff;
-  --border: #d5d9e2;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101216;
-    --fg: #eceef3;
-    --muted: #aab0bf;
-    --accent: #7fa8ff;
-    --border: #2b303b;
-  }
-}
 body {
   margin: 0 auto;
   max-width: 44rem;
   padding: 2rem 1rem 4rem;
   background: var(--bg);
-  color: var(--fg);
+  color: var(--ink);
   font:
     1rem / 1.6 system-ui,
     sans-serif;
@@ -37,12 +20,12 @@ h1 {
   line-height: 1.2;
 }
 .lede {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 1.15rem;
 }
 code,
 pre {
-  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
   border-radius: 4px;
 }
 code {
@@ -53,7 +36,7 @@ a.download {
   padding: 0.7rem 1.2rem;
   border-radius: 10px;
   background: var(--accent);
-  color: var(--bg);
+  color: var(--accent-ink);
   font-weight: 650;
   text-decoration: none;
 }
@@ -62,5 +45,5 @@ footer {
   margin-top: 3rem;
   border-top: 1px solid var(--border);
   padding-top: 1rem;
-  color: var(--muted);
+  color: var(--ink-muted);
 }

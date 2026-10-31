@@ -5,7 +5,7 @@ import {
   removeSentence,
   summarizeClaims,
 } from "@slayply/core";
-import { Button, Card, StickerBadge } from "@slayply/ui";
+import { Button, Card, Badge } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import type { CopyState } from "../lib/copy.js";
 import { fitToLimit } from "../lib/char-limit.js";
@@ -171,7 +171,7 @@ function CheckedAnswer({
           {[...sources].map(([id, source]) => (
             <details key={id} className="receipt">
               <summary>
-                <StickerBadge>{id}</StickerBadge> receipt
+                <Badge>{id}</Badge> receipt
               </summary>
               <p>{source}</p>
             </details>
