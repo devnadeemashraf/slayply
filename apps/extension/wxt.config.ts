@@ -1,4 +1,5 @@
 import { defineConfig } from "wxt";
+import { EXTENSION_KEY } from "./src/lib/extension-id";
 import { OPTIONAL_HOST_PERMISSIONS } from "./src/lib/manifest-hosts";
 import { isReleaseBuild, resolveRelayUrl } from "./src/lib/relay-url";
 
@@ -12,6 +13,7 @@ export default defineConfig({
   srcDir: "src",
   manifest: {
     name: "Slayply",
+    key: EXTENSION_KEY,
     description: "Turn a job description and its questions into honest, grounded answers.",
     // activeTab is granted by the user clicking the icon or a context menu item and lets Slayply read
     // that one tab then; there is no host access granted at install.

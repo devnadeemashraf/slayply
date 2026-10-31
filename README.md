@@ -12,26 +12,28 @@ A personal Chrome side panel that turns a job description and its application qu
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4)
 ![Telemetry](https://img.shields.io/badge/telemetry-none-brightgreen)
 
-[Honest status](#honest-status) · [Try it](#try-it) · [How it works](#how-it-works) · [Principles](#principles) · [Privacy](#privacy) · [Development](#development)
+[Honest status](#honest-status) · [Try it](#try-it) · [Disclaimer](#disclaimer) · [How it works](#how-it-works) · [Principles](#principles) · [Privacy](#privacy) · [Development](#development)
 
 </div>
 
 ## Honest status
 
-Everything on the roadmap is built, and a relay and landing site are live. What is **not** done is the one thing that matters most: **nobody has run it with a real, paid-for API key.**
+Everything on the roadmap is built, and a relay and landing site are live. It has had **one real-world test**: answer generation worked end to end with a real Gemini key, slowly. Beyond that it is lightly tested:
 
-Free LLM credits turned out to be a myth, and the companies that sell tokens by the gram have not been moved by this project's plight. So every test so far uses fake credentials and stubbed providers. The capture, profile, claim-checking, saving and copy flow is covered by an automated suite and a Chromium smoke test, and the relay streams correctly against a stand-in model. The part that has never met a real provider is the last mile:
+Free LLM credits turned out to be a myth, and the companies that sell tokens by the gram have not been moved by this project's plight. So almost all testing uses fake credentials and stubbed providers. The capture, profile, claim-checking, saving and copy flow is covered by an automated suite and a Chromium smoke test, and the relay streams correctly against a stand-in model.
 
-- Claude, OpenAI and Gemini replies, model lists and reasoning-effort settings were written from the vendors' documentation, not from live responses. OpenAI and Gemini are the least certain.
-- The panel's look, the three style presets, and capture on real Workday, Oracle and Lever pages have only been checked by hand on a few pages.
+- **Known problem:** a fit check on a slow thinking model (Gemini 3 Flash on low effort) ran past the relay's two-minute limit and showed an error, with no progress shown while waiting. The error now explains itself and offers a retry; progress indication and the cause are the next fixes.
+- **Never tried live:** Claude and OpenAI replies, model lists and reasoning-effort settings were written from the vendors' documentation. Gemini model lists and effort settings are only partly confirmed.
+- **Checked by hand on a few pages only:** the panel's look and capture on real Workday, Oracle and Lever pages.
 
-So please do not call this production-ready. Call it **a finished build that needs a brave tester**. If you have credits and ten spare minutes, running one real generation and [opening an issue](https://github.com/devnadeemashraf/slayply/issues/new) with what broke (or "it worked!") would be a huge help, and you will have this author's sincere and slightly desperate gratitude. Never paste your API key into an issue.
+So please do not call this production-ready. Call it **a finished build that needs a brave tester**. If you have Claude or OpenAI credits and ten spare minutes, running one real generation and [opening an issue](https://github.com/devnadeemashraf/slayply/issues/new) with what broke (or "it worked!") would be a huge help, and you will have this author's sincere and slightly desperate gratitude. Never paste your API key into an issue.
 
 ## Try it
 
 - **Site and privacy page:** https://slayply-site.onrender.com
 - **Relay:** https://slayply-relay.onrender.com (the free tier sleeps, so the first request after a pause can take up to a minute; the panel says "waking the relay" while it waits)
-- **Install:** not on the Chrome Web Store. Build it yourself:
+- **Download:** [slayply-extension.zip](https://github.com/devnadeemashraf/slayply/releases/latest/download/slayply-extension.zip) from the latest GitHub release (a SHA-256 checksum sits beside it). Unzip it, open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the unzipped folder. It is not on the Chrome Web Store, so Chrome will not update it: download the new zip to update. Read the [disclaimer](#disclaimer) first.
+- **Or build it yourself:**
 
   ```bash
   pnpm install
@@ -39,7 +41,7 @@ So please do not call this production-ready. Call it **a finished build that nee
   ```
 
   Then open `chrome://extensions`, turn on Developer mode, choose **Load unpacked** and pick `apps/extension/.output/chrome-mv3`.
-- **One catch:** the relay only accepts extension IDs its operator has listed, and an unpacked build's ID depends on its folder path. Until a store version exists, run your own relay (`render.yaml` and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)) or a local one with `pnpm --filter @slayply/relay dev` (localhost is always allowed). You can also open an issue asking for your extension's ID to be added.
+- **Relay access:** the extension has a fixed ID (`iljnmipngombklkmmjlfgbgdbnagbnbn`) on every machine, so the hosted relay accepts it wherever you unzip it. If you run your own relay, list that ID in `EXTENSION_IDS`.
 - Direct Mode (Claude only) skips the relay and calls Anthropic from your browser.
 
 ---
@@ -80,6 +82,18 @@ On LinkedIn, Slayply reads only the text you explicitly select, in line with Lin
 - **The relay is stateless.** No database, no stored prompts, and no request or response bodies in its logs. Your key travels in a header for a single request and is not retained.
 - **Prefer no relay at all?** Direct mode calls the provider straight from the extension.
 
+## Disclaimer
+
+Slayply is free, open-source software (MIT licence), provided **as is**, without warranty of any kind. You use it at your own risk.
+
+- **Not affiliated.** Slayply is not affiliated with, endorsed by or sponsored by Anthropic, OpenAI, Google, LinkedIn, Greenhouse, Lever, Ashby, Workday, Oracle or any employer. Their names and trademarks belong to their owners.
+- **AI can be wrong.** You are responsible for reading, correcting and submitting everything that carries your name. The claim check helps but does not guarantee accuracy. Never state anything untrue in an application.
+- **Your accounts and costs.** You are responsible for following the terms of the websites you use it on, of employers and recruiters, and of your AI provider, and for any charges on your API key. Some provider plans may train on what you send.
+- **No guarantees.** It does not promise interviews, offers or any outcome. It is not legal, career or professional advice.
+- **Limit of liability.** To the fullest extent the law allows, the author is not liable for any loss or damage from using it, including lost opportunities, rejected applications, account action by a third party, API charges or lost data. Back up your data from Settings.
+- **The hosted relay is a courtesy.** It is free, has no uptime promise and may be stopped at any time. You can run your own.
+- **Downloads are unsigned.** The prebuilt zip is not from the Chrome Web Store and is not code-signed. Check its SHA-256 against the value on the release page, or build it from source.
+
 ## Architecture
 
 ```mermaid
@@ -113,7 +127,7 @@ flowchart LR
 | 0 | Bootstrap: monorepo, checks, hooks, CI | Done |
 | 1 | Shared contract, relay, side panel shell, first generation loop | Done |
 | 2 | Profile, resume parsing, fit check, claim checker, settings and backup | Done |
-| 3 | OpenAI and Gemini, effort controls, direct mode | Built, never run with real keys |
+| 3 | OpenAI and Gemini, effort controls, direct mode | Built; Gemini tried live, Claude and OpenAI never |
 | 4 | Capture, job history, cover letters and messages | Done |
 | 5 | Themes, site, security review, release prep | Done; v1.0.0 not tagged until real-key testing |
 

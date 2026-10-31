@@ -65,6 +65,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.error(`panel threw: ${result.errors.join("; ")}`);
       process.exit(1);
     }
+    // The relay only accepts the ID in lib/extension-id.ts, so a load from any folder must get it.
+    const pinned = /EXTENSION_ID = "([a-p]{32})"/.exec(
+      fs.readFileSync("apps/extension/src/lib/extension-id.ts", "utf8"),
+    )?.[1];
+    if (result.extensionId !== pinned) {
+      console.error(`Extension loaded as ${result.extensionId}, expected the pinned ${pinned}.`);
+      process.exit(1);
+    }
     if (!result.text.includes("Where your data goes")) {
       console.error("Panel did not show the privacy gate on a fresh profile.");
       process.exit(1);

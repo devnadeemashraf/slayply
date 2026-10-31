@@ -2,6 +2,14 @@
 
 First release. Slayply is a Chrome side panel that drafts honest job-application answers from facts you saved about yourself.
 
+## Install
+
+Download `slayply-extension.zip`, unzip it, open `chrome://extensions`, turn on Developer mode and choose Load unpacked. Check the download against `slayply-extension.zip.sha256` first. It is unsigned and not on the Chrome Web Store, so it does not auto-update.
+
+## Disclaimer
+
+Slayply is free, open-source software provided as is, without warranty, and is not affiliated with Anthropic, OpenAI, Google, LinkedIn or any job board. Answer generation has been tried once with a real Gemini key; Claude and OpenAI have never been tried live, and a fit check on a slow thinking model can time out. AI output can be wrong; you are responsible for what you submit and for any charges on your API key. The full text is in the README and `docs/LEGAL.md`.
+
 ## What is in it
 
 - **Capture:** right-click a selection or page, the toolbar icon, or Alt+Shift+S. Reads the job description and the question labels (never what you typed). Greenhouse, Lever, Ashby and other boards on request; on LinkedIn only text you select.
@@ -21,7 +29,7 @@ First release. Slayply is a Chrome side panel that drafts honest job-application
 
 ## Known limits
 
-- OpenAI and Gemini were not tested against live services; model lists and effort support are guessed from model ids.
+- Only Gemini answer generation was tried live. Claude, OpenAI and Gemini model lists and effort support come from model ids and vendor docs. A fit check on a slow thinking model can run past the relay's two-minute limit and show an error with a retry button.
 - The panel's look, the sticky bar and all three style presets were checked by hand only.
 - Resumes with three or more columns may read out of order (use the preview). No OCR for scanned PDFs.
 - The free relay sleeps when idle; the first request after a pause can take up to a minute.

@@ -47,3 +47,21 @@ All third-party dependencies used across the monorepo must adhere to compatible 
 ## 5. Minors & Financial Compliance
 - Slayply does not collect personal data from any user, including minors.
 - Slayply handles no payments, subscriptions, or credit card transactions. API usage fees are paid directly by the user to their selected AI provider.
+
+---
+
+## 6. Disclaimer of Warranty and Liability
+> [!NOTE]
+> Written by the project, not by a lawyer. It lowers risk; it does not remove it. Have a lawyer review it if you ship this commercially or accept money.
+
+The same text is on the site (`apps/site/src/index.html`, section Disclaimer) and in the README. Keep the three in step.
+
+Slayply is free, open-source software (MIT licence), provided **as is**, without warranty of any kind. You use it at your own risk.
+
+- **Not affiliated.** Slayply is not affiliated with, endorsed by or sponsored by Anthropic, OpenAI, Google, LinkedIn, Greenhouse, Lever, Ashby, Workday, Oracle or any employer. Their names and trademarks belong to their owners.
+- **AI can be wrong.** You are responsible for reading, correcting and submitting everything that carries your name. The claim check helps but does not guarantee accuracy. Never state anything untrue in an application.
+- **Your accounts and costs.** You are responsible for following the terms of the websites you use it on, of employers and recruiters, and of your AI provider, and for any charges on your API key. Some provider plans may train on what you send.
+- **No guarantees.** It does not promise interviews, offers or any outcome. It is not legal, career or professional advice.
+- **Limit of liability.** To the fullest extent the law allows, the author is not liable for any loss or damage from using it, including lost opportunities, rejected applications, account action by a third party, API charges or lost data. Back up your data from Settings.
+- **The hosted relay is a courtesy.** It is free, has no uptime promise and may be stopped at any time. You can run your own.
+- **Downloads are unsigned.** The prebuilt zip is not from the Chrome Web Store and is not code-signed. Check its SHA-256 against the value on the release page, or build it from source.
