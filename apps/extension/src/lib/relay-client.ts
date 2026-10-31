@@ -19,6 +19,8 @@ export type StreamGenerateOptions = {
   request: GenerateRequest;
   fetchFn: (url: string, init?: RequestInit) => Promise<Response>;
   signal: AbortSignal;
+  /** Called once the relay (or provider) has accepted the request, before any text arrives. */
+  onConnected?: () => void;
 };
 
 const MAX_MESSAGE_CHARS = 200;
@@ -95,6 +97,8 @@ export async function* streamGenerate(options: StreamGenerateOptions): AsyncGene
 
   if (!response.ok) throw await httpError(response);
   if (!response.body) throw new RelayError("STREAM_INCOMPLETE", "The relay sent no answer.");
+
+  options.onConnected?.();
 
   let finished = false;
   try {
