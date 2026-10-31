@@ -350,6 +350,22 @@ button.remove {
   background: var(--bg);
 }
 
+/* Inside the dock the bar needs no stickiness, rule or spacing of its own. */
+.sl-dock .action-bar {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+.dock-slot {
+  flex: 1;
+}
+
+.dock-slot:empty {
+  display: none;
+}
+
 .action-bar p {
   flex: 1;
   margin: 0;
@@ -428,4 +444,16 @@ button.remove {
 .style-section > summary {
   cursor: pointer;
   color: var(--ink-muted);
+}
+
+.sl-dock-primary:has(.dock-slot:empty) {
+  display: none;
+}
+
+.answer-card > summary {
+  cursor: pointer;
+}
+
+.answer-card[open] > summary .muted {
+  display: none;
 }

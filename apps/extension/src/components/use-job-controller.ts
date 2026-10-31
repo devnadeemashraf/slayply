@@ -64,6 +64,8 @@ export type JobControllerProps = {
   onJobSaved: () => void;
   incoming: Incoming | null;
   job: JobDetails;
+  /** Where the primary button is shown (the app's dock); when null it renders in place. */
+  dockSlot?: HTMLElement | null;
 };
 
 export function useJobController({

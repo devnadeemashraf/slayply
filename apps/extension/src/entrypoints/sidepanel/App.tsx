@@ -156,6 +156,7 @@ export function App() {
   }
 
   const apiKey = settings ? keyFor(settings, settings.provider) : "";
+  const [dockSlot, setDockSlot] = useState<HTMLElement | null>(null);
   const modelList = useModels(settings?.privacyAcknowledged ? settings : null);
 
   /** The saved profile could not be read or opened; shown wherever the profile is needed. */
@@ -270,6 +271,7 @@ export function App() {
                 onJobSaved={() => setJobsVersion((version) => version + 1)}
                 incoming={incoming}
                 job={job}
+                dockSlot={dockSlot}
               />
             )}
           </TabPanel>
@@ -336,7 +338,9 @@ export function App() {
         </div>
       )}
       {settings?.privacyAcknowledged && (
-        <Dock>
+        <Dock
+          primary={tab === "apply" ? <div ref={setDockSlot} className="dock-slot" /> : undefined}
+        >
           <Tabs
             label="Slayply sections"
             tabs={TABS}
