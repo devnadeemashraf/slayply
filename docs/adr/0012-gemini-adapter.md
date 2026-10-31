@@ -31,3 +31,7 @@ The third adapter must fit the `ProviderAdapter` shape (ADR-0004, ADR-0011), str
 
 ## Validation & Verification
 - Recorded-fixture tests: stream at several chunk sizes, thought parts skipped, key in header and not URL, role mapping, newest-model default, HTTP and 400-marker mapping, mid-stream error statuses, every non-STOP finish reason, blocked prompt, truncated stream, bad JSON, transport and abort, budget and level mapping, no effort for non-thinking models, model filtering and ordering, cache TTL and key isolation, caps, no raw key in the cache.
+
+## Amendment (BP-fit-timeout)
+
+When no effort is chosen, thinking models now get the `low` setting instead of no thinking config. With no config, 2.5 models think dynamically and 3 models default to high, and a fit check on such a model ran past the relay's 120 s stream deadline. Choosing Medium or High still raises it. Unverified with a live key: the cause is inferred from the request shape and Google's documented defaults, so confirm the fit check time with a real key (REDO-03 adds the stage and elapsed time that will show it).

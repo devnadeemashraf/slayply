@@ -358,6 +358,18 @@ describe("gemini adapter: thinking effort", () => {
     expect(sentBody(fetchMock).generationConfig.thinkingConfig).toEqual({ thinkingLevel: level });
   });
 
+  it("bounds thinking at low effort when none is chosen, so a fit check cannot think past the relay deadline", async () => {
+    const fetchMock = routed({ generate: () => streamResponse(HAPPY_STREAM) });
+    const flash = createGeminiAdapter({ fetch: fetchMock, model: "gemini-2.5-flash" });
+    await drain(flash.stream(request, KEY, signal()));
+    expect(sentBody(fetchMock).generationConfig.thinkingConfig).toEqual({ thinkingBudget: 1024 });
+
+    const fetchThree = routed({ generate: () => streamResponse(HAPPY_STREAM) });
+    const three = createGeminiAdapter({ fetch: fetchThree, model: "gemini-3-pro" });
+    await drain(three.stream(request, KEY, signal()));
+    expect(sentBody(fetchThree).generationConfig.thinkingConfig).toEqual({ thinkingLevel: "low" });
+  });
+
   it("leaves effort out for a model that does not support it", async () => {
     const fetchMock = routed({ generate: () => streamResponse(HAPPY_STREAM) });
     const adapter = createGeminiAdapter({
