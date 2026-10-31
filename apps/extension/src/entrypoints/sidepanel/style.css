@@ -405,3 +405,13 @@ button.remove {
 .activity-row [role="status"] {
   flex: 1;
 }
+
+.step-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
