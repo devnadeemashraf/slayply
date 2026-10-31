@@ -48,48 +48,53 @@ export function QuestionList(props: QuestionListProps) {
             </label>
             <textarea
               aria-label={`Text of question ${index + 1}`}
-              rows={2}
+              rows={1}
               maxLength={LIMITS.questionChars}
               value={row.text}
               onChange={(event) => props.onChange(row.id, { text: event.target.value })}
             />
-            <div className="row">
-              <label htmlFor={`${row.id}-max`}>Max characters</label>
-              <input
-                id={`${row.id}-max`}
-                type="number"
-                min={1}
-                max={LIMITS.questionMaxChars}
-                value={row.maxChars ?? ""}
-                onChange={(event) => {
-                  const value = event.target.valueAsNumber;
-                  // Zero, negative or blank means no limit; a huge value is held at the contract's cap.
-                  props.onChange(row.id, {
-                    maxChars:
-                      Number.isNaN(value) || value < 1
-                        ? null
-                        : Math.min(Math.floor(value), LIMITS.questionMaxChars),
-                  });
-                }}
-              />
-              <button
-                type="button"
-                className="secondary"
-                aria-label={`Generate answer for question ${index + 1}`}
-                disabled={running || row.text.trim() === ""}
-                onClick={() => props.onGenerateOne(row.id)}
-              >
-                Generate
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                aria-label={`Remove question ${index + 1}`}
-                onClick={() => props.onRemove(row.id)}
-              >
-                Remove
-              </button>
-            </div>
+            <details className="q-options">
+              <summary>
+                {row.maxChars ? `Options · up to ${row.maxChars} characters` : "Options"}
+              </summary>
+              <div className="row">
+                <label htmlFor={`${row.id}-max`}>Max characters</label>
+                <input
+                  id={`${row.id}-max`}
+                  type="number"
+                  min={1}
+                  max={LIMITS.questionMaxChars}
+                  value={row.maxChars ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.valueAsNumber;
+                    // Zero, negative or blank means no limit; a huge value is held at the contract's cap.
+                    props.onChange(row.id, {
+                      maxChars:
+                        Number.isNaN(value) || value < 1
+                          ? null
+                          : Math.min(Math.floor(value), LIMITS.questionMaxChars),
+                    });
+                  }}
+                />
+                <button
+                  type="button"
+                  className="secondary"
+                  aria-label={`Generate answer for question ${index + 1}`}
+                  disabled={running || row.text.trim() === ""}
+                  onClick={() => props.onGenerateOne(row.id)}
+                >
+                  Generate
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  aria-label={`Remove question ${index + 1}`}
+                  onClick={() => props.onRemove(row.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            </details>
             {pastFor(row.id).length > 0 && (
               <details>
                 <summary>{`Earlier answer (${pastFor(row.id).length})`}</summary>

@@ -34,6 +34,10 @@ function useDismiss(
   outside: boolean,
   trigger?: RefObject<HTMLElement | null>,
 ) {
+  // Callers pass a new function each render; reading it through a ref keeps the effect (and the
+  // focus it restores on cleanup) from re-running on every keystroke in a drawer's field.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!open) return;
     const token = {};
@@ -41,12 +45,12 @@ function useDismiss(
     const before = document.activeElement;
     const onKey = (event: KeyboardEvent) => {
       if (openStack[openStack.length - 1] !== token) return;
-      if (shouldDismiss(event.key)) onClose();
+      if (shouldDismiss(event.key)) closeRef.current();
     };
     const onPress = (event: MouseEvent) => {
       if (!outside || !(event.target instanceof Node)) return;
       if (ref.current?.contains(event.target) || trigger?.current?.contains(event.target)) return;
-      onClose();
+      closeRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onPress);
@@ -56,7 +60,7 @@ function useDismiss(
       openStack.splice(openStack.indexOf(token), 1);
       if (before instanceof HTMLElement && document.contains(before)) before.focus();
     };
-  }, [open, onClose, ref, outside, trigger]);
+  }, [open, ref, outside, trigger]);
 }
 
 /** A titled block of a screen, with an optional action beside the heading. */

@@ -88,4 +88,23 @@ describe("QuestionList: past answers", () => {
   it("shows nothing when there are no past answers", () => {
     expect(renderToString(<QuestionList {...base} />)).not.toContain("Earlier answer");
   });
+
+  it("keeps each row to its checkbox and text, with the limit and buttons under Options", () => {
+    const html = renderToString(<QuestionList {...base} />);
+    const rowsHtml = html.split("<li").slice(1);
+    expect(rowsHtml).toHaveLength(2);
+    for (const row of rowsHtml) {
+      const options = row.indexOf("<details");
+      expect(options).toBeGreaterThan(row.indexOf("<textarea"));
+      expect(row.indexOf("Max characters")).toBeGreaterThan(options);
+      expect(row.indexOf("Remove question")).toBeGreaterThan(options);
+    }
+  });
+
+  it("keeps the main Generate button outside the Options and shows a set limit in their title", () => {
+    const html = renderToString(<QuestionList {...base} />);
+    expect(html).toContain("Options · up to 500 characters");
+    const lastOptions = html.lastIndexOf("</details>");
+    expect(html.indexOf("Generate 1 answer")).toBeGreaterThan(lastOptions);
+  });
 });

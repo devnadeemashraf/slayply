@@ -4,12 +4,14 @@ import { shiftLength } from "../lib/draft-kinds.js";
 import { copyTextOf } from "../lib/generate-controller.js";
 import { screenSteps } from "../lib/job-screens.js";
 import { addRow, removeRow, updateRow } from "../lib/question-rows.js";
+import { styleSummary } from "../lib/style-summary.js";
 import { ActionBar } from "./action-bar.js";
 import { DraftControls } from "./draft-controls.js";
 import { JobEmpty } from "./empty-states.js";
 import { FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
 import { JobStepper } from "./job-stepper.js";
+import { JobTextRow } from "./job-text-row.js";
 import { QuestionList } from "./question-list.js";
 import {
   JD_MAX_CHARS,
@@ -34,7 +36,6 @@ export function GeneratePanel(props: JobControllerProps) {
     fitState,
     formError,
     jd,
-    jdOpen,
     kind,
     length,
     limits,
@@ -53,7 +54,6 @@ export function GeneratePanel(props: JobControllerProps) {
     setFitResult,
     setFitState,
     setJd,
-    setJdOpen,
     setKind,
     setLength,
     setResumeId,
@@ -64,6 +64,9 @@ export function GeneratePanel(props: JobControllerProps) {
     suggested,
     tone,
   } = useJobController(props);
+
+  // The character limit field sits in the collapsed Style section; its error opens it.
+  const limitError = formError?.startsWith("The character limit") === true;
 
   return (
     <section>
@@ -94,44 +97,41 @@ export function GeneratePanel(props: JobControllerProps) {
                 </option>
               ))}
             </select>
-            <details open={jdOpen} onToggle={(event) => setJdOpen(event.currentTarget.open)}>
-              <summary>{`Job description (${jd.length.toLocaleString("en-US")} characters)`}</summary>
-              <label htmlFor="jd">Job description</label>
-              <textarea
-                id="jd"
-                rows={6}
-                maxLength={JD_MAX_CHARS}
-                value={jd}
-                onChange={(event) => {
-                  setJd(event.target.value);
-                  fitRunner.stop();
-                  setFitResult(null);
-                  setFitState({ phase: "idle" });
-                }}
-              />
-            </details>
+            <JobTextRow
+              jd={jd}
+              max={JD_MAX_CHARS}
+              onChange={(text) => {
+                setJd(text);
+                fitRunner.stop();
+                setFitResult(null);
+                setFitState({ phase: "idle" });
+              }}
+            />
           </>
         )}
         {screen === "questions" && (
           <>
-            <DraftControls
-              kind={kind}
-              tone={tone}
-              length={length}
-              maxChars={draftLimit}
-              canResize={
-                state.phase === "done" && !running && resultKind === kind && kind !== "answers"
-              }
-              onKind={setKind}
-              onTone={setTone}
-              onLength={setLength}
-              onMaxChars={setDraftLimit}
-              onResize={(direction) => {
-                const next = shiftLength(length, direction);
-                setLength(next);
-                void slay(undefined, { tone, length: next });
-              }}
-            />
+            <details className="style-section" open={limitError ? true : undefined}>
+              <summary>{`Style: ${styleSummary(kind, tone, length)}`}</summary>
+              <DraftControls
+                kind={kind}
+                tone={tone}
+                length={length}
+                maxChars={draftLimit}
+                canResize={
+                  state.phase === "done" && !running && resultKind === kind && kind !== "answers"
+                }
+                onKind={setKind}
+                onTone={setTone}
+                onLength={setLength}
+                onMaxChars={setDraftLimit}
+                onResize={(direction) => {
+                  const next = shiftLength(length, direction);
+                  setLength(next);
+                  void slay(undefined, { tone, length: next });
+                }}
+              />
+            </details>
             {kind === "answers" && (
               <QuestionList
                 rows={rows}
@@ -166,26 +166,25 @@ export function GeneratePanel(props: JobControllerProps) {
           onRerun={() => void checkFit(true)}
           onCancel={stopAll}
           direct={direct}
+          compact
         />
       )}
       {screen === "answers" && (
-        <>
-          <GenerationView
-            state={state}
-            copyState={copyState}
-            edits={edits}
-            limits={limits}
-            onEdit={applyEdit}
-            onFit={applyEdit}
-            onRetry={() => void slay()}
-            onCancel={stopAll}
-            direct={direct}
-            onCopy={() => {
-              const text = copyTextOf(state, edits);
-              if (text !== null) void feedback.copy(text);
-            }}
-          />
-        </>
+        <GenerationView
+          state={state}
+          copyState={copyState}
+          edits={edits}
+          limits={limits}
+          onEdit={applyEdit}
+          onFit={applyEdit}
+          onRetry={() => void slay()}
+          onCancel={stopAll}
+          direct={direct}
+          onCopy={() => {
+            const text = copyTextOf(state, edits);
+            if (text !== null) void feedback.copy(text);
+          }}
+        />
       )}
       {screen !== "capture" && (
         <>

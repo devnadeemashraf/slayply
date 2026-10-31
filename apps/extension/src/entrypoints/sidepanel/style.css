@@ -415,3 +415,17 @@ button.remove {
   cursor: pointer;
   text-decoration: underline;
 }
+
+.job-text-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-2) 0;
+}
+
+.q-options > summary,
+.style-section > summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+}

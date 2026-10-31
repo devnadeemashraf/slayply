@@ -4,8 +4,8 @@ import {
   type FitCheck,
   type StoredResume,
 } from "@slayply/core";
-import { Button, Card, Badge, type BadgeTone } from "@slayply/ui";
-import { useMemo } from "react";
+import { Badge, type BadgeTone, Button, Card, Drawer } from "@slayply/ui";
+import { useEffect, useMemo, useState } from "react";
 import type { GenerationState } from "../lib/generate-controller.js";
 import { ActivityIndicator } from "./activity-indicator.js";
 import { ErrorNotice } from "./error-notice.js";
@@ -158,6 +158,8 @@ export function FitView({
   onRerun,
   onCancel,
   direct = false,
+  compact = false,
+  initialDetailsOpen = false,
 }: {
   state: GenerationState;
   result: FitResult | null;
@@ -168,7 +170,17 @@ export function FitView({
   onCancel?: () => void;
   /** Direct Mode: error advice about choosing another model does not apply. */
   direct?: boolean;
+  /** A summary card with a Details drawer instead of the whole result. */
+  compact?: boolean;
+  /** Starts with the details drawer open (for tests). */
+  initialDetailsOpen?: boolean;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(initialDetailsOpen);
+  // A re-run or a cleared result closes the drawer, so it does not pop open when the next result lands.
+  const busy = state.phase === "streaming" || result === null;
+  useEffect(() => {
+    if (busy) setDetailsOpen(false);
+  }, [busy]);
   if (state.phase === "streaming") {
     return (
       <ActivityIndicator
@@ -195,6 +207,27 @@ export function FitView({
     );
   }
   if (!result) return null;
+  if (compact) {
+    const full = (
+      <Result result={result} suggestion={suggestion} onUseResume={onUseResume} onRerun={onRerun} />
+    );
+    return (
+      <div className="result" aria-live="polite">
+        <Card title="Fit check">
+          <p>
+            <Badge tone={CHANCE_TONE[result.fit.chance]}>{`Chance: ${result.fit.chance}`}</Badge>{" "}
+            {result.fit.reason}
+          </p>
+          <Button variant="secondary" onClick={() => setDetailsOpen(true)}>
+            Details
+          </Button>
+        </Card>
+        <Drawer open={detailsOpen} title="Fit check" onClose={() => setDetailsOpen(false)}>
+          {full}
+        </Drawer>
+      </div>
+    );
+  }
   return (
     <div className="result" aria-live="polite">
       <Card title="Fit check">

@@ -80,7 +80,6 @@ export function useJobController({
 }: JobControllerProps) {
   const [jd, setJd] = useState("");
   const [rows, setRows] = useState<QuestionRow[]>([]);
-  const [jdOpen, setJdOpen] = useState(true);
   const [resumeId, setResumeId] = useState(readRememberedResume);
   const [formError, setFormError] = useState<string | null>(null);
   const [state, setState] = useState<GenerationState>({ phase: "idle" });
@@ -129,7 +128,6 @@ export function useJobController({
     setRows(applied.rows);
     if (applied.jd !== undefined) setJd(applied.jd);
     if (applied.resetResult) {
-      setJdOpen(false);
       setScreen("capture");
       runner.stop();
       fitRunner.stop();
@@ -315,7 +313,6 @@ export function useJobController({
     fitState,
     formError,
     jd,
-    jdOpen,
     kind,
     length,
     limits,
@@ -331,7 +328,6 @@ export function useJobController({
     setFitResult,
     setFitState,
     setJd,
-    setJdOpen,
     setKind,
     setLength,
     setResumeId,

@@ -170,3 +170,51 @@ describe("FitView", () => {
     expect(html).not.toMatch(/deal-breakers/i);
   });
 });
+
+describe("FitView compact", () => {
+  function compact(initialDetailsOpen = false): string {
+    return renderToString(
+      <FitView
+        state={{ phase: "idle" }}
+        result={RESULT}
+        suggestion={null}
+        onUseResume={() => {}}
+        onRerun={() => {}}
+        compact
+        initialDetailsOpen={initialDetailsOpen}
+      />,
+    );
+  }
+
+  it("shows only the chance, the reason and a Details button", () => {
+    const html = compact();
+    expect(html).toMatch(/medium/i);
+    expect(html).toContain("Strong backend match.");
+    expect(html).toMatch(/<button[^>]*>Details<\/button>/);
+    expect(html).not.toContain("Deal-breakers");
+    expect(html).not.toContain("No on-call experience");
+  });
+
+  it("opens the full result in a dialog", () => {
+    const html = compact(true);
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain("Deal-breakers");
+    expect(html).toContain("No on-call experience");
+    expect(html).toContain("I am looking for 120k to 140k.");
+  });
+
+  it("keeps escaping model text in the summary", () => {
+    const hostile = { ...RESULT, fit: { ...FIT, reason: "<script>x</script>" } };
+    const html = renderToString(
+      <FitView
+        state={{ phase: "idle" }}
+        result={hostile}
+        suggestion={null}
+        onUseResume={() => {}}
+        onRerun={() => {}}
+        compact
+      />,
+    );
+    expect(html).not.toContain("<script>");
+  });
+});
