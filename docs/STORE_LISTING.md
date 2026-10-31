@@ -48,10 +48,10 @@ Productivity. English.
 Take these from the release build, at 1280x800 (or 640x400):
 
 1. First-run privacy screen.
-2. Job tab with a captured job and questions.
+2. Apply tab with a captured job and questions.
 3. A generated answer with its citations and a flagged sentence.
 4. Fit check result.
-5. Jobs tab with saved jobs.
+5. Saved tab with saved jobs.
 
 ## Support
 

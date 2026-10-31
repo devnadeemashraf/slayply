@@ -3,7 +3,11 @@ import { setupChecklist, TABS } from "./panel-nav.js";
 
 describe("TABS", () => {
   it("lists the four tabs in order", () => {
-    expect(TABS.map((tab) => tab.id)).toEqual(["job", "jobs", "you", "setup"]);
+    expect(TABS.map((tab) => tab.id)).toEqual(["apply", "saved", "you", "setup"]);
+  });
+
+  it("labels them Apply, Saved, You and Setup, so no two names look alike", () => {
+    expect(TABS.map((tab) => tab.label)).toEqual(["Apply", "Saved", "You", "Setup"]);
   });
 });
 

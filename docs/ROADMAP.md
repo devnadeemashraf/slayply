@@ -461,7 +461,7 @@
 
 #### `REDO-02`: New Shell
 - **Size:** M
-- **Status:** Planned
+- **Status:** In review (PR pending). Tabs are Apply, Saved, You, Setup (ids `apply`, `saved`); app bar with a theme toggle and an empty chip slot for `REDO-04`; `Dock`, `Section`, `Drawer`, `Popover` in `packages/ui`. The primary action still lives in `GeneratePanel`'s action bar until `REDO-05` moves it into the dock.
 - **Acceptance Criteria:** Tabs renamed Apply, Saved, You, Setup; app bar, restyled tabs, sticky dock, section/drawer/popover primitives; existing screens still work. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-03`: Activity Indicator
@@ -472,7 +472,7 @@
 #### `REDO-04`: Model and Effort Chip
 - **Size:** S
 - **Status:** Planned
-- **Acceptance Criteria:** Provider, model and effort change from the app bar without leaving the Job tab. Detail: `docs/REDESIGN_PLAN.md`.
+- **Acceptance Criteria:** Provider, model and effort change from the app bar without leaving the Apply tab. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-05`: Job Tab Restructure
 - **Size:** L

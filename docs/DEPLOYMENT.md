@@ -113,7 +113,7 @@ Load the release build unpacked (`chrome://extensions` > Developer mode > Load u
 - [ ] Capture a job: right-click a selection, and the toolbar icon on a Greenhouse or Lever job page.
 - [ ] On a LinkedIn job page the page capture refuses and selecting text works.
 - [ ] Generate an answer; it streams, passes the check, and Copy works.
-- [ ] Save the job; the Jobs tab shows it. Settings export, wipe and import round-trip.
+- [ ] Save the job; the Saved tab shows it. Settings export, wipe and import round-trip.
 - [ ] Stop the relay (suspend it in Render): the panel says the relay is not responding.
 
 ## 7. Publish and tag
