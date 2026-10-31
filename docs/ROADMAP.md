@@ -502,7 +502,7 @@
 
 #### `REDO-10`: Site and Release
 - **Size:** S
-- **Status:** Planned
+- **Status:** In review (PR pending). Docs only: draft v1.1.0 release notes, updated screenshot list and end-to-end checks. Left for the maintainer: real store and README screenshots, the 1.1.0 version bump, running `docs/DEPLOYMENT.md`, the tag.
 - **Acceptance Criteria:** Site uses the same tokens; README and store screenshots; deployment handbook rerun. Detail: `docs/REDESIGN_PLAN.md`.
 
 ---

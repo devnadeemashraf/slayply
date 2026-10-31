@@ -115,6 +115,9 @@ Load the release build unpacked (`chrome://extensions` > Developer mode > Load u
 - [ ] Generate an answer; it streams, passes the check, and Copy works.
 - [ ] Save the job; the Saved tab shows it. Settings export, wipe and import round-trip.
 - [ ] Stop the relay (suspend it in Render): the panel says the relay is not responding.
+- [ ] Redesign (1.1.0): the app bar chip changes provider, model and effort; the theme button cycles auto, light and dark; the Apply tab moves Capture, Questions, Answers and its main button sits above the tab bar.
+- [ ] While a fit check and an answer run, the stage and elapsed time tick and Cancel stops them. On Gemini, note the time the fit check takes (the `BP-fit-timeout` fix is unconfirmed) and whether the relay's keep-alive reaches the panel through Render (the stage must not drop to an error before 2 minutes).
+- [ ] Look at all four tabs at 390 x 720 in light and dark.
 
 ## 7. Publish and tag
 
