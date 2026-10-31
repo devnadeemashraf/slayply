@@ -447,16 +447,62 @@
 - **Required Tests:** Regression tests for each fixed finding; `pnpm run check` green on the tagged commit.
 - 🧪 **Manual Test:** Follow `docs/DEPLOYMENT.md` end to end on a real Render account and a real browser.
 
-#### `REL-02`: Prebuilt Download, Pinned ID, Disclaimer and New Icon
+### Phase 6: Redesign (`docs/REDESIGN_PLAN.md`, ADR-0022)
+
+#### `REDO-00`: Plan, Prototype and ADR
 - **Size:** S
-- **Status:** In review (PR pending). Tag `v1.0.0` not pushed; the Release workflow has never run.
-- **Acceptance Criteria:**
-  - Pushing a `v*` tag publishes `slayply-extension.zip` and a SHA-256 file to a GitHub release, built against the live relay after `pnpm run check`.
-  - The site has a download button to the stable asset URL, install steps for the zip, and a disclaimer; README, LEGAL and release notes carry the same disclaimer.
-  - The extension has a fixed ID (manifest `key`) so the relay accepts every unzipped copy; a test proves the ID matches the key.
-  - The icon and site favicon use the new mark (white S on the accent-blue square).
-- **Required Tests:** key-to-ID test; site tests for the download link, disclaimer phrases and own-repo-only links; workflow test (tag trigger, checks before publish, asset name, least privilege, release notes exist).
-- 🧪 **Manual Test:** add the pinned ID to `EXTENSION_IDS` on Render; push `v1.0.0`; download the zip from the site; unzip, load unpacked, confirm "Connected".
+- **Status:** In review (PR pending). Prototype at `docs/design/prototype/index.html`.
+- **Acceptance Criteria:** Maintainer approves the look and the PR order. No app change. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-01`: Theme Foundation
+- **Size:** M
+- **Status:** Planned
+- **Acceptance Criteria:** Light, dark and auto with one accent; presets removed (stored value ignored); shared with the site; contrast tests pass. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-02`: New Shell
+- **Size:** M
+- **Status:** Planned
+- **Acceptance Criteria:** Tabs renamed Apply, Saved, You, Setup; app bar, restyled tabs, sticky dock, section/drawer/popover primitives; existing screens still work. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-03`: Activity Indicator
+- **Size:** M
+- **Status:** Planned
+- **Acceptance Criteria:** Every long task shows stage, time elapsed and Cancel from an explicit stage machine; relay keep-alive; slow-run note. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-04`: Model and Effort Chip
+- **Size:** S
+- **Status:** Planned
+- **Acceptance Criteria:** Provider, model and effort change from the app bar without leaving the Job tab. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-05`: Job Tab Restructure
+- **Size:** L
+- **Status:** Planned
+- **Acceptance Criteria:** Capture, Questions, Answers steps; common case fits one screen at 390 x 720. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-06`: Answer Actions
+- **Size:** M
+- **Status:** Blocked on SPEC change A (maintainer edit).
+- **Acceptance Criteria:** Improve, more natural, shorter, longer, custom, with undo; claims re-checked after every rewrite. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-07`: Click to Fill
+- **Size:** M
+- **Status:** Blocked on SPEC change B (maintainer edit).
+- **Acceptance Criteria:** Fill one answer into one field on click; never submits, never on LinkedIn; undo. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-08`: You Tab and Resume Prefill
+- **Size:** L
+- **Status:** Blocked on SPEC change C (maintainer edit).
+- **Acceptance Criteria:** Suggested facts from the resume with source lines; nothing saved until accepted. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-09`: Jobs, Setup and Motion Polish
+- **Size:** M
+- **Status:** Planned
+- **Acceptance Criteria:** Remaining screens restyled; one micro-interaction pass with reduced-motion tests; playful copy only in empty states. Detail: `docs/REDESIGN_PLAN.md`.
+
+#### `REDO-10`: Site and Release
+- **Size:** S
+- **Status:** Planned
+- **Acceptance Criteria:** Site uses the same tokens; README and store screenshots; deployment handbook rerun. Detail: `docs/REDESIGN_PLAN.md`.
 
 ---
 
@@ -476,6 +522,7 @@
 | **ADR-0010** | Claim Checker & Grounding | Accepted | Deterministic text-based check in core against the profile that was sent; exact claim match; flag when unsure | Trust model claims, resume `R` IDs (follow-up), LLM verifier pass |
 | **ADR-0011** | OpenAI Adapter | Accepted | Chat Completions; chat models and effort support read from the model id; `supportsEffort` on `ModelInfo` | Responses API, hard-coded model table, always send effort |
 | **ADR-0012** | Gemini Adapter | Accepted | Key in header; ends only on `STOP`; thinking budget (2.5) or level (3+) by model id; models ordered by version | Key in URL, trusting a partial stream, relying on the models `thinking` field |
+| **ADR-0022** | Redesign Direction | Proposed | Restyle and restructure in small PRs after an approved prototype; light and dark only | See `docs/adr/0022-redesign-direction.md` |
 | **ADR-0021** | Applying the Design to the Panel | Accepted | Global token stylesheet for legacy elements, components for rebuilt screens; stepper and action bar inside `GeneratePanel`; native `<details>` receipts | Rewrite every panel, lift handlers into `App`, per-sentence chips with state |
 | **ADR-0020** | UI Package, Tokens and Base Components | Accepted | Source package; tokens in plain CSS parsed by the contrast test; hand-written `sl-*` classes | `tsc` build, tokens in TypeScript, Tailwind, CSS-in-JS |
 | **ADR-0019** | Panel Shell and Navigation | Accepted | Bottom tab bar; all panels stay mounted and hidden; pure tab logic in `lib/panel-nav.ts` | Left icon rail, one scroll with anchors |
@@ -488,6 +535,8 @@
 *(Any future changes to `docs/SPEC.md` must be proposed and logged here with what it replaces, cost, and risk.)*
 
 - **2026-10-30, approved by the maintainer (`PROV-04`):** §6 `GenerateRequest` gains optional `provider`, `model` and `effort`. *Replaces:* nothing (additive; requests without them are unchanged). *Cost:* one cached model-list call when a model is named. *Risk:* the model id is client text; mitigated by a shape check in the schema and a check against the provider's own model list in the relay (ADR-0014).
+
+- **2026-10-31, proposed (`REDO-06`, `REDO-07`, `REDO-08`), not yet applied:** a rewrite request, writing one answer into one field on click, and a resume prefill request. Exact wording, replaced text, cost and risk are in `docs/REDESIGN_PLAN.md`. Each PR is blocked until the maintainer edits the SPEC by hand.
 
 ---
 

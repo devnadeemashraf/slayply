@@ -34,8 +34,8 @@
 - None.
 
 ## NEXT UP
-- **Item:** none left in the roadmap. `REL-01` in review; then the maintainer follows `docs/DEPLOYMENT.md` (deploy, verify, publish, tag v1.0.0).
-- **Why now:** the project is feature complete; only deployment remains.
+- **Item:** Phase 6 redesign (`docs/REDESIGN_PLAN.md`, ADR-0022). `REDO-00` (plan and prototype) in review; next `REDO-01` theme foundation, `REDO-02` shell, then `REDO-03` activity indicator and `REDO-04` model chip. `REDO-06/07/08` wait for SPEC edits by the maintainer.
+- **Why now:** real-key use of the live build showed no progress while waiting, a long scroll, no fill or rewrite, and a dated look.
 - **Open from `CAP-01`:** needs a manual test in a real unpacked extension (steps in the roadmap entry; plus the toolbar-icon path for the panel buttons, and LinkedIn: "Capture visible JD" must refuse, selection must work). `capture-panel.tsx`, `background.ts` and `capture-browser.ts` have no automated tests. Job fields and notes live in panel memory only (`JOBS-01` / `HIST-01` should persist them). The panel's page button needs `activeTab`, so after a tab switch the user may need to click the toolbar icon first. `innerText` behaviour is untested (tests use linkedom `textContent`). Workday and other script-rendered boards may give little text. Only the top frame is read by the panel buttons (a job post inside an iframe needs the right-click path); `info.selectionText` length limits are unchecked; "Use as…" before a key and profile exist shows nothing until the generate panel appears. The context-menu "page" item shows on LinkedIn too and answers with a refusal message.
 - **Open from `PROV-04`:** needs a manual test in a real extension (see the roadmap entry; `provider-panel.tsx`, `generate-panel.tsx` and `App.tsx` have no automated tests). OpenAI and Gemini remain live-untested (no keys), so model filtering and effort support are still guessed from ids. Claude has no effort control (the Claude adapter never sets `supportsEffort`). Direct Mode is Claude only and picks the newest Claude model (no list in Direct Mode); OpenAI/Gemini direct calls need host permissions and a CORS check (own PR, own ADR). The saved fit result is keyed by job description only, so changing provider or model does not refresh it (use Run again). The model list is fetched through the relay whenever the panel opens or the key or provider changes (the relay caches it for 10 minutes). The relay now checks the key format before taking the stream slot (a bad key used to leak one slot until restart).
 - **Open from `DIRECT-01`:** needs a manual test in a real unpacked extension: stop the relay, open Settings, turn on Direct Mode, accept the browser prompt, generate an answer (also try declining the prompt: the switch must stay off). It settles whether `anthropic-dangerous-direct-browser-access` is needed (record the result in `docs/VERSIONS.md`). Claude only; OpenAI and Gemini direct calls need the provider picker. The relay health banner still shows the relay's state in Direct Mode. The permission stays granted after switching off; if the user revokes it in the browser, Direct Mode stays on and the error names the permission. `settings-panel.tsx` has no automated tests. A key with Direct Mode on is stored in `chrome.storage.local` exactly as before.
@@ -73,8 +73,8 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
-- PR (pending) | `REL-02` | Pinned extension ID, release workflow and site download button, disclaimer (README, LEGAL, site), new icon, favicon | Manual test: Yes
-- PR (pending) | `BP-errors` | `error-copy.ts`, `ErrorNotice`, Direct Mode wording, retry on fit and generate errors | Manual test: Yes
-- PR (pending) | `BP-loadtest` | `pnpm run loadtest`: in-process relay load test with stub provider, p99 budget gate, short run in tests | Manual test: No
-- PR (pending) | `BP-readme` | README: honest status, live URLs, build-it-yourself install, roadmap table brought up to date | Manual test: No
-- PR (pending) | `REL-01` | Release prep: icons, 1.0.0, deployment handbook, store listing, release notes, red-team fixes | Manual test: Yes
+- PR #54 | `BP-errors` | `error-copy.ts`, `ErrorNotice`, Direct Mode wording, retry on fit and generate errors | Manual test: Yes
+- PR (pending) | `REDO-00` | Redesign plan, static prototype with screenshots, ADR-0022, roadmap Phase 6 | Manual test: Yes
+- PR #53 | `BP-loadtest` | `pnpm run loadtest`: in-process relay load test with stub provider, p99 budget gate, short run in tests | Manual test: No
+- PR #52 | `BP-readme` | README: honest status, live URLs, build-it-yourself install, roadmap table brought up to date | Manual test: No
+- PR #51 | `REL-01` | Release prep: icons, 1.0.0, deployment handbook, store listing, release notes, red-team fixes | Manual test: Yes
