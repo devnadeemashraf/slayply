@@ -1,6 +1,6 @@
 import type { Effort } from "@slayply/core";
 import type { ProviderId } from "@slayply/providers";
-import { DEFAULT_PRESET, isPreset, type Preset } from "@slayply/ui";
+import { DEFAULT_THEME, isTheme, type Theme } from "@slayply/ui";
 
 const STORAGE_KEY = "slayply:settings";
 
@@ -20,8 +20,8 @@ export type Settings = {
   privacyAcknowledged: boolean;
   /** Direct Mode: call the provider from the panel and skip the relay (SPEC Feature 8). */
   directMode: boolean;
-  /** Visual preset (SPEC Feature 10). */
-  preset: Preset;
+  /** Colour theme (SPEC Feature 10); "auto" follows the system. */
+  theme: Theme;
 };
 
 export type SaveKeyResult = { ok: true } | { ok: false; reason: "empty" | "invalid" };
@@ -42,7 +42,7 @@ const DEFAULTS: Settings = {
   effort: "",
   privacyAcknowledged: false,
   directMode: false,
-  preset: DEFAULT_PRESET,
+  theme: DEFAULT_THEME,
 };
 
 const KEY_FIELDS = {
@@ -77,7 +77,7 @@ function parseSettings(raw: unknown): Settings {
         : "",
     privacyAcknowledged: record.privacyAcknowledged === true,
     directMode: record.directMode === true,
-    preset: isPreset(record.preset) ? record.preset : DEFAULT_PRESET,
+    theme: isTheme(record.theme) ? record.theme : DEFAULT_THEME,
   };
 }
 
@@ -127,7 +127,7 @@ export function createSettingsStore(area: StorageAreaLike) {
 
     setDirectMode: (on: boolean) => update({ directMode: on }),
 
-    setPreset: (preset: Preset) => update({ preset: isPreset(preset) ? preset : DEFAULT_PRESET }),
+    setTheme: (theme: Theme) => update({ theme: isTheme(theme) ? theme : DEFAULT_THEME }),
 
     /** Removes the whole record (key and acknowledgement), queued behind any update in flight. */
     wipe(): Promise<void> {

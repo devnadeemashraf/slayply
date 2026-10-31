@@ -456,7 +456,7 @@
 
 #### `REDO-01`: Theme Foundation
 - **Size:** M
-- **Status:** Planned
+- **Status:** In review (PR pending). Removed with the presets: the preset list and picker tests, per-preset token snapshots and `StickerBadge` (now `Badge`); `sl-drop` keyframes went with the sticker.
 - **Acceptance Criteria:** Light, dark and auto with one accent; presets removed (stored value ignored); shared with the site; contrast tests pass. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-02`: New Shell

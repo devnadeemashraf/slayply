@@ -1,5 +1,5 @@
 import type { StoredProfile, StoredResume } from "@slayply/core";
-import { DEFAULT_PRESET, TabPanel, Tabs } from "@slayply/ui";
+import { DEFAULT_THEME, TabPanel, Tabs } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { CapturePanel } from "../../components/capture-panel.js";
@@ -7,7 +7,7 @@ import { GeneratePanel } from "../../components/generate-panel.js";
 import { JobsTab } from "../../components/jobs-tab.js";
 import { ONBOARDING_LAST_STEP, OnboardingCards } from "../../components/onboarding-cards.js";
 import { YouEmpty } from "../../components/empty-states.js";
-import { PresetPicker } from "../../components/preset-picker.js";
+import { ThemePicker } from "../../components/theme-picker.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
 import { ProviderPanel } from "../../components/provider-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
@@ -68,11 +68,12 @@ export function App() {
   const [tab, setTab] = useState<TabId>("job");
   const [onboardingStep, setOnboardingStep] = useState(0);
 
-  // The preset is a data-theme on the page root; before settings load the default (neon) applies.
-  const preset = settings?.preset ?? DEFAULT_PRESET;
+  // "auto" removes data-theme so the stylesheet follows the system; light and dark force a theme.
+  const theme = settings?.theme ?? DEFAULT_THEME;
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", preset);
-  }, [preset]);
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     store.load().then(setSettings, () => setLoadError(SERIOUS.settingsUnreadable));
@@ -287,11 +288,11 @@ export function App() {
           </TabPanel>
           <TabPanel id="setup" active={tab === "setup"}>
             {errorFor("setup")}
-            <PresetPicker
-              value={settings.preset}
+            <ThemePicker
+              value={settings.theme}
               onChange={(next) =>
                 void attempt("setup", async () => {
-                  await store.setPreset(next);
+                  await store.setTheme(next);
                   await refresh();
                 })
               }

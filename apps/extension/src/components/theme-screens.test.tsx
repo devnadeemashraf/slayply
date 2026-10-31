@@ -8,7 +8,7 @@ import { CharRing } from "./char-ring.js";
 import { FitView } from "./fit-view.js";
 import { GenerationView } from "./generation-view.js";
 import { JobStepper } from "./job-stepper.js";
-import { PresetPicker } from "./preset-picker.js";
+import { ThemePicker } from "./theme-picker.js";
 
 const noop = () => {};
 
@@ -63,21 +63,20 @@ describe("micro-interaction hooks in markup", () => {
   });
 });
 
-describe("PresetPicker", () => {
-  it("lists the three presets and marks only the current one pressed", () => {
-    const html = renderToString(<PresetPicker value="bubblegum" onChange={noop} />);
-    expect(html).toContain("Neon");
-    expect(html).toContain("Bubblegum");
-    expect(html).toContain("Brutal");
+describe("ThemePicker", () => {
+  it("lists match system, light and dark and marks only the current one pressed", () => {
+    const html = renderToString(<ThemePicker value="dark" onChange={noop} />);
+    expect(html).toContain("Match system");
+    expect(html).toContain("Light");
+    expect(html).toContain("Dark");
     expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Bubblegum|Bubblegum[^<]*<\/button>/);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>Dark/);
   });
 
   it("is a labelled group", () => {
-    const html = renderToString(<PresetPicker value="neon" onChange={noop} />);
+    const html = renderToString(<ThemePicker value="auto" onChange={noop} />);
     expect(html).toContain("<fieldset");
-    expect(html).toContain("<legend>Look</legend>");
-    expect(html).toContain("Look");
+    expect(html).toContain("<legend>Theme</legend>");
   });
 });
 
@@ -236,7 +235,7 @@ describe("FitView on the new design", () => {
     salaryAnswer: "",
   };
 
-  it("shows the chance as a sticker badge with the level in text", () => {
+  it("shows the chance as a badge with the level in text", () => {
     const html = renderToString(
       <FitView
         state={{ phase: "idle" }}
@@ -246,7 +245,7 @@ describe("FitView on the new design", () => {
         onRerun={noop}
       />,
     );
-    expect(html).toContain("sl-sticker-bad");
+    expect(html).toContain("sl-badge-bad");
     expect(html).toContain("Chance: low");
   });
 });

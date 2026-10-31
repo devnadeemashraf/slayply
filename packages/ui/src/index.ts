@@ -1,3 +1,4 @@
+export { Badge, type BadgeTone } from "./badge.js";
 export { Button, type ButtonProps, type ButtonVariant } from "./button.js";
 export { Card } from "./card.js";
 export { Chip } from "./chip.js";
@@ -5,7 +6,6 @@ export { contrastRatio } from "./contrast.js";
 export { EmptyState } from "./empty-state.js";
 export { Field, type FieldProps } from "./field.js";
 export { unguardedAnimations } from "./motion-audit.js";
-export { StickerBadge, type StickerTone } from "./sticker-badge.js";
 export { Switch } from "./switch.js";
 export { nextIndex, type TabItem, TabPanel, Tabs } from "./tabs.js";
-export { DEFAULT_PRESET, isPreset, PRESETS, type Preset } from "./themes.js";
+export { DEFAULT_THEME, isTheme, THEMES, type Theme } from "./themes.js";

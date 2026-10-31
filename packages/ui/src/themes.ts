@@ -1,9 +1,10 @@
-export const PRESETS = ["neon", "bubblegum", "brutal"] as const;
+/** "auto" follows the system's light or dark setting. */
+export const THEMES = ["auto", "light", "dark"] as const;
 
-export type Preset = (typeof PRESETS)[number];
+export type Theme = (typeof THEMES)[number];
 
-export const DEFAULT_PRESET: Preset = "neon";
+export const DEFAULT_THEME: Theme = "auto";
 
-export function isPreset(value: unknown): value is Preset {
-  return PRESETS.some((preset) => preset === value);
+export function isTheme(value: unknown): value is Theme {
+  return THEMES.some((theme) => theme === value);
 }

@@ -10,7 +10,7 @@ const EMPTY_SETTINGS = {
   effort: "",
   privacyAcknowledged: false,
   directMode: false,
-  preset: "neon",
+  theme: "auto",
 } as const;
 
 function memoryArea(initial: Record<string, unknown> = {}): StorageAreaLike & {
