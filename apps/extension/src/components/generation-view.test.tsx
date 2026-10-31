@@ -208,4 +208,69 @@ describe("GenerationView: fit to limit", () => {
     expect(html).not.toContain("Fit to");
     expect(html).toContain("Too long to trim by whole sentences");
   });
+
+  describe("several answers", () => {
+    const three: GenerationState = {
+      phase: "done",
+      attempts: 1,
+      profile: { facts: [{ id: "F01", text: "Built the billing system." }], stories: [] },
+      response: {
+        outputs: [
+          { id: "q1", label: "Why us?", text: "First answer text.", claims: [], charCount: 18 },
+          {
+            id: "q2",
+            label: "Why you?",
+            text: "I built the billing system.",
+            claims: [{ sentence: "I built the billing system.", factIds: ["F01"] }],
+            charCount: 27,
+          },
+          {
+            id: "q3",
+            label: "Salary?",
+            text: "I want <b>fair</b> pay.",
+            claims: [],
+            charCount: 23,
+          },
+        ],
+        warnings: [],
+      },
+    };
+
+    it("opens only the first card and shows a one-line preview on the others", () => {
+      const html = render(three);
+      const flags = [...html.matchAll(/<details class="answer-card"( open="")?/g)].map(
+        (match) => match[1] !== undefined,
+      );
+      expect(flags).toEqual([true, false, false]);
+      expect(html).toContain("Why you?");
+      expect(html).toContain("I built the billing system.");
+    });
+
+    it("flags a card that has sentences to check", () => {
+      const flagged: GenerationState = {
+        ...three,
+        response: {
+          ...(three as Extract<GenerationState, { phase: "done" }>).response,
+          outputs: [
+            { id: "q1", label: "Why us?", text: "I led teams.", claims: [], charCount: 12 },
+            { id: "q2", label: "Why you?", text: "Fine.", claims: [], charCount: 5 },
+          ],
+        },
+      } as GenerationState;
+      expect(render(flagged)).toContain("1 to check");
+    });
+
+    it("keeps model text escaped in the preview", () => {
+      expect(render(three)).not.toContain("<b>fair</b>");
+    });
+
+    it("keeps the Copy button outside the cards", () => {
+      const html = render(three);
+      expect(html.indexOf("Copy to Clipboard")).toBeGreaterThan(html.lastIndexOf("</details>"));
+    });
+
+    it("does not collapse a single answer", () => {
+      expect(render(DONE)).not.toContain("<details");
+    });
+  });
 });

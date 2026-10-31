@@ -16,10 +16,15 @@ export function ActionBar({
   const onClick = action.kind === "fit" ? onFit : action.kind === "answers" ? onAnswers : onStop;
   return (
     <div className="action-bar">
-      {action.hint && <p className="muted">{action.hint}</p>}
+      {action.hint && (
+        <p id="action-hint" className="muted">
+          {action.hint}
+        </p>
+      )}
       <Button
         variant={action.kind === "stop" ? "secondary" : "primary"}
         disabled={action.disabled}
+        aria-describedby={action.hint ? "action-hint" : undefined}
         onClick={onClick}
       >
         {action.label}

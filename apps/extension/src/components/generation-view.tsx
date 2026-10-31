@@ -13,6 +13,7 @@ import type { GenerationState } from "../lib/generate-controller.js";
 import { copyTextOf } from "../lib/generate-controller.js";
 import { createExit, exitDelay, prefersReducedMotion } from "../lib/motion.js";
 import { ActivityIndicator } from "./activity-indicator.js";
+import { answerPreview } from "../lib/answer-preview.js";
 import { CharRing } from "./char-ring.js";
 import { ErrorNotice } from "./error-notice.js";
 
@@ -182,6 +183,33 @@ function CheckedAnswer({
   );
 }
 
+/** A collapsible card for one of several answers: label, claims to check, and a one-line preview. */
+function AnswerCard({
+  output,
+  text,
+  open,
+  state,
+  children,
+}: {
+  output: OutputAnswer;
+  text: string;
+  open: boolean;
+  state: Extract<GenerationState, { phase: "done" }>;
+  children: React.ReactNode;
+}) {
+  const { uncited } = summarizeClaims(checkClaims(text, output.claims, state.profile));
+  return (
+    <details className="answer-card" open={open}>
+      <summary>
+        <strong>{output.label}</strong>
+        {uncited > 0 && <Badge tone="warn">{`${uncited} to check`}</Badge>}
+        <span className="muted"> {answerPreview(text)}</span>
+      </summary>
+      {children}
+    </details>
+  );
+}
+
 /** Renders the generation state. Model output is plain text children only, never HTML. */
 export function GenerationView({
   state,
@@ -237,21 +265,30 @@ export function GenerationView({
       )}
       {state.phase === "done" && (
         <>
-          {state.response.outputs.map((output) => (
-            <Card
-              key={output.id}
-              title={state.response.outputs.length > 1 ? output.label : undefined}
-            >
+          {state.response.outputs.map((output, index) => {
+            const text = edits[output.id] ?? output.text;
+            const answer = (
               <CheckedAnswer
                 output={output}
-                text={edits[output.id] ?? output.text}
+                text={text}
                 max={limits?.[output.id]}
                 state={state}
                 onEdit={onEdit}
                 onFit={onFit}
               />
-            </Card>
-          ))}
+            );
+            // One answer is shown whole; several collapse, with only the first open.
+            if (state.response.outputs.length === 1) {
+              return <Card key={output.id}>{answer}</Card>;
+            }
+            return (
+              <Card key={output.id}>
+                <AnswerCard output={output} text={text} open={index === 0} state={state}>
+                  {answer}
+                </AnswerCard>
+              </Card>
+            );
+          })}
           {state.response.warnings.length > 0 && (
             <ul className="warnings">
               {state.response.warnings.map((warning) => (

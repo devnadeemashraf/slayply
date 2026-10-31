@@ -1,4 +1,5 @@
 import { Button } from "@slayply/ui";
+import { createPortal } from "react-dom";
 import { describeProfileUse } from "../lib/build-request.js";
 import { shiftLength } from "../lib/draft-kinds.js";
 import { copyTextOf } from "../lib/generate-controller.js";
@@ -21,7 +22,7 @@ import {
 } from "./use-job-controller.js";
 
 export function GeneratePanel(props: JobControllerProps) {
-  const { profile, resumes, direct } = props;
+  const { profile, resumes, direct, dockSlot } = props;
   const {
     action,
     applyEdit,
@@ -67,6 +68,15 @@ export function GeneratePanel(props: JobControllerProps) {
 
   // The character limit field sits in the collapsed Style section; its error opens it.
   const limitError = formError?.startsWith("The character limit") === true;
+
+  const actionBar = (
+    <ActionBar
+      action={action}
+      onFit={() => void checkFit(false)}
+      onAnswers={() => void slay()}
+      onStop={stopAll}
+    />
+  );
 
   return (
     <section>
@@ -198,12 +208,7 @@ export function GeneratePanel(props: JobControllerProps) {
           )}
         </>
       )}
-      <ActionBar
-        action={action}
-        onFit={() => void checkFit(false)}
-        onAnswers={() => void slay()}
-        onStop={stopAll}
-      />
+      {dockSlot ? createPortal(actionBar, dockSlot) : actionBar}
     </section>
   );
 }
