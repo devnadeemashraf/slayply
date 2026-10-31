@@ -36,13 +36,15 @@ const THINKING_LEVEL: Record<ReasoningEffort, "low" | "high"> = {
   high: "high",
 };
 
+const DEFAULT_EFFORT: ReasoningEffort = "low";
+
 export type GeminiAdapterOptions = {
   /** Defaults to the global `fetch`; tests inject recorded fixtures. */
   fetch?: typeof fetch;
   baseUrl?: string;
   /** Model id to use. When omitted the newest text model from the models endpoint is used. */
   model?: string;
-  /** Sent as a thinking budget or level only when the model supports thinking. */
+  /** Sent as a thinking budget or level only when the model supports thinking; unset means low. */
   effort?: ReasoningEffort;
   now?: () => number;
 };
@@ -159,10 +161,13 @@ export function createGeminiAdapter(options: GeminiAdapterOptions = {}): Provide
   }
 
   function thinkingConfig(model: string): Record<string, unknown> {
-    if (options.effort === undefined || !supportsThinking(model)) return {};
+    if (!supportsThinking(model)) return {};
+    // Unset is not "model default": Gemini 2.5 thinks dynamically and 3 defaults to high, which can
+    // outlast the relay's stream deadline on a large reply such as a fit check. Ask for low instead.
+    const effort = options.effort ?? DEFAULT_EFFORT;
     return Math.floor(versionOf(model)) >= 3
-      ? { thinkingConfig: { thinkingLevel: THINKING_LEVEL[options.effort] } }
-      : { thinkingConfig: { thinkingBudget: THINKING_BUDGET[options.effort] } };
+      ? { thinkingConfig: { thinkingLevel: THINKING_LEVEL[effort] } }
+      : { thinkingConfig: { thinkingBudget: THINKING_BUDGET[effort] } };
   }
 
   async function* streamCompletion(
