@@ -61,4 +61,17 @@ describe("JobsView", () => {
   it("has a remove button per job", () => {
     expect(render([JOB, { ...JOB, id: "k2" }]).match(/Remove job/g)).toHaveLength(2);
   });
+
+  it("heads the list with a count of saved jobs", () => {
+    expect(render([JOB])).toContain("1 saved");
+    expect(render([JOB, { ...JOB, id: "k2" }])).toContain("2 saved");
+  });
+
+  it("shows no count when the list is empty", () => {
+    expect(render([])).not.toContain("0 saved");
+  });
+
+  it("shows the status as a badge as well as in the select", () => {
+    expect(render([JOB])).toMatch(/sl-badge[^>]*>Applied</);
+  });
 });

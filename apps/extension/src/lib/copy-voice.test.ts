@@ -21,14 +21,13 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe("voice: playful stays in its lane", () => {
-  it("has playful copy only for empty states and the relay warm-up", () => {
+  it("has playful copy only for empty states", () => {
     expect(Object.keys(PLAYFUL).sort()).toEqual(
       [
         "jobEmptyBody",
         "jobEmptyTitle",
         "jobsEmptyBody",
         "jobsEmptyTitle",
-        "relayWarming",
         "youEmptyBody",
         "youEmptyTitle",
       ].sort(),

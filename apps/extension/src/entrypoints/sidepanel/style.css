@@ -457,3 +457,27 @@ button.remove {
 .answer-card[open] > summary .muted {
   display: none;
 }
+
+.jobs-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* You and Setup: each top-level section reads as a card, like Saved. */
+#sl-panel-you > section,
+#sl-panel-setup > section,
+#sl-panel-setup > fieldset.plain {
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+#sl-panel-you > section > h2:first-child,
+#sl-panel-setup > section > h2:first-child {
+  margin-top: 0;
+}

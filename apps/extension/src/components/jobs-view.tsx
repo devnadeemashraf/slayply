@@ -1,5 +1,5 @@
 import { JOB_STATUSES, type JobRecord, type JobStatus } from "@slayply/core";
-import { Button, Card, EmptyState } from "@slayply/ui";
+import { Badge, Button, Card, EmptyState } from "@slayply/ui";
 import { PLAYFUL } from "../lib/copy-text.js";
 
 const LABELS: Record<JobStatus, string> = {
@@ -26,7 +26,10 @@ export function JobsView({
 }) {
   return (
     <section>
-      <h2>Jobs</h2>
+      <div className="jobs-head">
+        <h2>Saved jobs</h2>
+        {jobs.length > 0 && <span className="muted">{`${jobs.length} saved`}</span>}
+      </div>
       {error && (
         <p className="error" role="alert">
           {error}
@@ -38,6 +41,7 @@ export function JobsView({
         jobs.map((job) => (
           <Card key={job.id}>
             <h3>{[job.title || "Untitled job", job.company].filter(Boolean).join(" at ")}</h3>
+            <Badge>{statusLabel(job.status)}</Badge>
             <p className="muted">
               {[
                 job.location,

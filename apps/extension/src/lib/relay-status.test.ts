@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SERIOUS } from "./copy-text.js";
 import {
   DIRECT_MODE_AFTER_MS,
   describeRelayStatus,
@@ -51,7 +52,7 @@ describe("describeRelayStatus", () => {
     for (const status of phases) expect(status.label.length).toBeGreaterThan(0);
     expect(phases.map((s) => s.offerDirectMode)).toEqual([false, false, false, true]);
     expect(phases[2]?.label).toBe("Connected");
-    expect(phases[1]?.label).toContain("cooking your answer");
+    expect(phases[1]?.label).toBe(SERIOUS.relayWarming);
   });
 });
 
@@ -166,5 +167,14 @@ describe("monitorRelay", () => {
     monitorRelay({ url: "http://relay.test/", fetchFn, onChange: () => {} });
     await vi.advanceTimersByTimeAsync(0);
     expect(fetchFn).toHaveBeenCalledWith("http://relay.test/health", expect.anything());
+  });
+});
+
+describe("warm-up wording", () => {
+  it("says plainly that the relay is waking, with no joke or emoji", () => {
+    const status = describeRelayStatus({ elapsedMs: 3_000, outcome: "pending" });
+    expect(status.label).toBe(SERIOUS.relayWarming);
+    expect(status.label).not.toMatch(/\p{Extended_Pictographic}/u);
+    expect(status.label.toLowerCase()).toContain("relay");
   });
 });

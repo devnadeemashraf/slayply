@@ -8,7 +8,6 @@
  */
 
 export const PLAYFUL = {
-  relayWarming: "Waking the relay… cooking your answer ☕",
   jobEmptyTitle: "No job yet",
   jobEmptyBody: "Open a posting and hit Capture, or paste a description below.",
   jobsEmptyTitle: "No saved jobs yet",
@@ -20,6 +19,7 @@ export const PLAYFUL = {
 
 export const SERIOUS = {
   relayChecking: "Checking relay…",
+  relayWarming: "Waking the relay, which can take up to a minute…",
   relayConnected: "Connected",
   relayNotResponding: "Relay not responding. You can switch to Direct Mode.",
   directModeNotice:

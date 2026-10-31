@@ -1,4 +1,4 @@
-import { PLAYFUL, SERIOUS } from "./copy-text.js";
+import { SERIOUS } from "./copy-text.js";
 
 /** After this long without a healthy probe the panel offers Direct Mode (SPEC §5). */
 export const DIRECT_MODE_AFTER_MS = 60_000;
@@ -33,7 +33,7 @@ export function describeRelayStatus(input: {
   if (outcome === "failed" || elapsedMs >= WARMING_AFTER_MS) {
     return {
       phase: "warming",
-      label: PLAYFUL.relayWarming,
+      label: SERIOUS.relayWarming,
       offerDirectMode: false,
     };
   }
