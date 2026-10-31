@@ -85,12 +85,12 @@ Confirm what was baked in:
 ```
 type apps\extension\.output\chrome-mv3\manifest.json
 ```
-`host_permissions` must contain only your relay origin followed by `/*`, `version` must be `1.0.0`, and `permissions` must be exactly `sidePanel, storage, contextMenus, activeTab, scripting`.
+`host_permissions` must contain only your relay origin followed by `/*`, `version` must be `1.1.0`, and `permissions` must be exactly `sidePanel, storage, contextMenus, activeTab, scripting`.
 
 Zip for the store (the folder contents, not the folder itself):
 ```
 cd apps\extension\.output\chrome-mv3
-tar -a -c -f ..\slayply-1.0.0.zip *
+tar -a -c -f ..\slayply-1.1.0.zip *
 ```
 
 ## 5. Extension ID and `EXTENSION_IDS`
@@ -125,10 +125,10 @@ Load the release build unpacked (`chrome://extensions` > Developer mode > Load u
 2. Once the store assigns or confirms the ID, make sure it is in `EXTENSION_IDS` (step 5).
 3. Tag the release from `main`:
    ```
-   git tag -a v1.0.0 -m "Slayply 1.0.0"
-   git push origin v1.0.0
+   git tag -a v1.1.0 -m "Slayply 1.1.0"
+   git push origin v1.1.0
    ```
-   Use `docs/RELEASE_NOTES_v1.0.0.md` as the GitHub release text.
+   Use `docs/RELEASE_NOTES_v1.1.0.md` as the GitHub release text.
 
 ## Publish a prebuilt download (GitHub release)
 
@@ -137,12 +137,12 @@ The site's download button points at `releases/latest/download/slayply-extension
 1. Merge everything for the release to `main`; make sure `apps/extension/package.json` has the version and `docs/RELEASE_NOTES_v<version>.md` exists (a test checks this).
 2. Tag and push (this is the only step you run):
    ```
-   git tag -a v1.0.0 -m "Slayply 1.0.0"
-   git push origin v1.0.0
+   git tag -a v1.1.0 -m "Slayply 1.1.0"
+   git push origin v1.1.0
    ```
 3. The **Release** workflow (`.github/workflows/release.yml`) runs the full check, builds the zip against the live relay, writes a SHA-256 file and creates the release with both attached. Watch it under the repository's Actions tab.
 4. Check: open `https://github.com/devnadeemashraf/slayply/releases/latest/download/slayply-extension.zip`; it should download. Unzip it, load it unpacked, and confirm the panel says "Connected".
-5. A failed workflow publishes nothing. Fix the cause, delete the tag (`git push origin :v1.0.0` and `git tag -d v1.0.0`), and tag again.
+5. A failed workflow publishes nothing. Fix the cause, delete the tag (`git push origin :v1.1.0` and `git tag -d v1.1.0`), and tag again.
 
 To update users: tag a new version. Chrome does not auto-update unpacked extensions; the site and README tell people to download again.
 

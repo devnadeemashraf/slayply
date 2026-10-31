@@ -1,6 +1,6 @@
-# Slayply 1.1.0 (draft)
+# Slayply 1.1.0
 
-A redesign of the side panel, with progress you can see while a model works. The version in `apps/extension/package.json` is still 1.0.0: bump it, tag and use this text when you cut the release (`docs/DEPLOYMENT.md`).
+A redesign of the side panel, with progress you can see while a model works. Tag `v1.1.0` and use this text for the release (`docs/DEPLOYMENT.md`).
 
 ## What changed
 
