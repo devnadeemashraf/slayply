@@ -3,7 +3,7 @@
 ## State
 - Phase 0: Bootstrap completed.
 - `pnpm run check` is now truthful: Biome failures fail the build (BP-001); hooks auto-install on `pnpm install`.
-- `REL-03`: extension bumped to 1.1.0; release notes final; `docs/DEPLOYMENT.md` and the release workflow comment use 1.1.0. Not done, yours: take the screenshots, run the `docs/DEPLOYMENT.md` §6 checklist on the release build, tag `v1.1.0`. SPEC §5 still says "lively warmup state" (`REDO-09` made it plain), so it needs your edit.
+- `REL-04`: the site home page shows the newest GitHub release (`apps/site/src/release.js`, one fetch to the public API, falls back to a releases link; the privacy page says so). The `v1.1.0` workflow failed only because the tag was pushed before #69 merged; re-run it (`gh run rerun`). Still yours: screenshots, the `docs/DEPLOYMENT.md` §6 run, SPEC §5 wording.
 - `REDO-04`: an app bar chip (`ModelChip`, e.g. "Gemini · Gemini 2.5 Pro · low") opens a popover with provider, model and effort; Setup now holds only the key form (`ProviderPanel`); the model list moved to `useModels` in App. Direct Mode shows "Claude · Direct" (model and effort locked) or "<Provider> · blocked in Direct Mode". `useModels` has no automated test (no hook renderer in the repo). Popover placement in the narrow bar, click-outside and Escape are manual-test only.
 - `REDO-03`: every answer and fit-check run shows an `ActivityIndicator` (stage, elapsed time, Cancel, a note after 30 s) fed by a `stage` and run-wide `startedAt` on the streaming state; the relay sends a `ping` event every 10 s (clients ignore it). Replaces `PLAYFUL.fitLoading` / `draftLoading`. **Gives the real timing of the slow Gemini fit check once run with a live key: note the time shown at the stage change.** Ticking, Cancel click and layout are manual-test only; the ping is not yet checked through Render's proxy.
 - `REDO-02`: tabs renamed Apply/Saved/You/Setup, `AppBar` (theme toggle, chip slot for `REDO-04`), floating pill tab bar in a `Dock`, and `Section`/`Drawer`/`Popover` primitives (no screen uses the last three yet). Look, glider, sticky dock and Escape/outside-press closing are manual-test only; the action bar still sits above the dock via `--dock-h: 72px`.
@@ -77,4 +77,4 @@
 - Mode: BUILD (learning curriculum inactive).
 
 ## Recent history
-- PR (pending) | `REL-03` | Bump to 1.1.0, final release notes | Manual test: Yes (release checklist)
+- PR (pending) | `REL-04` | Site shows the latest release number | Manual test: Yes (open the home page after a release)

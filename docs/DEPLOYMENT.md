@@ -134,7 +134,7 @@ Load the release build unpacked (`chrome://extensions` > Developer mode > Load u
 
 The site's download button points at `releases/latest/download/slayply-extension.zip`, so a GitHub release with that file is all it needs.
 
-1. Merge everything for the release to `main`; make sure `apps/extension/package.json` has the version and `docs/RELEASE_NOTES_v<version>.md` exists (a test checks this).
+1. Merge everything for the release to `main` **and wait until the merge is done**: the workflow refuses a tag whose commit is not on `main` (a tag pushed from a PR branch before the merge fails with "is not on main"); make sure `apps/extension/package.json` has the version and `docs/RELEASE_NOTES_v<version>.md` exists (a test checks this).
 2. Tag and push (this is the only step you run):
    ```
    git tag -a v1.1.0 -m "Slayply 1.1.0"
@@ -142,7 +142,9 @@ The site's download button points at `releases/latest/download/slayply-extension
    ```
 3. The **Release** workflow (`.github/workflows/release.yml`) runs the full check, builds the zip against the live relay, writes a SHA-256 file and creates the release with both attached. Watch it under the repository's Actions tab.
 4. Check: open `https://github.com/devnadeemashraf/slayply/releases/latest/download/slayply-extension.zip`; it should download. Unzip it, load it unpacked, and confirm the panel says "Connected".
-5. A failed workflow publishes nothing. Fix the cause, delete the tag (`git push origin :v1.1.0` and `git tag -d v1.1.0`), and tag again.
+5. A failed workflow publishes nothing. If the cause was only timing (the tag commit is now on `main`), re-run it: `gh run rerun <run-id>` or the Actions tab. Otherwise fix the cause, delete the tag (`git push origin :v1.1.0` and `git tag -d v1.1.0`), and tag again.
+
+The site's home page reads the newest release number from GitHub's public API when it loads (`apps/site/src/release.js`), so it needs no redeploy after a release.
 
 To update users: tag a new version. Chrome does not auto-update unpacked extensions; the site and README tell people to download again.
 
