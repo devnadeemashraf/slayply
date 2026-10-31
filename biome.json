@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/*.md", "!**/*.yaml", "!**/*.yml"]
+    "includes": ["**", "!**/*.md", "!**/*.yaml", "!**/*.yml", "!docs/design"]
   },
   "formatter": {
     "enabled": true,
