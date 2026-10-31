@@ -29,7 +29,7 @@ Using the production build with a real Gemini key showed a panel that scrolls to
 
 ## Decision
 Option 2, in the order set out in `docs/REDESIGN_PLAN.md`:
-- **Themes:** light, dark and follow-system only; one accent (`#0b5fff` light, `#7fa8ff` dark); dark background a greyish black (`#222222`). The three presets and the preset picker go; a stored `settings.preset` is ignored. The site uses the same tokens.
+- **Themes:** light, dark and follow-system only; one accent (`#0b5fff` light, `#7fa8ff` dark); dark background a greyish black (`#0e0d0d`). The three presets and the preset picker go; a stored `settings.preset` is ignored. The site uses the same tokens.
 - **Structure:** a fixed app bar, a content area, and a dock holding one primary action and the tabs. The Job tab becomes Capture, Questions, Answers.
 - **Activity:** one component for every long task, driven by an explicit stage machine, showing the stage, time elapsed and Cancel. The relay sends a keep-alive event so a quiet stream is not dropped.
 - **Model chip:** provider, model and effort in the app bar; Setup keeps keys, Direct Mode, theme and data.
