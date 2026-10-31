@@ -19,7 +19,7 @@ Found by using the production build with a real Gemini key:
 
 ## Design rules
 
-- One purpose per screen; one primary button, always in the dock.
+- One purpose per screen; one primary button, always in the dock, above the tab bar. The tab bar is a full-width pill with the same 12 px gap left, right and bottom, and a highlight that slides to the active tab (instant under reduced motion).
 - Details open in drawers or popovers; a screen should fit in about 720 px without scrolling for the common case.
 - Colour: light (white, `#0b5fff` accent), dark (greyish black `#0e0d0d`, `#7fa8ff` accent).  Measured contrast: every dark text pair is 6.5:1 or better and every light pair 4.7:1 or better (WCAG AA needs 4.5:1); REDO-01 turns this into a test. Status colours only for status (ok, warn, bad). Meaning never depends on colour alone.
 - Motion is small (press, copy, popover, step change) and every motion has a reduced-motion rule and a test.
