@@ -475,8 +475,9 @@
 - **Acceptance Criteria:** Provider, model and effort change from the app bar without leaving the Apply tab. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-05`: Job Tab Restructure
-- **Size:** L
-- **Status:** Planned
+- **Size:** L, sliced into four PRs (architect comparison: extract state first, then re-layout; no ADR, ADR-0022 covers it)
+- **Slices:** `REDO-05a` move the Job tab state and effects into `useJobController` and the limits into `draftLimits`, no visible change (in review); `REDO-05b` step model and navigation (`visibleStep`, clickable stepper, auto-advance); `REDO-05c` Capture (resume, job text in a Drawer, fit summary card plus drawer) and Questions (style section, compact rows) layouts with the primary button in the Dock; `REDO-05d` Answers step (collapsible answer cards, Save job moved).
+- **Status:** `REDO-05a` in review (PR pending); b to d planned
 - **Acceptance Criteria:** Capture, Questions, Answers steps; common case fits one screen at 390 x 720. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-06`: Answer Actions
