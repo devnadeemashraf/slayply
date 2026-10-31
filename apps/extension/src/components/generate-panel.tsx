@@ -51,7 +51,7 @@ import { QuestionList } from "./question-list.js";
 
 const JD_MAX_CHARS = 60_000;
 const DIRECT_BLOCKED =
-  "Direct Mode works with Claude only. Turn it off in Settings, or switch the provider to Claude.";
+  "Direct Mode works with Claude only. Turn it off in Setup, or switch the provider to Claude from the chip at the top.";
 
 // A per-viewer convenience only; storage can be blocked, so a failure just forgets the choice.
 function readRememberedResume(): string {

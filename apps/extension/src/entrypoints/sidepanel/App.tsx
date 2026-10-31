@@ -10,6 +10,8 @@ import { ONBOARDING_LAST_STEP, OnboardingCards } from "../../components/onboardi
 import { YouEmpty } from "../../components/empty-states.js";
 import { ThemePicker } from "../../components/theme-picker.js";
 import { ProfilePanel } from "../../components/profile-panel.js";
+import { useModels } from "../../lib/use-models.js";
+import { ModelChip } from "../../components/model-chip.js";
 import { ProviderPanel } from "../../components/provider-panel.js";
 import { QuestionnairePanel } from "../../components/questionnaire-panel.js";
 import { ResumesPanel } from "../../components/resumes-panel.js";
@@ -154,6 +156,7 @@ export function App() {
   }
 
   const apiKey = settings ? keyFor(settings, settings.provider) : "";
+  const modelList = useModels(settings?.privacyAcknowledged ? settings : null);
 
   /** The saved profile could not be read or opened; shown wherever the profile is needed. */
   const profileProblem = (
@@ -190,6 +193,20 @@ export function App() {
     <main>
       <AppBar
         status={status}
+        chip={
+          settings?.privacyAcknowledged ? (
+            <ModelChip
+              settings={settings}
+              {...modelList}
+              onChoice={(choice) =>
+                void attempt("setup", async () => {
+                  await store.setChoice(choice);
+                  await refresh();
+                })
+              }
+            />
+          ) : undefined
+        }
         theme={theme}
         onTheme={() =>
           // Cycle from the stored value, so two quick clicks cannot send the same next theme.
@@ -301,12 +318,6 @@ export function App() {
             />
             <ProviderPanel
               settings={settings}
-              onChoice={(choice) =>
-                void attempt("setup", async () => {
-                  await store.setChoice(choice);
-                  await refresh();
-                })
-              }
               onSaveKey={saveKey}
               onClearKey={async (provider) => {
                 await attempt("setup", async () => {

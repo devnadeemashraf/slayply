@@ -27,6 +27,8 @@ export type ModelPickerProps = {
   model: string;
   effort: Effort | "";
   disabled: boolean;
+  /** Keeps the provider choosable but locks model and effort (Direct Mode ignores them). */
+  lockModel?: boolean;
   onProvider: (provider: ProviderId) => void;
   onModel: (model: string) => void;
   onEffort: (effort: Effort | "") => void;
@@ -34,6 +36,7 @@ export type ModelPickerProps = {
 
 export function ModelPicker(props: ModelPickerProps) {
   const { provider, models, model, effort, disabled } = props;
+  const modelLocked = disabled || props.lockModel === true;
   // A saved model that the list no longer has is shown as "Newest", which is what is sent.
   const shown = models?.some((entry) => entry.id === model) ? model : "";
   const showEffort = effectiveModel(models, shown)?.supportsEffort === true;
@@ -58,7 +61,7 @@ export function ModelPicker(props: ModelPickerProps) {
       <select
         id="model"
         value={shown}
-        disabled={disabled || props.loading}
+        disabled={modelLocked || props.loading}
         onChange={(event) => props.onModel(event.target.value)}
       >
         <option value="">{props.loading ? "Loading models…" : "Newest available"}</option>
@@ -74,7 +77,7 @@ export function ModelPicker(props: ModelPickerProps) {
           <select
             id="effort"
             value={effort}
-            disabled={disabled}
+            disabled={modelLocked}
             onChange={(event) => props.onEffort(event.target.value as Effort | "")}
           >
             <option value="">Default</option>

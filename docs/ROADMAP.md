@@ -471,7 +471,7 @@
 
 #### `REDO-04`: Model and Effort Chip
 - **Size:** S
-- **Status:** Planned
+- **Status:** In review (PR pending). Chip in the app bar opens a popover with the existing picker; Setup keeps only the API key form. Direct Mode shows "Claude · Direct" with the picker disabled.
 - **Acceptance Criteria:** Provider, model and effort change from the app bar without leaving the Apply tab. Detail: `docs/REDESIGN_PLAN.md`.
 
 #### `REDO-05`: Job Tab Restructure
