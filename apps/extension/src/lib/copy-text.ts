@@ -14,7 +14,7 @@ export const PLAYFUL = {
   jobEmptyTitle: "No job yet",
   jobEmptyBody: "Open a posting and hit Capture, or paste a description below.",
   jobsEmptyTitle: "No saved jobs yet",
-  jobsEmptyBody: "Save a job from the Job tab and it waits here, with where it stands.",
+  jobsEmptyBody: "Save a job from the Apply tab and it waits here, with where it stands.",
   youEmptyTitle: "Nothing here yet",
   youEmptyBody:
     "Add a few facts, answer the questionnaire or upload a resume, and your drafts will sound like you.",

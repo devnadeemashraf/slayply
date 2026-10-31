@@ -1,7 +1,8 @@
 import type { StoredProfile, StoredResume } from "@slayply/core";
-import { DEFAULT_THEME, TabPanel, Tabs } from "@slayply/ui";
+import { DEFAULT_THEME, Dock, nextTheme, TabPanel, Tabs } from "@slayply/ui";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
+import { AppBar } from "../../components/app-bar.js";
 import { CapturePanel } from "../../components/capture-panel.js";
 import { GeneratePanel } from "../../components/generate-panel.js";
 import { JobsTab } from "../../components/jobs-tab.js";
@@ -51,21 +52,12 @@ function useRelayStatus(): RelayStatus {
   return status;
 }
 
-function StatusBadge({ status }: { status: RelayStatus }) {
-  return (
-    <p className={`status status-${status.phase}`} role="status">
-      <span className="dot" aria-hidden="true" />
-      {status.label}
-    </p>
-  );
-}
-
 export function App() {
   const store = useMemo(() => createSettingsStore(chrome.storage.local), []);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const status = useRelayStatus();
-  const [tab, setTab] = useState<TabId>("job");
+  const [tab, setTab] = useState<TabId>("apply");
   const [onboardingStep, setOnboardingStep] = useState(0);
 
   // "auto" removes data-theme so the stylesheet follows the system; light and dark force a theme.
@@ -196,10 +188,20 @@ export function App() {
 
   return (
     <main>
-      <header>
-        <h1>Slayply</h1>
-        <StatusBadge status={status} />
-      </header>
+      <AppBar
+        status={status}
+        theme={theme}
+        onTheme={() =>
+          // Cycle from the stored value, so two quick clicks cannot send the same next theme.
+          void store
+            .load()
+            .then((saved) => store.setTheme(nextTheme(saved.theme)))
+            .then(
+              () => refresh(),
+              () => setLoadError(SERIOUS.genericError),
+            )
+        }
+      />
       {status.offerDirectMode && <p className="notice">{SERIOUS.directModeNotice}</p>}
       {loadError && (
         <p className="error" role="alert">
@@ -222,7 +224,7 @@ export function App() {
       )}
       {settings?.privacyAcknowledged && (
         <div className="panels">
-          <TabPanel id="job" active={tab === "job"}>
+          <TabPanel id="apply" active={tab === "apply"}>
             {profileProblem}
             {profileStatus === "ready" && resumesLoaded && (
               <SetupChecklist
@@ -254,7 +256,7 @@ export function App() {
               />
             )}
           </TabPanel>
-          <TabPanel id="jobs" active={tab === "jobs"}>
+          <TabPanel id="saved" active={tab === "saved"}>
             <JobsTab store={jobStore} refresh={jobsVersion} />
           </TabPanel>
           <TabPanel id="you" active={tab === "you"}>
@@ -323,7 +325,7 @@ export function App() {
         </div>
       )}
       {settings?.privacyAcknowledged && (
-        <div className="dock">
+        <Dock>
           <Tabs
             label="Slayply sections"
             tabs={TABS}
@@ -338,7 +340,7 @@ export function App() {
               );
             }}
           />
-        </div>
+        </Dock>
       )}
     </main>
   );

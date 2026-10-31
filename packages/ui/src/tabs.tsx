@@ -1,4 +1,4 @@
-import { type ReactNode, useRef } from "react";
+import { type CSSProperties, type ReactNode, useRef } from "react";
 
 /** The tab a navigation key moves to (ARIA tabs pattern, wrapping), or null for any other key. */
 export function nextIndex(count: number, current: number, key: string): number | null {
@@ -35,7 +35,21 @@ export function Tabs({
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   return (
-    <div className="sl-tabs" role="tablist" aria-label={label}>
+    <div
+      className="sl-tabs"
+      role="tablist"
+      aria-label={label}
+      style={
+        {
+          "--tab-count": tabs.length,
+          "--tab-index": Math.max(
+            0,
+            tabs.findIndex((tab) => tab.id === active),
+          ),
+        } as CSSProperties
+      }
+    >
+      <span className="sl-tabs-glider" aria-hidden="true" />
       {tabs.map((tab, index) => (
         <button
           key={tab.id}

@@ -7,7 +7,10 @@ import { EmptyState } from "./empty-state.js";
 import { Field } from "./field.js";
 import { Badge } from "./badge.js";
 import { Switch } from "./switch.js";
+import { Dock } from "./dock.js";
+import { Drawer, nextFocusIndex, Popover, Section, shouldDismiss } from "./overlay.js";
 import { nextIndex, TabPanel, Tabs } from "./tabs.js";
+import { nextTheme } from "./themes.js";
 
 const noop = () => {};
 const HOSTILE = "<img src=x onerror=1>";
@@ -206,5 +209,146 @@ describe("EmptyState", () => {
 
   it("works without an action", () => {
     expect(renderToString(<EmptyState title="Empty">text</EmptyState>)).toContain("Empty");
+  });
+});
+
+describe("Tabs glider", () => {
+  const tabs = [
+    { id: "a", label: "Alpha" },
+    { id: "b", label: "Beta" },
+    { id: "c", label: "Gamma" },
+    { id: "d", label: "Delta" },
+  ];
+
+  it("tells the stylesheet how many tabs there are and which is active", () => {
+    const html = renderToString(<Tabs label="Sections" tabs={tabs} active="c" onSelect={noop} />);
+    expect(html).toContain("--tab-count:4");
+    expect(html).toContain("--tab-index:2");
+    expect(html).toContain("sl-tabs-glider");
+  });
+
+  it("hides the glider from assistive technology", () => {
+    const html = renderToString(<Tabs label="Sections" tabs={tabs} active="a" onSelect={noop} />);
+    expect(html).toMatch(
+      /class="sl-tabs-glider"[^>]*aria-hidden="true"|aria-hidden="true"[^>]*class="sl-tabs-glider"/,
+    );
+  });
+});
+
+describe("Dock", () => {
+  it("puts the primary action above the tabs", () => {
+    const html = renderToString(
+      <Dock primary={<button type="button">Generate</button>}>
+        <nav>tabs</nav>
+      </Dock>,
+    );
+    expect(html.indexOf("Generate")).toBeLessThan(html.indexOf("tabs"));
+    expect(html).toContain("sl-dock-primary");
+  });
+
+  it("leaves the primary row out when there is no action", () => {
+    expect(renderToString(<Dock>x</Dock>)).not.toContain("sl-dock-primary");
+  });
+});
+
+describe("Section", () => {
+  it("shows a heading, an optional action and the body", () => {
+    const html = renderToString(
+      <Section title="Questions" action={<button type="button">Add</button>}>
+        <p>body</p>
+      </Section>,
+    );
+    expect(html).toContain("<h2");
+    expect(html).toContain("Questions");
+    expect(html).toContain("Add");
+    expect(html).toContain("body");
+  });
+
+  it("escapes a hostile title", () => {
+    const html = renderToString(<Section title={HOSTILE}>x</Section>);
+    expect(html).not.toContain(HOSTILE);
+  });
+});
+
+describe("Drawer", () => {
+  it("renders nothing while closed", () => {
+    expect(
+      renderToString(
+        <Drawer open={false} title="Job text" onClose={noop}>
+          x
+        </Drawer>,
+      ),
+    ).toBe("");
+  });
+
+  it("is a labelled modal dialog with a close button when open", () => {
+    const html = renderToString(
+      <Drawer open={true} title="Job text" onClose={noop}>
+        <p>content</p>
+      </Drawer>,
+    );
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-modal="true"');
+    expect(html).toContain('aria-label="Job text"');
+    expect(html).toContain("content");
+    expect(html).toContain('aria-label="Close"');
+  });
+});
+
+describe("Popover", () => {
+  it("renders nothing while closed and a labelled non-modal dialog when open", () => {
+    expect(
+      renderToString(
+        <Popover open={false} label="Model" onClose={noop}>
+          x
+        </Popover>,
+      ),
+    ).toBe("");
+    const html = renderToString(
+      <Popover open={true} label="Model" onClose={noop}>
+        <p>choices</p>
+      </Popover>,
+    );
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-label="Model"');
+    expect(html).not.toContain("aria-modal");
+    expect(html).toContain("choices");
+  });
+});
+
+describe("shouldDismiss", () => {
+  it("closes on Escape only", () => {
+    expect(shouldDismiss("Escape")).toBe(true);
+    expect(shouldDismiss("Enter")).toBe(false);
+    expect(shouldDismiss("")).toBe(false);
+  });
+});
+
+describe("nextTheme", () => {
+  it("cycles match system, light, dark and back", () => {
+    expect(nextTheme("auto")).toBe("light");
+    expect(nextTheme("light")).toBe("dark");
+    expect(nextTheme("dark")).toBe("auto");
+  });
+});
+
+describe("nextFocusIndex", () => {
+  it("wraps Tab from the last control to the first and Shift+Tab the other way", () => {
+    expect(nextFocusIndex(3, 2, false)).toBe(0);
+    expect(nextFocusIndex(3, 0, true)).toBe(2);
+  });
+
+  it("leaves a step inside the drawer to the browser", () => {
+    expect(nextFocusIndex(3, 0, false)).toBeNull();
+    expect(nextFocusIndex(3, 2, true)).toBeNull();
+  });
+
+  it("starts at the first control when focus is on the dialog itself", () => {
+    expect(nextFocusIndex(3, -1, false)).toBe(0);
+    expect(nextFocusIndex(3, -1, true)).toBe(2);
+  });
+
+  it("keeps focus on the dialog when it has nothing to focus", () => {
+    expect(nextFocusIndex(0, -1, false)).toBeNull();
   });
 });

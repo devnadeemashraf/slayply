@@ -144,7 +144,7 @@ describe("motion", () => {
   });
 
   it("defines the keyframes the components use, and a plain fade to replace movement", () => {
-    for (const name of ["sl-pop", "sl-shake", "sl-fade"]) {
+    for (const name of ["sl-pop", "sl-shake", "sl-fade", "sl-rise"]) {
       expect(components, `missing @keyframes ${name}`).toContain(`@keyframes ${name}`);
     }
   });
