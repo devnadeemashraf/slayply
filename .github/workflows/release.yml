@@ -1,6 +1,6 @@
 name: Release
 
-# Pushing a tag such as v1.0.0 builds the extension against the live relay and publishes it as a
+# Pushing a tag such as v1.1.0 builds the extension against the live relay and publishes it as a
 # GitHub release. The asset name is fixed so the site's download link never changes.
 # The build job runs install scripts and tests with a read-only token; only the publish job can write.
 on:
