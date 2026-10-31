@@ -18,6 +18,7 @@ import {
 import { RELAY_URL } from "../lib/config.js";
 import { type CopyState, createCopyFeedback } from "../lib/copy.js";
 import type { DraftKindId } from "../lib/draft-kinds.js";
+import { advance, type ScreenId, type ScreenProgress } from "../lib/job-screens.js";
 import { draftLimits } from "../lib/draft-limits.js";
 import { createFitRunner } from "../lib/fit-flow.js";
 import { type FitStore, fitKey } from "../lib/fit-store.js";
@@ -129,6 +130,7 @@ export function useJobController({
     if (applied.jd !== undefined) setJd(applied.jd);
     if (applied.resetResult) {
       setJdOpen(false);
+      setScreen("capture");
       runner.stop();
       fitRunner.stop();
       setFitResult(null);
@@ -169,6 +171,29 @@ export function useJobController({
     fitRunning,
     running,
   };
+  // A failed run still has something to show (the error), so it keeps the Answers screen open.
+  const screenProgress: ScreenProgress = {
+    hasJd: progress.hasJd,
+    fitDone: progress.fitDone,
+    answered: progress.answered || state.phase === "error",
+    running: progress.running,
+  };
+  const [screen, setScreen] = useState<ScreenId>("capture");
+  // Moves on the event that finishes a step (see `advance`); runs only when progress changes.
+  const previousProgress = useRef(screenProgress);
+  useEffect(() => {
+    setScreen((current) => advance(current, previousProgress.current, screenProgress));
+    previousProgress.current = screenProgress;
+  }, [
+    screenProgress.hasJd,
+    screenProgress.fitDone,
+    screenProgress.answered,
+    screenProgress.running,
+  ]);
+  const selectScreen = (next: ScreenId) => {
+    setFormError(null);
+    setScreen(next);
+  };
   const action = primaryAction({
     ...progress,
     questionCount: kind === "answers" ? rows.filter((row) => row.checked).length : 1,
@@ -196,6 +221,7 @@ export function useJobController({
       return;
     }
     setFormError(null);
+    setScreen("answers");
     setCopyState("idle");
     setEdits({});
     setResultKind(kind);
@@ -259,6 +285,7 @@ export function useJobController({
       return;
     }
     setFormError(null);
+    setScreen("capture");
     setFitResult(null);
     await fitRunner.start({
       jd,
@@ -272,6 +299,9 @@ export function useJobController({
   }
 
   return {
+    screen,
+    screenProgress,
+    selectScreen,
     action,
     applyEdit,
     changeRows,
