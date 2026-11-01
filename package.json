@@ -20,7 +20,7 @@
     "loadtest": "node scripts/loadtest-relay.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.3",
+    "@biomejs/biome": "2.6.4",
     "@types/node": "26.6.6",
     "playwright-core": "1.64.1",
     "turbo": "2.11.10",
